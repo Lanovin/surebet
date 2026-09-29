@@ -51,6 +51,7 @@ const PROFILES: Record<BookmakerId, BookProfile> = {
   merkurxtip: { overround: 0.07, liveOverround: 0.095, noise: 0.02, liveLag: [1000, 4000], preLag: [60e3, 240e3], suspendProb: 0.7, stateStyle: 'clock', coverage: 0.8, swapTennis: false, startOffsetMin: 0, skipLeagues: ['WTA Ostrava'] },
   kingsbet: { overround: 0.065, liveOverround: 0.09, noise: 0.018, liveLag: [800, 3000], preLag: [60e3, 200e3], suspendProb: 0.75, stateStyle: 'text', coverage: 0.8, swapTennis: false, startOffsetMin: 0, skipLeagues: ['Euroliga'] },
   betx: { overround: 0.06, liveOverround: 0.085, noise: 0.02, liveLag: [900, 3500], preLag: [45e3, 200e3], suspendProb: 0.7, stateStyle: 'clock', coverage: 0.8, swapTennis: true, startOffsetMin: 0, skipLeagues: [] },
+  synot: { overround: 0.065, liveOverround: 0.09, noise: 0.018, liveLag: [700, 2500], preLag: [45e3, 180e3], suspendProb: 0.8, stateStyle: 'text', coverage: 0.85, swapTennis: false, startOffsetMin: 0, skipLeagues: [] },
 };
 
 interface Quote {

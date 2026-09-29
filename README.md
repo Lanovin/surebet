@@ -72,6 +72,7 @@ přesahuje zbývající čas přestávky, je označen ⚠ jako rizikový.
 | BetX | ✅ | L2 API `sportapis-cz.betx.bet`, L5 prohlížeč | web je na **bet-x.cz** (betx.cz je parkovaná doména); live cache ~10 s |
 | Sazka (Allwyn) | ✅ | L2 OpenBet REST, L3 websocket push (live) | Akamai cachuje odpovědi 30–60 s (prematch data až ~60 s stará); prohlížeč Akamai blokuje |
 | MerkurXtip | ✅ | L2 veřejné Altenar API, L5 prohlížeč | ~1 385 zápasů; live jen hlavní trhy |
+| SYNOT TIP | ✅ | L2 interní API `sport.synottip.cz` (prematch protobuf, live JSON), L5 prohlížeč | ~1 070 zápasů; vedlejší trhy jen do 24 h; live jen hlavní trhy, viz `docs/bookmakers/synot.md` |
 | Tipsport | ⛔ blokováno | – | Cloudflare/F5 pozná automatizaci (i v Chrome), viz `docs/bookmakers/tipsport.md` |
 | Chance | ⛔ blokováno | – | stejná platforma a ochrana jako Tipsport |
 | Betano | ⛔ blokováno | – | Cloudflare bot management, viz `docs/bookmakers/betano.md` |

@@ -1,0 +1,481 @@
+// SYNOT TIP (sport.synottip.cz) – platforma eBet, čisté parsování.
+//
+// Prematch: GetWebStandardEvents → base64 protobuf (proto.ts) se stromem sport → země → liga →
+// události. Live: GetLIPEvtsDsk → čistý JSON (stejné názvy polí, navíc stav zápasu).
+// Událost má GameGroups[] → Games[] (typ trhu; `ID` = "<typ>d<detail>" nebo jen "<typ>" u trhů
+// s liniemi) → Details[] (jedna linie) → OddsList[] (výběr: Name "1"/"0"/"2", "Pod (2.5)",
+// "Tým 1 (-1.5)", "Ano"…, Rate, State). Typ trhu bereme z čísla na začátku Game.ID a navíc
+// kontrolujeme název (vč. prodloužení vs. základní doba).
+import { marketKey } from '../../core/markets.js';
+import type { GameState, MarketScope, MarketType, RawEvent, RawMarket, RawSelection, SelectionKey, Sport } from '../../core/types.js';
+import type { PbCategory, PbDetail, PbEvent, PbEventsResponse, PbGame } from './proto.js';
+
+export const ORIGIN = 'https://sport.synottip.cz';
+
+/** Kořenové kategorie sportů (CategoryID pro GetWebStandardEvents) = DisciplineID v live feedu. */
+export const SPORT_IDS: Record<Sport, number> = { football: 12, hockey: 14, tennis: 19, basketball: 21 };
+const ID_TO_SPORT: Record<number, Sport> = { 12: 'football', 14: 'hockey', 19: 'tennis', 21: 'basketball' };
+
+/** Texty feedu obsahují nezlomitelné mezery ("Tým 1 (-1.5)") → sjednotit bílé znaky. */
+const norm = (s: string | undefined) => (s ?? '').replace(/\s+/g, ' ').trim();
+
+// ---------- surové typy live feedu (JSON) ----------
+
+export interface SynLiveOdds {
+  TipID?: string;
+  Name?: string;
+  Rate?: number;
+  State?: number;
+}
+export interface SynLiveResult {
+  ID?: number;
+  Name?: string;
+  Score?: string;
+  MainResult?: boolean;
+  /** 64 = výsledek periody, 1 = gamové skóre (tenis) */
+  Flags?: number;
+}
+export interface SynLiveEvent {
+  ID: number;
+  Name: string;
+  /** "/Date(1790690400000+0200)/" */
+  Date: string;
+  CategoryPath?: string;
+  DisciplineID?: number;
+  /** 2 = běží / před začátkem, 3 = ukončeno */
+  State?: number;
+  StateName?: string;
+  /** Uplynulý herní čas v s od začátku zápasu. */
+  StateTime?: number;
+  RemainingPeriodTime?: number;
+  ClockStopped?: boolean;
+  Results?: SynLiveResult[];
+  GameGroups?: { ID?: number; Name?: string; Games?: (PbGame & { Details?: (PbDetail & { OddsList?: SynLiveOdds[] })[] })[] }[];
+}
+export interface SynLiveDiscipline {
+  DisciplineID: number;
+  Events?: SynLiveEvent[];
+}
+export interface SynLiveResponse {
+  Result: number;
+  TimeStamp?: number;
+  ReturnValue?: SynLiveDiscipline[] | null;
+}
+
+// ---------- mapování trhů ----------
+
+type Kind = '1X2' | 'ML' | 'OU' | 'AH' | 'BTTS' | 'OE';
+interface Rule {
+  type: MarketType;
+  kind: Kind;
+  /** Pevný rozsah, nebo číslo periody z názvu trhu ("2. třetina", "1. set", "3. čtvrtina"). */
+  scope: MarketScope | 'P' | 'S' | 'Q';
+  /** Název trhu (Game.Name) musí odpovídat – ochrana proti posunu významu ID typu. */
+  name?: RegExp;
+}
+
+const OT = /prodl|nájezd/i;
+const R = (type: MarketType, kind: Kind, scope: Rule['scope'], name?: RegExp): Rule => ({ type, kind, scope, name });
+
+/**
+ * ID typu trhu (číslo na začátku Game.ID) → pravidlo. ID a názvy jsou z filtru trhů webu
+ * (GetWebStandardEvents → AvailableGames). Evropský handicap "Handicap 0:1" (5), kombinace,
+ * hráčské trhy, přesné výsledky … vynechány.
+ */
+const RULES: Record<Sport, Record<number, Rule>> = {
+  football: {
+    2: R('1X2', '1X2', 'REG', /^Zápas$/),
+    4: R('DNB', 'ML', 'REG', /^Sázka bez remízy$/),
+    79: R('OU', 'OU', 'REG', /^Celkový počet gólů$/),
+    7: R('AH', 'AH', 'REG', /^Handicap$/),
+    88: R('BTTS', 'BTTS', 'REG', /^Oba týmy dají gól$/),
+    8: R('OE', 'OE', 'REG', /^Lichá\/Sudá \(počet gólů\)$/),
+    80: R('OU_HOME', 'OU', 'REG', /^Tým1 celkový počet gólů$/),
+    81: R('OU_AWAY', 'OU', 'REG', /^Tým2 celkový počet gólů$/),
+    12: R('1X2', '1X2', 'H1', /^1\. poločas$/),
+    14: R('DNB', 'ML', 'H1', /^1\. poločas - Sázka bez remízy$/),
+    113: R('OU', 'OU', 'H1', /^1\. poločas - Počet gólů$/),
+    16: R('AH', 'AH', 'H1', /^1\. poločas - Handicap$/),
+    117: R('BTTS', 'BTTS', 'H1', /^1\. poločas - Oba týmy dají gól$/),
+    114: R('OU_HOME', 'OU', 'H1', /^1\. poločas - Tým1 počet gólů$/),
+    115: R('OU_AWAY', 'OU', 'H1', /^1\. poločas - Tým2 počet gólů$/),
+    123: R('1X2', '1X2', 'H2', /^2\. poločas$/),
+    125: R('DNB', 'ML', 'H2', /^2\. poločas - Sázka bez remízy$/),
+    130: R('OU', 'OU', 'H2', /^2\. poločas - Počet gólů$/),
+    127: R('AH', 'AH', 'H2', /^2\. poločas - Handicap$/),
+    135: R('BTTS', 'BTTS', 'H2', /^2\. poločas - Oba týmy dají gól$/),
+    131: R('OU_HOME', 'OU', 'H2', /^2\. poločas - Tým1 počet gólů$/),
+    132: R('OU_AWAY', 'OU', 'H2', /^2\. poločas - Tým2 počet gólů$/),
+  },
+  hockey: {
+    2: R('1X2', '1X2', 'REG', /^Zápas$/),
+    4: R('DNB', 'ML', 'REG', /^Sázka bez remízy$/),
+    79: R('OU', 'OU', 'REG', /^Celkový počet gólů$/),
+    7: R('AH', 'AH', 'REG', /^Handicap$/),
+    88: R('BTTS', 'BTTS', 'REG', /^Oba týmy dají gól$/),
+    8: R('OE', 'OE', 'REG', /^Lichá\/Sudá \(počet gólů\)$/),
+    80: R('OU_HOME', 'OU', 'REG', /^Tým1 celkový počet gólů$/),
+    81: R('OU_AWAY', 'OU', 'REG', /^Tým2 celkový počet gólů$/),
+    228: R('ML', 'ML', 'MATCH', /^Vítěz \(včetně prodloužení a sam\. nájezdů\)$/),
+    229: R('AH', 'AH', 'MATCH', /^Handicap \(včetně prodloužení a sam\. nájezdů\)$/),
+    230: R('OU', 'OU', 'MATCH', /^Počet gólů \(včetně prodloužení a sam\. nájezdů\)$/),
+    233: R('1X2', '1X2', 'P', /^[123]\. třetina$/),
+    240: R('DNB', 'ML', 'P', /^[123]\. třetina - Sázka bez remízy$/),
+    235: R('OU', 'OU', 'P', /^1\. třetina - Počet gólů$/),
+    236: R('OU', 'OU', 'P', /^2\. třetina - Počet gólů$/),
+    237: R('OU', 'OU', 'P', /^3\. třetina - Počet gólů$/),
+    241: R('AH', 'AH', 'P', /^1\. třetina - Handicap$/),
+    242: R('AH', 'AH', 'P', /^2\. třetina - Handicap$/),
+    243: R('AH', 'AH', 'P', /^3\. třetina - Handicap$/),
+    238: R('BTTS', 'BTTS', 'P', /^[123]\. třetina - Oba týmy dají gól$/),
+  },
+  tennis: {
+    178: R('ML', 'ML', 'MATCH', /^Vítěz zápasu$/),
+    209: R('AH', 'AH', 'MATCH', /^Gamy - Handicap$/),
+    210: R('AH_SETS', 'AH', 'MATCH', /^Sety - Handicap$/),
+    211: R('OU', 'OU', 'MATCH', /^Celkový počet gamů$/),
+    // název je "<jméno hráče> počet gamů"
+    212: R('OU_HOME', 'OU', 'MATCH', / počet gamů$/),
+    213: R('OU_AWAY', 'OU', 'MATCH', / počet gamů$/),
+    356: R('OU_SETS', 'OU', 'MATCH', /^Počet setů$/),
+    221: R('ML', 'ML', 'S', /^[1-5]\. set - Vítěz$/),
+    222: R('AH', 'AH', 'S', /^[1-5]\. set - Gamy handicap$/),
+    223: R('OU', 'OU', 'S', /^[1-5]\. set - Počet gamů$/),
+  },
+  basketball: {
+    // Zápas (1/0/2) = základní hrací doba – v prematch nabídce ho Synot nevypisuje, v live ano
+    2: R('1X2', '1X2', 'REG', /^Zápas$/),
+    251: R('ML', 'ML', 'MATCH', /^Vítěz \(včetně prodloužení\)$/),
+    252: R('AH', 'AH', 'MATCH', /^Handicap \(včetně prodloužení\)$/),
+    253: R('OU', 'OU', 'MATCH', /^Počet bodů \(včetně prodloužení\)$/),
+    // "<tým> počet bodů (včetně prodloužení)"
+    254: R('OU_HOME', 'OU', 'MATCH', / počet bodů \(včetně prodloužení\)$/),
+    255: R('OU_AWAY', 'OU', 'MATCH', / počet bodů \(včetně prodloužení\)$/),
+    12: R('1X2', '1X2', 'H1', /^1\. poločas$/),
+    14: R('DNB', 'ML', 'H1', /^1\. poločas - Sázka bez remízy$/),
+    113: R('OU', 'OU', 'H1', /^1\. poločas - Počet bodů$/),
+    16: R('AH', 'AH', 'H1', /^1\. poločas - Handicap$/),
+    // 2. poločas a 4. čtvrtina vynechány: u basketu nemusí být jasné, jestli zahrnují prodloužení
+    257: R('1X2', '1X2', 'Q', /^[123]\. čtvrtina$/),
+    262: R('DNB', 'ML', 'Q', /^[123]\. čtvrtina - Sázka bez remízy$/),
+    258: R('OU', 'OU', 'Q', /^1\. čtvrtina - Počet bodů$/),
+    259: R('OU', 'OU', 'Q', /^2\. čtvrtina - Počet bodů$/),
+    260: R('OU', 'OU', 'Q', /^3\. čtvrtina - Počet bodů$/),
+    263: R('AH', 'AH', 'Q', /^1\. čtvrtina - Handicap$/),
+    264: R('AH', 'AH', 'Q', /^2\. čtvrtina - Handicap$/),
+    265: R('AH', 'AH', 'Q', /^3\. čtvrtina - Handicap$/),
+  },
+};
+
+/**
+ * ID typů trhů, které prematch stahuje filtrem GameIds (druhý požadavek na sport). Hlavní trh
+ * (`Zápas` / `Vítěz zápasu` / `Vítěz (včetně prodloužení)`) přichází bez filtru.
+ */
+export const PREMATCH_GAME_IDS: Record<Sport, number[]> = {
+  football: Object.keys(RULES.football).map(Number).filter((id) => id !== 2),
+  hockey: Object.keys(RULES.hockey).map(Number).filter((id) => id !== 2),
+  tennis: Object.keys(RULES.tennis).map(Number).filter((id) => id !== 178),
+  basketball: Object.keys(RULES.basketball).map(Number).filter((id) => id !== 2 && id !== 251),
+};
+
+const REQUIRED: Record<Kind, number> = { '1X2': 3, ML: 2, OU: 2, AH: 2, BTTS: 2, OE: 2 };
+
+/** ID typu trhu z Game.ID ("233d462443661" → 233, "79" → 79). */
+export function gameTypeId(id: string | undefined): number | undefined {
+  const m = /^(\d+)(?:d\d+)?$/.exec(id ?? '');
+  return m ? Number(m[1]) : undefined;
+}
+
+function periodScope(name: string, prefix: 'P' | 'S' | 'Q'): MarketScope | null {
+  const n = /^(\d)\.\s*(třetina|set|čtvrtina)/i.exec(name)?.[1];
+  if (!n) return null;
+  const max = prefix === 'P' ? 3 : prefix === 'Q' ? 4 : 5;
+  return Number(n) >= 1 && Number(n) <= max ? (`${prefix}${n}` as MarketScope) : null;
+}
+
+/** "2.5" / "+1.5" / "-0" → číslo; jen celé a půlové linie (čtvrtinové x.25/x.75 = rozdělená sázka). */
+function parseLine(s: string): number | undefined {
+  const v = Number(s.replace(',', '.'));
+  if (!Number.isFinite(v)) return undefined;
+  return Math.abs(v * 2 - Math.round(v * 2)) < 1e-9 ? v : undefined;
+}
+
+interface Sel {
+  key: SelectionKey;
+  line?: number;
+}
+
+/** Název výběru → kanonický klíč (+ linie z pohledu domácích u AH). */
+function selectionOf(kind: Kind, name: string): Sel | null | undefined {
+  const n = norm(name);
+  switch (kind) {
+    case '1X2':
+      return n === '1' ? { key: 'HOME' } : n === '0' ? { key: 'DRAW' } : n === '2' ? { key: 'AWAY' } : null;
+    case 'ML':
+      return n === '1' ? { key: 'HOME' } : n === '2' ? { key: 'AWAY' } : null;
+    case 'BTTS':
+      return n === 'Ano' ? { key: 'YES' } : n === 'Ne' ? { key: 'NO' } : null;
+    case 'OE':
+      return n === 'Lichá' ? { key: 'ODD' } : n === 'Sudá' ? { key: 'EVEN' } : null;
+    case 'OU': {
+      const m = /^(Pod|Nad) \(([^)]+)\)$/.exec(n);
+      if (!m) return null;
+      const line = parseLine(m[2]);
+      return line === undefined ? undefined : { key: m[1] === 'Nad' ? 'OVER' : 'UNDER', line };
+    }
+    case 'AH': {
+      // "Tým 1 (-1.5)" / "Tým 2 (+1.5)" – linie domácích = číslo u Týmu 1, u Týmu 2 opačné znaménko
+      const m = /^Tým ([12]) \(([^)]+)\)$/.exec(n);
+      if (!m) return null;
+      const v = parseLine(m[2]);
+      if (v === undefined) return undefined;
+      return m[1] === '1' ? { key: 'HOME', line: v } : { key: 'AWAY', line: -v };
+    }
+  }
+}
+
+/** Stav výběru/linie: 0 None (prematch protobuf neposílá), 2 Opened = aktivní; 1 Created, 3 Suspended, 4 Closed = ne. */
+const isOpenState = (s: number | undefined) => s === undefined || s === 0 || s === 2;
+
+function odds2dp(rate: number | undefined): number | null {
+  if (typeof rate !== 'number' || !Number.isFinite(rate)) return null;
+  // prematch posílá float32 (2.3499999) → zaokrouhlit na 2 místa, web ukazuje totéž
+  const o = Math.round(rate * 100) / 100;
+  return o >= 1.01 ? o : null;
+}
+
+/** Jeden Synot trh (Game) → 0..n kanonických trhů (každý Detail = jedna linie). */
+export function mapGame(sport: Sport, g: PbGame): RawMarket[] {
+  const typeId = gameTypeId(g.ID);
+  if (typeId === undefined) return [];
+  const rule = RULES[sport][typeId];
+  const name = norm(g.Name);
+  if (!rule || (rule.name && !rule.name.test(name))) return [];
+  // pojistka rozsahu: REG/periody nesmí mluvit o prodloužení, MATCH hokeje/basketu ho mít musí
+  if (rule.scope !== 'MATCH' && OT.test(name)) return [];
+  if (rule.scope === 'MATCH' && (sport === 'hockey' || sport === 'basketball') && !OT.test(name)) return [];
+  const scope = rule.scope === 'P' || rule.scope === 'S' || rule.scope === 'Q' ? periodScope(name, rule.scope) : rule.scope;
+  if (!scope) return [];
+
+  const out: RawMarket[] = [];
+  const seen = new Set<string>();
+  for (const d of g.Details ?? []) {
+    const sels: RawSelection[] = [];
+    let line: number | undefined;
+    let bad = false;
+    for (const o of d.OddsList ?? []) {
+      const s = selectionOf(rule.kind, o.Name ?? '');
+      if (s === null) {
+        bad = true; // neznámý výběr → linii vynechat celou
+        break;
+      }
+      if (s === undefined) {
+        bad = true; // čtvrtinová linie
+        break;
+      }
+      if (s.line !== undefined) {
+        if (line !== undefined && Math.abs(line - s.line) > 1e-9) {
+          bad = true; // výběry jedné linie nesouhlasí
+          break;
+        }
+        line = s.line;
+      }
+      const odds = odds2dp(o.Rate);
+      if (odds === null) {
+        bad = true; // suspendovaný výběr bez kurzu (Rate 0)
+        break;
+      }
+      sels.push({ key: s.key, odds, open: isOpenState(o.State), rawName: o.Name });
+    }
+    if (bad || sels.length !== REQUIRED[rule.kind] || new Set(sels.map((s) => s.key)).size !== sels.length) continue;
+    if (rule.kind === 'OU' && (line === undefined || line < 0)) continue;
+    if (rule.kind === 'AH' && line === undefined) continue;
+    const key = marketKey(rule.type, scope, line);
+    if (seen.has(key)) continue;
+    seen.add(key);
+    const detailOpen = isOpenState(d.State) && !d.Suspended;
+    out.push({
+      key,
+      open: detailOpen && sels.some((s) => s.open !== false),
+      selections: sels,
+      sourceId: String(d.ID ?? g.ID),
+      rawName: name,
+    });
+  }
+  return out;
+}
+
+function mapGroups(sport: Sport, groups: PbEvent['GameGroups']): RawMarket[] {
+  const out: RawMarket[] = [];
+  const keys = new Set<string>();
+  for (const gg of groups ?? []) {
+    for (const g of gg.Games ?? []) {
+      for (const m of mapGame(sport, g)) {
+        if (keys.has(m.key)) continue;
+        keys.add(m.key);
+        out.push(m);
+      }
+    }
+  }
+  return out;
+}
+
+/** "Domácí - Hosté"; jméno obsahující víc " - " je nejednoznačné → null (tenis "Příjmení, Jméno"). */
+export function splitName(name: string): [string, string] | null {
+  const parts = norm(name).split(' - ');
+  if (parts.length !== 2) return null;
+  const [h, a] = parts.map((p) => p.trim());
+  return h && a ? [h, a] : null;
+}
+
+export const eventUrl = (id: number | string) => `${ORIGIN}/zapas/${id}`;
+export const liveEventUrl = (id: number | string) => `${ORIGIN}/live/live-zapas/${id}`;
+
+// ---------- prematch ----------
+
+interface Located {
+  e: PbEvent;
+  sport: Sport;
+  competition: string;
+  country?: string;
+}
+
+/** Strom kategorií → události se sportem, zemí (2. úroveň pod sportem) a ligou (nejhlubší úroveň). */
+function flatten(r: PbEventsResponse): Located[] {
+  const out: Located[] = [];
+  for (const sportCat of r.EventTree?.Categories ?? []) {
+    const sport = ID_TO_SPORT[Number(sportCat.Base?.Id)];
+    if (!sport || sportCat.IsVirtual) continue;
+    const walk = (c: PbCategory, path: string[]) => {
+      const names = norm(c.Base?.Name) ? [...path, norm(c.Base?.Name)] : path;
+      for (const e of c.Base?.Events ?? []) {
+        out.push({ e, sport, competition: names[names.length - 1] ?? '', country: names.length > 1 ? names[0] : undefined });
+      }
+      for (const sub of c.Categories ?? []) walk(sub, names);
+    };
+    for (const c of sportCat.Categories ?? []) walk(c, []);
+  }
+  return out;
+}
+
+export interface ParseOptions {
+  now: number;
+  sports?: Sport[];
+}
+
+/**
+ * Prematch: hlavní nabídka (bez filtru trhů – všechny zápasy s hlavním trhem) + odpovědi s
+ * vybranými trhy (filtr GameIds, jen blízké zápasy). Trhy stejné události se sloučí.
+ */
+export function parsePrematch(responses: PbEventsResponse[], o: ParseOptions): RawEvent[] {
+  const byId = new Map<string, RawEvent>();
+  for (const r of responses) {
+    for (const { e, sport, competition, country } of flatten(r)) {
+      if (o.sports && !o.sports.includes(sport)) continue;
+      if (e.Id === undefined || e.IsLive) continue;
+      const startTime = e.Date?.Value;
+      if (typeof startTime !== 'number' || !Number.isFinite(startTime) || startTime <= o.now) continue; // už začal
+      const teams = splitName(e.Name ?? '');
+      if (!teams) continue;
+      const id = String(e.Id);
+      const markets = mapGroups(sport, e.GameGroups);
+      const cur = byId.get(id);
+      if (cur) {
+        const keys = new Set(cur.markets.map((m) => m.key));
+        for (const m of markets) if (!keys.has(m.key)) cur.markets.push(m);
+        continue;
+      }
+      const ev: RawEvent = { sourceId: id, sport, competition, home: teams[0], away: teams[1], startTime, live: false, markets, url: eventUrl(id) };
+      if (country) ev.country = country;
+      byId.set(id, ev);
+    }
+  }
+  return [...byId.values()];
+}
+
+// ---------- live ----------
+
+/** "/Date(1790690400000+0200)/" → epoch ms. */
+export function parseWcfDate(s: string | undefined): number | undefined {
+  const m = /\/Date\((-?\d+)(?:[+-]\d{4})?\)\//.exec(s ?? '');
+  return m ? Number(m[1]) : undefined;
+}
+
+function parseScore(s: string | undefined): [number, number] | undefined {
+  const m = /^(\d+):(\d+)$/.exec((s ?? '').trim());
+  return m ? [Number(m[1]), Number(m[2])] : undefined;
+}
+
+const BREAK_RE = /^poločas$|přestávk|pauza/i;
+const FINISHED_RE = /^ukončen|^konec zápasu|^konec$/i;
+
+/**
+ * Stav z live feedu: StateName (surový text: "1. poločas", "Poločas", "2. třetina", "Přestávka",
+ * "3. set", "Nezačalo", "Přerušeno", "Ukončeno"), StateTime (uplynulé s), RemainingPeriodTime,
+ * ClockStopped, Results[] (hlavní skóre, periody s Flags 64, tenisové "Game skóre" s Flags 1).
+ */
+export function parseState(e: SynLiveEvent, sport: Sport): GameState {
+  const st: GameState = {};
+  const text = norm(e.StateName);
+  if (text) st.statusText = text;
+  const results = e.Results ?? [];
+  const main = results.find((r) => r.MainResult) ?? results.find((r) => r.ID === 1);
+  const score = parseScore(main?.Score);
+  if (score) st.score = score;
+  const periods = results.filter((r) => r !== main && ((r.Flags ?? 0) & 64) !== 0 && /^\d\.\s/.test(norm(r.Name)));
+  const periodScores = periods.map((r) => parseScore(r.Score)).filter((x): x is [number, number] => !!x);
+  if (periodScores.length && periodScores.length === periods.length) st.periodScores = periodScores;
+
+  const per = /^(\d)\.\s*(poločas|třetina|čtvrtina|set|prodl)/i.exec(text);
+  if (per) st.period = Number(per[1]);
+  else if (BREAK_RE.test(text) && periods.length) st.period = periods.length; // přestávka po n-té periodě
+  if (BREAK_RE.test(text)) st.breakFlag = true;
+  if (FINISHED_RE.test(text) || e.State === 3) st.finished = true;
+
+  if (sport === 'tennis') {
+    if (st.period && periodScores.length >= st.period) st.games = periodScores[st.period - 1];
+    const pts = results.find((r) => ((r.Flags ?? 0) & 1) !== 0 && /game/i.test(r.Name ?? ''));
+    if (pts?.Score) st.points = pts.Score.trim();
+  } else {
+    if (typeof e.StateTime === 'number' && e.StateTime >= 0 && e.StateTime < 4 * 3600) st.clockSec = e.StateTime;
+    if (typeof e.RemainingPeriodTime === 'number' && e.RemainingPeriodTime >= 0 && e.RemainingPeriodTime <= 3600) {
+      st.periodRemainingSec = e.RemainingPeriodTime;
+    }
+    if (typeof e.ClockStopped === 'boolean' && (st.clockSec !== undefined || st.periodRemainingSec !== undefined)) st.clockRunning = !e.ClockStopped;
+  }
+  if (st.breakFlag || st.finished || /^přerušeno/i.test(text)) st.clockRunning = false;
+  return st;
+}
+
+/** GetLIPEvtsDsk → RawEvent[] (běžící zápasy s hlavními trhy; "Nezačalo" = v live nabídce před začátkem). */
+export function parseLive(r: SynLiveResponse, o: ParseOptions): RawEvent[] {
+  const out: RawEvent[] = [];
+  const seen = new Set<string>();
+  for (const d of r.ReturnValue ?? []) {
+    const sport = ID_TO_SPORT[d.DisciplineID];
+    if (!sport || (o.sports && !o.sports.includes(sport))) continue;
+    for (const e of d.Events ?? []) {
+      const id = String(e.ID);
+      const startTime = parseWcfDate(e.Date);
+      const teams = splitName(e.Name ?? '');
+      if (!teams || startTime === undefined || seen.has(id)) continue;
+      seen.add(id);
+      const path = norm(e.CategoryPath).split(' / ').map((s) => s.trim());
+      const ev: RawEvent = {
+        sourceId: id,
+        sport,
+        competition: path.length > 1 ? path.slice(1).join(' / ') : (path[0] ?? ''),
+        home: teams[0],
+        away: teams[1],
+        startTime,
+        live: true,
+        state: parseState(e, sport),
+        markets: mapGroups(sport, e.GameGroups as PbEvent['GameGroups']),
+        url: liveEventUrl(id),
+      };
+      if (path.length > 1 && path[0]) ev.country = path[0];
+      out.push(ev);
+    }
+  }
+  return out;
+}

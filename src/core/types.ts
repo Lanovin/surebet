@@ -9,6 +9,7 @@ export const BOOKMAKERS = [
   'merkurxtip',
   'kingsbet',
   'betx',
+  'synot',
 ] as const;
 export type BookmakerId = (typeof BOOKMAKERS)[number];
 

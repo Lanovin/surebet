@@ -19,4 +19,5 @@ export const BOOKMAKER_INFO: Record<BookmakerId, BookmakerInfo> = {
   merkurxtip: { id: 'merkurxtip', name: 'MerkurXtip', url: 'https://www.merkurxtip.cz', color: '#9333ea', acceptanceDelayMs: { prematch: 1000, live: 5000 } },
   kingsbet: { id: 'kingsbet', name: 'Kingsbet', url: 'https://www.kingsbet.cz', color: '#0891b2', acceptanceDelayMs: { prematch: 1000, live: 5000 } },
   betx: { id: 'betx', name: 'BetX', url: 'https://bet-x.cz', color: '#db2777', acceptanceDelayMs: { prematch: 1000, live: 5000 } },
+  synot: { id: 'synot', name: 'SYNOT TIP', url: 'https://sport.synottip.cz', color: '#65a30d', acceptanceDelayMs: { prematch: 1000, live: 5000 } },
 };
