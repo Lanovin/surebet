@@ -1,0 +1,145 @@
+{
+ "_note": "Po\u0159ad\u00ed po\u017eadavk\u016f headless Chromia s p\u0159epsan\u00fdm UA/sec-ch-ua (diagnostika, ne strategie): 200 do dokon\u010den\u00ed Cloudflare JSD oneshot, pak 403 splash.",
+ "requests": [
+  {
+   "status": 200,
+   "type": "document",
+   "url": "https://www.betano.cz/sport/fotbal/"
+  },
+  {
+   "status": 200,
+   "type": "xhr",
+   "url": "https://www.betano.cz/api/static-content/assets/leagues?apiVersion=2.2"
+  },
+  {
+   "status": 200,
+   "type": "xhr",
+   "url": "https://www.betano.cz/api/static-content/assets/regions?apiVersion=2.2"
+  },
+  {
+   "status": 200,
+   "type": "xhr",
+   "url": "https://www.betano.cz/api/static-content/assets/players?apiVersion=2.2"
+  },
+  {
+   "status": 200,
+   "type": "xhr",
+   "url": "https://www.betano.cz/api/kb-config/"
+  },
+  {
+   "status": 200,
+   "type": "xhr",
+   "url": "https://www.betano.cz/api/static-content/assets/teams?apiVersion=2.2"
+  },
+  {
+   "status": 200,
+   "type": "xhr",
+   "url": "https://www.betano.cz/api/sports/FOOT/hot/coupons?req=s,stnf,c,mb"
+  },
+  {
+   "status": 200,
+   "type": "xhr",
+   "url": "https://www.betano.cz/api/sports/FOOT/hot/trending/leagues?req=s,stnf,c,mb"
+  },
+  {
+   "status": 200,
+   "type": "xhr",
+   "url": "https://www.betano.cz/cdn-cgi/challenge-platform/h/b/jsd/oneshot/d76008a69eab/0.08865171040413122:1790625636:9IoT4MhP88sFX8a5yLbzwfxv-E1V_KY1ZOTlEzAHOF8/a425a020fdb2876f"
+  },
+  {
+   "status": 200,
+   "type": "xhr",
+   "url": "https://www.betano.cz/api/smart-picks?sportId=1&includeTypes=0&includeTypes=1&includeTypes=2&includeTypes=4&includeTypes=5&PageSize=10"
+  },
+  {
+   "status": 200,
+   "type": "fetch",
+   "url": "https://www.betano.cz/api/v1/translations/kcv/sportsbookbetting/cs/26/"
+  },
+  {
+   "status": 403,
+   "type": "xhr",
+   "url": "https://www.betano.cz/api/sports/FOOT/hot/trending/leagues/476g/events?req=s,stnf,c,mb"
+  },
+  {
+   "status": 403,
+   "type": "xhr",
+   "url": "https://www.betano.cz/api/sportsbook-settings"
+  },
+  {
+   "status": 403,
+   "type": "xhr",
+   "url": "https://www.betano.cz/api/bonus/sportsbook-missions/translations"
+  },
+  {
+   "status": 403,
+   "type": "xhr",
+   "url": "https://www.betano.cz/api/bonus/marketing-banners/translations"
+  },
+  {
+   "status": 403,
+   "type": "xhr",
+   "url": "https://www.betano.cz/api/favorite-competitions/recommended/?req=s,stnf,c,mb"
+  },
+  {
+   "status": 403,
+   "type": "xhr",
+   "url": "https://www.betano.cz/api/layout/footer"
+  },
+  {
+   "status": 403,
+   "type": "xhr",
+   "url": "https://www.betano.cz/api/bonus/marketing-banners/home"
+  },
+  {
+   "status": 403,
+   "type": "fetch",
+   "url": "https://www.betano.cz/danae-webapi/api/live/availabilities/latest"
+  },
+  {
+   "status": 200,
+   "type": "fetch",
+   "url": "https://www.google.com/ccm/collect?rcb=12&frm=0&apvc=1&ae=g&auid=1790575766.1790628684&dt=Fotbal%20-%20online%20s%C3%A1zen%C3%AD%20a%20skv%C4%9Bl%C3%A9%20kurzy%20%7C%20Betano&en=page_view&dl=https%3A%"
+  },
+  {
+   "status": 200,
+   "type": "fetch",
+   "url": "https://da.betano.cz/g/collect?v=2&tid=G-SJLCV23YJW&gtm=45je69p1h2v9169229084z8897767220za20gzb897767220zd897767220xf1&_p=1790628681687&gcs=G100&gcd=13p3pPp2p5l1&npa=1&dma_cps=-&dma=1&gdid=dYWJhMj&eci"
+  },
+  {
+   "status": 204,
+   "type": "xhr",
+   "url": "https://www.betano.cz/cdn-cgi/rum?"
+  },
+  {
+   "status": 403,
+   "type": "fetch",
+   "url": "https://www.betano.cz/danae-webapi/api/live/availabilities/latest"
+  },
+  {
+   "status": 403,
+   "type": "fetch",
+   "url": "https://www.betano.cz/danae-webapi/api/live/availabilities/latest"
+  },
+  {
+   "status": 403,
+   "type": "fetch",
+   "url": "https://www.betano.cz/danae-webapi/api/live/availabilities/latest"
+  },
+  {
+   "status": 403,
+   "type": "document",
+   "url": "https://www.betano.cz/live/"
+  },
+  {
+   "status": 200,
+   "type": "document",
+   "url": "https://landingpages.kaizengaming.com/betano-splash-screen-bz/index.html"
+  },
+  {
+   "status": 204,
+   "type": "xhr",
+   "url": "https://www.betano.cz/cdn-cgi/rum?"
+  }
+ ]
+}

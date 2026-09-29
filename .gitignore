@@ -1,0 +1,11 @@
+node_modules/
+dist/
+.infra/
+.next/
+web/.next/
+*.log
+.env
+.env.local
+analytics/.venv/
+analytics/models/*.pkl
+__pycache__/

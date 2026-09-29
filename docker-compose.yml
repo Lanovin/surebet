@@ -1,0 +1,102 @@
+# Celý systém jedním příkazem:  docker compose up -d --build   ->  http://localhost:3000
+# Testovací kurzy (simulátor): výchozí DATA_SOURCE=sim ; skutečné sázkovky: DATA_SOURCE=real docker compose up -d
+name: surebet
+
+x-env: &env
+  DATABASE_URL: postgres://surebet:surebet@postgres:5432/surebet
+  REDIS_URL: redis://redis:6379
+  DATA_SOURCE: ${DATA_SOURCE:-sim}
+  TZ: Europe/Prague
+  LOG_LEVEL: ${LOG_LEVEL:-info}
+
+services:
+  postgres:
+    image: timescale/timescaledb:latest-pg16
+    environment:
+      POSTGRES_USER: surebet
+      POSTGRES_PASSWORD: surebet
+      POSTGRES_DB: surebet
+      TIMESCALEDB_TELEMETRY: "off"
+    command: ["postgres", "-c", "shared_buffers=128MB", "-c", "max_connections=40", "-c", "work_mem=8MB"]
+    volumes: [pgdata:/var/lib/postgresql/data]
+    ports: ["5432:5432"]
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U surebet"]
+      interval: 5s
+      retries: 20
+    mem_limit: 512m
+    restart: unless-stopped
+
+  redis:
+    image: redis:7-alpine
+    command: ["redis-server", "--save", "", "--appendonly", "no", "--maxmemory", "200mb"]
+    ports: ["6379:6379"]
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      retries: 20
+    mem_limit: 256m
+    restart: unless-stopped
+
+  gateway:
+    build: { context: ., dockerfile: docker/node.Dockerfile }
+    command: ["npx", "tsx", "src/services/gateway/main.ts"]
+    environment: *env
+    ports: ["3001:3001"]
+    depends_on:
+      postgres: { condition: service_healthy }
+      redis: { condition: service_healthy }
+    mem_limit: 256m
+    restart: unless-stopped
+
+  detector:
+    build: { context: ., dockerfile: docker/node.Dockerfile }
+    command: ["npx", "tsx", "src/services/detector/main.ts"]
+    environment: *env
+    depends_on:
+      postgres: { condition: service_healthy }
+      redis: { condition: service_healthy }
+    mem_limit: 384m
+    restart: unless-stopped
+
+  ingest:
+    build: { context: ., dockerfile: docker/ingest.Dockerfile }
+    environment:
+      <<: *env
+      BOOKMAKERS: ${BOOKMAKERS:-}
+    # jeden Chromium pro všechny sázkovky (sdílený context), pamětní strop
+    shm_size: 256m
+    volumes: [./fixtures:/app/fixtures, browser:/app/.infra]
+    depends_on:
+      postgres: { condition: service_healthy }
+      redis: { condition: service_healthy }
+      detector: { condition: service_started }
+    mem_limit: 1200m
+    restart: unless-stopped
+
+  web:
+    build:
+      context: .
+      dockerfile: docker/web.Dockerfile
+      args: { GATEWAY_URL: http://gateway:3001 }
+    ports: ["3000:3000"]
+    depends_on: [gateway]
+    mem_limit: 384m
+    restart: unless-stopped
+
+  # Fáze 2: noční retrénink modelu přežití (profil – zapni: docker compose --profile analytics up -d)
+  analytics:
+    build: { context: ., dockerfile: docker/analytics.Dockerfile }
+    profiles: [analytics]
+    environment:
+      <<: *env
+      DATABASE_URL: postgresql://surebet:surebet@postgres:5432/surebet
+      RETRAIN_AT: "03:30"
+    depends_on:
+      postgres: { condition: service_healthy }
+    mem_limit: 1g
+    restart: unless-stopped
+
+volumes:
+  pgdata:
+  browser:

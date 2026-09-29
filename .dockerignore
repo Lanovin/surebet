@@ -1,0 +1,9 @@
+node_modules
+web/node_modules
+web/.next
+.infra
+dist
+analytics/.venv
+analytics/models/*.json
+**/*.log
+.git

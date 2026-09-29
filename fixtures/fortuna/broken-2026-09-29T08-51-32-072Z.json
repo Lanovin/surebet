@@ -1,0 +1,10 @@
+{
+  "savedAt": "2026-09-29T08:51:32.072Z",
+  "bookmaker": "fortuna",
+  "strategy": "sim-json",
+  "error": "simulated network error",
+  "details": {
+    "kind": "other",
+    "simulated": true
+  }
+}

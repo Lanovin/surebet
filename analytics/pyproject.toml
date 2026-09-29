@@ -1,0 +1,14 @@
+[project]
+name = "surebet-analytics"
+version = "0.1.0"
+description = "Fáze 2: model přežití arbů (Cox PH) s nočním retréninkem a exportem pro TS"
+requires-python = ">=3.11"
+dependencies = [
+  "lifelines>=0.29",
+  "pandas>=2.2",
+  "numpy>=1.26",
+  "psycopg[binary]>=3.2",
+]
+
+[project.optional-dependencies]
+xgb = ["xgboost>=2.1"]

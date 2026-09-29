@@ -1,0 +1,195 @@
+import { describe, expect, it } from 'vitest';
+import { loadFixture } from '../fixtures.js';
+import { validateRawOdds } from '../../core/validate.js';
+import { parseMarketKey } from '../../core/markets.js';
+import type { RawEvent, RawOdds } from '../../core/types.js';
+import { liveUrl, parseRaw, type BetxRaw } from './strategies.js';
+import { betxState, parseUofKey, type BetxMatch } from './parse.js';
+
+type Fixture = BetxRaw & { recordedAt: string };
+
+async function load(name: string, scope: 'prematch' | 'live'): Promise<{ events: RawEvent[]; now: number }> {
+  const raw = await loadFixture<Fixture>('betx', name);
+  const now = Date.parse(raw.recordedAt);
+  return { events: parseRaw(raw, scope, now), now };
+}
+
+function odds(e: RawEvent, key: string): Record<string, number> {
+  const m = e.markets.find((x) => x.key === key);
+  if (!m) throw new Error(`market ${key} missing on ${e.home} – ${e.away}`);
+  return Object.fromEntries(m.selections.map((s) => [s.key, s.odds]));
+}
+
+function validate(events: RawEvent[], scope: 'prematch' | 'live', now: number, strategy: string) {
+  const raw: RawOdds = { bookmaker: 'betx', strategy, scope, fetchedAt: now, events };
+  return validateRawOdds(raw, { minEvents: 1, maxAgeMs: 60_000, now });
+}
+
+describe('betx / betx-api prematch (matches/flat, víc BetTypeKey průchodů)', async () => {
+  const { events, now } = await load('betx-api-prematch.json', 'prematch');
+  const byId = new Map(events.map((e) => [e.sourceId, e]));
+
+  it('parsuje a slučuje průchody pro všechny čtyři sporty', () => {
+    expect(events).toHaveLength(80);
+    for (const s of ['football', 'tennis', 'basketball', 'hockey']) expect(events.filter((e) => e.sport === s)).toHaveLength(20);
+    expect(events.every((e) => !e.live && e.startTime > now && !e.state)).toBe(true);
+  });
+
+  it('fotbal: 1X2 + počet gólů + 2-cestný handicap z pohledu domácích', () => {
+    const e = byId.get('73220774')!;
+    expect(e).toMatchObject({
+      sport: 'football',
+      home: 'Suriname',
+      away: 'Martinique',
+      competition: 'CONCACAF Liga národů - Liga A',
+      country: 'Mezinárodní',
+      startTime: Date.parse('2026-09-28T22:00:00Z'),
+    });
+    expect(odds(e, '1X2|REG')).toEqual({ HOME: 1.49, DRAW: 4.09, AWAY: 6.5 });
+    expect(odds(e, 'OU|REG|2.5')).toEqual({ OVER: 1.92, UNDER: 1.82 });
+    // favorit domácí -> handicap domácích -1.5
+    expect(odds(e, 'AH|REG|-1.5')).toEqual({ HOME: 2.35, AWAY: 1.53 });
+  });
+
+  it('hokej: 1X2 v základní době + vítěz vč. prodloužení + počet gólů', () => {
+    const e = byId.get('72166250')!;
+    expect(e).toMatchObject({ sport: 'hockey', home: 'Amur Khabarovsk', away: 'CHK Neftěchimik Nižněkamsk', competition: 'KHL' });
+    expect(odds(e, '1X2|REG')).toEqual({ HOME: 2.29, DRAW: 3.96, AWAY: 2.56 });
+    expect(odds(e, 'ML|MATCH')).toEqual({ HOME: 1.79, AWAY: 1.96 });
+    expect(odds(e, 'OU|REG|5.5')).toEqual({ OVER: 2.18, UNDER: 1.64 });
+  });
+
+  it('tenis: vítěz, počet gemů, handicap gemů', () => {
+    const e = byId.get('75094670')!;
+    expect(e).toMatchObject({ sport: 'tennis', home: 'Tsitsipas, Stefanos', away: 'Hijikata, Rinky', startTime: Date.parse('2026-09-29T02:00:00Z') });
+    expect(odds(e, 'ML|MATCH')).toEqual({ HOME: 1.29, AWAY: 3.38 });
+    expect(odds(e, 'OU|MATCH|22.5')).toEqual({ OVER: 1.99, UNDER: 1.73 });
+    expect(odds(e, 'AH|MATCH|-3.5')).toEqual({ HOME: 1.73, AWAY: 1.99 });
+  });
+
+  it('basket: vítěz, total a handicap vč. prodloužení', () => {
+    const e = byId.get('74998040')!;
+    expect(e).toMatchObject({ sport: 'basketball', home: 'CA Lanus', away: 'Gimnasia de Comodoro' });
+    expect(odds(e, 'ML|MATCH')).toEqual({ HOME: 2.37, AWAY: 1.52 });
+    expect(odds(e, 'OU|MATCH|157.5')).toEqual({ OVER: 1.88, UNDER: 1.82 });
+    expect(odds(e, 'AH|MATCH|4.5')).toEqual({ HOME: 1.81, AWAY: 1.89 });
+  });
+
+  it('scope trhů odpovídá sportu', () => {
+    for (const e of events)
+      for (const m of e.markets) {
+        const { type, scope } = parseMarketKey(m.key);
+        if (e.sport === 'football') expect(scope).toBe('REG');
+        if (e.sport === 'tennis' || e.sport === 'basketball') expect(scope).toBe('MATCH');
+        if (e.sport === 'hockey') expect(type === 'ML' ? 'MATCH' : 'REG').toBe(scope);
+      }
+  });
+
+  it('validateRawOdds projde', () => {
+    const v = validate(events, 'prematch', now, 'betx-api');
+    expect(v.errors).toEqual([]);
+    expect(v.ok).toBe(true);
+    expect(v.stats.droppedOdds).toBe(0);
+  });
+});
+
+describe('betx / betx-api live (matches/live + BetTypeKey 5_-1)', async () => {
+  const { events, now } = await load('betx-api-live.json', 'live');
+  const byId = new Map(events.map((e) => [e.sourceId, e]));
+
+  it('parsuje live události s herním stavem', () => {
+    expect(events).toHaveLength(13);
+    expect(events.every((e) => e.live && e.state)).toBe(true);
+    expect(events.filter((e) => e.sport === 'football')).toHaveLength(6);
+  });
+
+  it('fotbal: 1X2 ze základního listingu + OU z BetTypeKey průchodu, stav', () => {
+    const e = byId.get('74894938')!;
+    expect(e).toMatchObject({ home: 'CA Tembetary Ypane', away: 'Paraguari AC', competition: 'Segunda Division' });
+    expect(e.state).toEqual({ statusText: '2. poločas', score: [2, 1], periodScores: [[2, 0], [0, 1]], period: 2, clockSec: 3120 });
+    expect(e.markets.map((m) => m.key).sort()).toEqual(['1X2|REG', 'OU|REG|4.5']);
+  });
+
+  it('tenis: sety, gemy, body', () => {
+    const e = byId.get('75048540')!;
+    expect(e.state).toEqual({
+      statusText: '3.set',
+      score: [1, 1],
+      periodScores: [[2, 6], [7, 5], [5, 3]],
+      period: 3,
+      games: [5, 3],
+      points: '40:30',
+    });
+    expect(e.markets[0].key).toBe('ML|MATCH');
+  });
+
+  it('basket: čtvrtina, 1X2 základní doby', () => {
+    const e = byId.get('73187244')!;
+    expect(e.state).toMatchObject({ statusText: '1.čtvrtina', period: 1, score: [15, 9] });
+    expect(e.markets[0].key).toBe('1X2|REG');
+  });
+
+  it('validateRawOdds projde', () => {
+    const v = validate(events, 'live', now, 'betx-api');
+    expect(v.ok).toBe(true);
+    expect(v.stats.droppedOdds).toBe(0);
+  });
+});
+
+describe('betx / betx-browser live (stejné API přes Chromium)', async () => {
+  const { events, now } = await load('betx-browser-live.json', 'live');
+  it('parsuje se stejně jako HTTP varianta', () => {
+    expect(events.length).toBeGreaterThan(0);
+    expect(validate(events, 'live', now, 'betx-browser').ok).toBe(true);
+  });
+});
+
+describe('betx / přestávky a konce (pozorované payloady)', () => {
+  const m = (x: Partial<BetxMatch>) => ({ Id: 1, MatchStartTime: '2026-09-28T20:00:00Z', SportId: 388, ...x }) as BetxMatch;
+  it('fotbalový poločas: LB_SOCCER_PAUSED / "Přestávka" / paused', () => {
+    const st = betxState(
+      m({ LiveMatchTime: '45', LiveMatchTimeState: 'Přestávka', LiveMatchTimeOrigName: 'LB_SOCCER_PAUSED', LiveStatusString: 'paused', LiveMatchScore: '0 : 1', LiveSetScore: '0 : 1' }),
+      'football',
+    );
+    expect(st).toEqual({ statusText: 'Přestávka', score: [0, 1], periodScores: [[0, 1]], breakFlag: true, period: 1, clockSec: 2700 });
+  });
+  it('hokejová přestávka: LB_ICE_HOCKEY_PAUSED', () => {
+    const st = betxState(
+      m({ SportId: 398, LiveMatchTime: '20', LiveMatchTimeState: 'Přestávka', LiveMatchTimeOrigName: 'LB_ICE_HOCKEY_PAUSED', LiveStatusString: 'paused', LiveMatchScore: '0 : 2', LiveSetScore: '0 : 2' }),
+      'hockey',
+    );
+    expect(st).toMatchObject({ breakFlag: true, period: 1, clockSec: 1200, score: [0, 2] });
+  });
+  it('přerušený tenis není přestávka, konec zápasu je finished', () => {
+    const t = betxState(
+      m({ SportId: 389, LiveMatchTimeState: 'přerušeno', LiveMatchTimeOrigName: 'LB_TENNIS_INTERRUPTED', LiveStatusString: 'interrupted', LiveMatchScore: '0 : 0', LiveSetScore: '1 : 2', LiveGameScore: '15 : 30' }),
+      'tennis',
+    );
+    expect(t.breakFlag).toBeUndefined();
+    expect(t).toMatchObject({ statusText: 'přerušeno', games: [1, 2], points: '15:30' });
+    const f = betxState(
+      m({ LiveMatchTime: '', LiveMatchTimeState: 'Konec zápasu', LiveMatchTimeOrigName: 'LB_SOCCER_ENDED', LiveStatusString: 'ended', LiveMatchScore: '0 : 0', LiveSetScore: '0 : 0 - 0 : 0' }),
+      'football',
+    );
+    expect(f).toMatchObject({ finished: true, score: [0, 0] });
+    expect(f.breakFlag).toBeUndefined();
+  });
+});
+
+describe('betx / UofKey a URL', () => {
+  it('parsuje UofKey se specifikátory, varianty odmítne', () => {
+    expect(parseUofKey('uof:3/sr:sport:4/446/12?periodnr=1&total=1.5')).toEqual({
+      producer: 3,
+      srSport: 4,
+      market: 446,
+      outcome: 12,
+      specs: { periodnr: '1', total: '1.5' },
+    });
+    expect(parseUofKey('uof:3/sr:sport:1/15/sr:winning_margin:3+:119?variant=sr:winning_margin:3+')).toBeUndefined();
+  });
+  it('každý live BetTypeKey průchod má vlastní řetězec SportIds (serverová cache)', () => {
+    expect(liveUrl([388, 389])).toMatch(/SportIds=388,389$/);
+    expect(liveUrl([388, 389], '5_-1', 1)).toMatch(/SportIds=388,389,388&BetTypeKey=5_-1$/);
+    expect(liveUrl([388], '7_16', 2)).toMatch(/SportIds=388,388,388&BetTypeKey=7_16$/);
+  });
+});

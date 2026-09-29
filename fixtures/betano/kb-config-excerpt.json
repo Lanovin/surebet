@@ -1,0 +1,168 @@
+{
+ "_note": "Výřez z /api/kb-config/ (jediný úspěšný průchod před blokací JS detekcí Cloudflare, 28. 9. 2026). Jen pro dokumentaci endpointů.",
+ "websiteRootUrl": "https://www.betano.cz",
+ "customerPushConfig": {
+  "hubEnabled": true,
+  "hubUrl": "/customerhub",
+  "scaleFactor": 1,
+  "hubSubscription": "subscribe",
+  "retryAttemptsForLogging": 20,
+  "reconnectIntervalMilliseconds": 2000,
+  "subscriptionInitiator": 1,
+  "idleBeforeFirstRetryMilliSeconds": 5000,
+  "clientConnectionConfig": {
+   "skipNegotiation": true
+  },
+  "pushCashoutConfig": {
+   "enabled": true,
+   "pollingEnabled": true,
+   "pollingFallbackIntervalMilliseconds": 10000
+  },
+  "pushBetslipConfig": {
+   "enabled": true,
+   "pollingIntervalMilliseconds": 60000
+  }
+ },
+ "danaeClientConfig": {
+  "commonSettings": {
+   "platformType": 1,
+   "enabled": true,
+   "hubPath": "/contenthub?platformType=1",
+   "hubSkipNegotiation": true,
+   "hubRetryAttemptsForLogging": 20,
+   "hubReconnectIntervalMillis": 6000,
+   "hubIdleBeforeFirstRetryMillis": 5000,
+   "hubServerTimeoutMillis": 60000,
+   "hubKeepAliveIntervalMillis": 30000,
+   "hubTransportType": 1,
+   "operator": 10,
+   "language": 7,
+   "keepConnectionAliveInBackgroundSeconds": 2
+  },
+  "liveOverviewSettings": {
+   "newHubEnabled": true,
+   "preloadEnabled": true,
+   "hubWebEnabled": true,
+   "subscriptionEnabled": true,
+   "includeVirtuals": true,
+   "hubJoinInvokeMethod": "joinLiveOverviewGroup",
+   "hubLeaveInvokeMethod": "leaveLiveOverviewGroup",
+   "hubResetInvokeMethod": "getLiveOverviewVersion",
+   "initialDataApiPath": "/danae-webapi/api/live/overview",
+   "layoutLiveApiPath": "/danae-webapi/api/layout/live",
+   "eventSyncApiPath": "/danae-webapi/api/live/overview/sync",
+   "latestOverviewApiPath": "/danae-webapi/api/live/overview/latest",
+   "latestOverviewPerSportApiPath": "/danae-webapi/api/live/overview/latest?sportIds=",
+   "latestInitialDataApiMaxRetries": 5,
+   "latestInitialDataApiIntervalMillis": 1000,
+   "idleTabTimeoutMillis": 0,
+   "resyncIntervalMillis": 4000,
+   "maxAllowedNumberOfUnsyncedEvents": 20,
+   "fallbackPollIntervalMillis": 5000,
+   "maxNumberOfFailedSyncEventCalls": 10,
+   "maxQueueSize": 3000
+  },
+  "liveEventSettings": {
+   "subscriptionEnabled": true,
+   "supportedSportIds": [
+    "TABL",
+    "FOOT",
+    "BASK",
+    "TENN",
+    "VOLL",
+    "BCHV",
+    "BASE",
+    "ICEH",
+    "ESPS",
+    "AMFO",
+    "FRM1",
+    "MOGP",
+    "HAND",
+    "BADM",
+    "WTPL",
+    "FUTS",
+    "BOXI",
+    "SNOO",
+    "MMAF",
+    "GOLF",
+    "DART"
+   ],
+   "hubJoinInvokeMethod": "joinLiveEventGroup",
+   "hubLeaveInvokeMethod": "leaveLiveEventGroup",
+   "hubResetInvokeMethod": "getLiveEventVersion",
+   "initialDataApiPath": "/danae-webapi/api/live/events",
+   "layoutLiveApiPath": "/danae-webapi/api/layout/live",
+   "latestInitialDataApiMaxRetries": 5,
+   "latestInitialDataApiIntervalMillis": 1000,
+   "resyncIntervalMillis": 1000,
+   "throttleMaxNoOfMessages": 100,
+   "throttleMaxMilliSeconds": 1000,
+   "fallbackPollIntervalMillis": 6000,
+   "maxQueueSize": 30,
+   "whiteListLeagues": null,
+   "useMessageQueue": false,
+   "liveDetailsDataSourceStrategy": 0,
+   "isLiveDetailsOrchestratorEnabled": false,
+   "lineupsMarketsLayout": {
+    "enabled": true
+   }
+  },
+  "liteLiveOverviewSettings": {
+   "latestContentApiPath": "/danae-webapi/api/live/overview/content/latest",
+   "pollingEnabled": true,
+   "pollingMillis": 5000
+  },
+  "liveMultipleEventsSettings": {
+   "subscriptionEnabled": false,
+   "supportedSportIds": [
+    "TABL",
+    "FOOT",
+    "BASK",
+    "TENN",
+    "VOLL",
+    "BCHV",
+    "BASE",
+    "ICEH",
+    "ESPS",
+    "AMFO",
+    "FRM1",
+    "MOGP",
+    "HAND",
+    "WTPL",
+    "FUTS",
+    "BOXI",
+    "SNOO",
+    "MMAF"
+   ],
+   "hubJoinInvokeMethod": "joinLiveEventGroup",
+   "hubLeaveInvokeMethod": "leaveLiveEventGroup",
+   "hubResetInvokeMethod": "getLiveEventVersion",
+   "initialDataApiPath": "/danae-webapi/api/live/events",
+   "layoutLiveApiPath": "/danae-webapi/api/layout/live",
+   "latestInitialDataApiMaxRetries": 5,
+   "latestInitialDataApiIntervalMillis": 1000,
+   "resyncIntervalMillis": 1000,
+   "throttleMaxNoOfMessages": 100,
+   "throttleMaxMilliSeconds": 1000,
+   "fallbackPollIntervalMillis": 5000,
+   "maxQueueSize": 30,
+   "whiteListLeagues": null,
+   "useMessageQueue": false,
+   "liveDetailsDataSourceStrategy": 0,
+   "isLiveDetailsOrchestratorEnabled": false,
+   "lineupsMarketsLayout": {
+    "enabled": true
+   },
+   "fallbackSlowPollIntervalMillis": 30000
+  },
+  "liveAvailabilitiesSettings": {
+   "enabled": true,
+   "liveDataStrategy": 2,
+   "latestDataApiPath": "/danae-webapi/api/live/availabilities/latest",
+   "versionDataApiPath": "/danae-webapi/api/live/availabilities",
+   "pollIntervalMillis": 10000,
+   "apiMaxRetries": 5,
+   "apiRetryIntervalMillis": 500
+  }
+ }
+}

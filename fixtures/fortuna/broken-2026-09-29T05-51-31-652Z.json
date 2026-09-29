@@ -1,0 +1,10 @@
+{
+  "savedAt": "2026-09-29T05:51:31.652Z",
+  "bookmaker": "fortuna",
+  "strategy": "sim-json",
+  "error": "HTTP 503 (simulated outage)",
+  "details": {
+    "kind": "http",
+    "simulated": true
+  }
+}
