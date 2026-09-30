@@ -1,4 +1,4 @@
-import type { BookmakerId, Mode, Sport } from '@core/types';
+import type { BookmakerId, MarketType, Mode, SelectionKey, Sport } from '@core/types';
 import { BOOKMAKER_INFO } from '@config/bookmakers';
 
 export const SPORT_LABEL: Record<Sport, string> = {
@@ -74,4 +74,85 @@ export async function api<T>(path: string, init?: RequestInit): Promise<T> {
   const body = await r.json().catch(() => ({}));
   if (!r.ok) throw new Error((body as { error?: string }).error ?? `HTTP ${r.status}`);
   return body as T;
+}
+
+function signed(x: number): string {
+  return x > 0 ? `+${x}` : `${x}`;
+}
+
+/**
+ * Co přesně vsadit: srozumitelný popis výběru (týmy, linie) a jak se výběr jmenuje u sázkovky,
+ * která má týmy v opačném pořadí (swapped) – tam je kanonický „domácí“ uvedený jako druhý.
+ */
+export function describeLeg(
+  a: { marketType: MarketType; line: number | null; home: string; away: string },
+  sel: SelectionKey,
+  swapped: boolean,
+): { title: string; atBook?: string } {
+  const line = a.line ?? 0;
+  const team = sel === 'HOME' ? a.home : a.away;
+  const pos = (s: SelectionKey) => (s === 'HOME' ? (swapped ? '2' : '1') : swapped ? '1' : '2');
+  const at = swapped && (sel === 'HOME' || sel === 'AWAY') ? `u sázkovky jako „${pos(sel)}“ – týmy má v opačném pořadí` : undefined;
+  switch (a.marketType) {
+    case '1X2':
+      if (sel === 'DRAW') return { title: 'X · remíza' };
+      return { title: `${sel === 'HOME' ? '1' : '2'} · ${team}`, atBook: at };
+    case 'ML':
+      return { title: team, atBook: at };
+    case 'DNB':
+      return { title: `${team} (bez remízy)`, atBook: at };
+    case 'AH':
+      return { title: `${team} ${signed(sel === 'HOME' ? line : -line)}`, atBook: at };
+    case 'AH_SETS':
+      return { title: `${team} ${signed(sel === 'HOME' ? line : -line)} setu`, atBook: at };
+    case 'OU':
+    case 'OU_SETS':
+      return { title: `${sel === 'OVER' ? 'Více' : 'Méně'} než ${line}` };
+    case 'OU_HOME':
+      return { title: `${a.home}: ${sel === 'OVER' ? 'více' : 'méně'} než ${line}` };
+    case 'OU_AWAY':
+      return { title: `${a.away}: ${sel === 'OVER' ? 'více' : 'méně'} než ${line}` };
+    case 'BTTS':
+      return { title: `Oba dají gól – ${sel === 'YES' ? 'ano' : 'ne'}` };
+    case 'OE':
+      return { title: sel === 'ODD' ? 'Lichý počet' : 'Sudý počet' };
+  }
+}
+
+/** Důvod zániku arbu česky („leg_odds_changed:kingsbet“ → „Kingsbet: změna kurzu“). */
+export function endReasonLabel(reason: string | undefined): string {
+  if (!reason) return '–';
+  const [code, bk] = reason.split(':');
+  const who = bk ? bkName(bk) : '';
+  switch (code) {
+    case 'leg_odds_changed':
+      return who ? `${who}: změna kurzu` : 'změna kurzu';
+    case 'stale':
+      return who ? `${who}: kurz nepotvrzen (stará data)` : 'kurz nepotvrzen (stará data)';
+    case 'suspended':
+      return 'trh pozastaven nebo stažen';
+    case 'event_started':
+      return 'zápas začal';
+    case 'pause_started':
+      return 'začala přestávka';
+    case 'pause_ended':
+      return 'skončila přestávka';
+    case 'event_finished':
+      return 'zápas skončil';
+    case 'threshold_changed':
+      return 'změna prahu v nastavení';
+    case 'unlinked':
+      return 'zrušené spárování zápasu';
+    case 'system_restart':
+      return 'restart systému';
+    default:
+      return reason;
+  }
+}
+
+/** Herní čas pro přehled: minuta (vzestupné hodiny) nebo zbývající čas periody (odpočet, basket). */
+export function clockLabel(st: { clockSec?: number; periodRemainingSec?: number } | undefined): string | null {
+  if (st?.clockSec !== undefined) return `${Math.floor(st.clockSec / 60)}'`;
+  if (st?.periodRemainingSec !== undefined) return `zbývá ${Math.floor(st.periodRemainingSec / 60)}:${String(st.periodRemainingSec % 60).padStart(2, '0')}`;
+  return null;
 }

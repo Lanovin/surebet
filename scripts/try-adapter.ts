@@ -1,5 +1,6 @@
-// Ruční zkouška adaptéru:  npx tsx scripts/try-adapter.ts <bookmaker> [prematch|live] [--strategy=name] [--save] [--json]
+// Ruční zkouška adaptéru:  npx tsx scripts/try-adapter.ts <bookmaker> [prematch|live] [--strategy=name] [--save] [--json] [--push[=s]]
 // Spustí healthCheck + fetch každé strategie, zvaliduje výstup a vypíše souhrn.
+// --push[=30]: u strategií se subscribe() (websocket) místo fetch() poslouchá N sekund a vypisuje stav.
 import { BOOKMAKERS, SPORTS, type BookmakerId, type FeedScope } from '../src/core/types.js';
 import { validateRawOdds } from '../src/core/validate.js';
 import { HttpClient } from '../src/adapters/http.js';
@@ -19,6 +20,8 @@ const scope = (args.find((a) => a === 'prematch' || a === 'live') ?? 'prematch')
 const only = args.find((a) => a.startsWith('--strategy='))?.split('=')[1];
 const save = args.includes('--save');
 const asJson = args.includes('--json');
+const pushArg = args.find((a) => a === '--push' || a.startsWith('--push='));
+const pushSec = pushArg ? Number(pushArg.split('=')[1] ?? 30) || 30 : 0;
 
 const mod = (await import(`../src/adapters/${bk}/index.ts`)) as { default: AdapterFactory };
 const browser = new BrowserPool({
@@ -44,6 +47,10 @@ try {
     console.log(`\n=== ${bk} / ${s.name} (level ${s.level}) / ${scope}`);
     const h = await s.healthCheck().catch((e) => ({ ok: false, latencyMs: 0, message: String(e?.message ?? e) }));
     console.log('health:', JSON.stringify(h));
+    if (pushSec && s.subscribe) {
+      await tryPush(s, pushSec);
+      continue;
+    }
     const t0 = performance.now();
     try {
       const raw = await s.fetch({ scope, sports: [...SPORTS] });
@@ -81,4 +88,29 @@ try {
 } finally {
   for (const s of adapter.strategies) await s.dispose?.().catch(() => {});
   await browser.close();
+}
+
+/** Poslouchá push strategii N sekund: počet zpráv, událostí, trhů a stáří dat (now − fetchedAt). */
+async function tryPush(s: (typeof adapter.strategies)[number], sec: number): Promise<void> {
+  let n = 0;
+  let last: { events: number; markets: number; ageMs: number; valid: boolean } | null = null;
+  const ages: number[] = [];
+  const stop = await s.subscribe!(
+    { scope, sports: [...SPORTS] },
+    (raw) => {
+      n++;
+      const v = validateRawOdds(raw, { minEvents: 0, maxAgeMs: 120_000 });
+      const ageMs = Date.now() - raw.fetchedAt;
+      ages.push(ageMs);
+      last = { events: raw.events.length, markets: raw.events.reduce((k, e) => k + e.markets.length, 0), ageMs, valid: v.ok };
+    },
+    (err) => console.log('push error:', err.message),
+  );
+  const timer = setInterval(() => console.log(`  +${n} zpráv`, last ? JSON.stringify(last) : '(zatím nic)'), 5000);
+  await new Promise((r) => setTimeout(r, sec * 1000));
+  clearInterval(timer);
+  await stop();
+  ages.sort((a, b) => a - b);
+  const q = (p: number) => ages[Math.min(ages.length - 1, Math.floor(p * ages.length))] ?? null;
+  console.log(`push: ${n} zpráv za ${sec} s, stáří dat p50 ${q(0.5)} ms / p95 ${q(0.95)} ms, poslední`, JSON.stringify(last));
 }

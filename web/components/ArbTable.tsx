@@ -3,7 +3,7 @@ import { useEffect, useMemo, useState } from 'react';
 import type { BookmakerId, Mode, Sport } from '@core/types';
 import { BOOKMAKERS, MODES, SPORTS } from '@core/types';
 import { useLive, type ArbRow } from '@/lib/live';
-import { SPORT_LABEL, formatCountdown, formatDuration, formatKc, bkName } from '@/lib/format';
+import { SPORT_LABEL, clockLabel, formatCountdown, formatDuration, formatKc, bkName } from '@/lib/format';
 import { BookmakerChip, ModeBadge } from './Badges';
 import { useNow } from './useNow';
 
@@ -171,7 +171,7 @@ function Row({ a, now, selected, onOpen }: { a: ArbRow; now: number; selected: b
         <div className="truncate text-xs text-muted">
           {a.competition}
           {st?.score && ` · ${st.score[0]}:${st.score[1]}`}
-          {st?.clockSec !== undefined && a.mode !== 'PREMATCH' && ` · ${Math.floor(st.clockSec / 60)}'`}
+          {a.mode !== 'PREMATCH' && clockLabel(st) && ` · ${clockLabel(st)}`}
           {a.mode === 'PAUSED' && a.pause && ` · pauza ${formatDuration(Math.max(0, a.pause.expectedSec * 1000 - (now - a.pause.startedAt)))} zbývá`}
           {a.mode === 'PREMATCH' && ` · výkop za ${formatCountdown(Math.round((a.startTime - now) / 1000))}`}
         </div>

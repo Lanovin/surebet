@@ -1,6 +1,6 @@
 'use client';
 import { useEffect, useState } from 'react';
-import { api, bkName, formatDuration, formatKc, formatPct, SPORT_LABEL } from '@/lib/format';
+import { api, bkName, endReasonLabel, formatDuration, formatKc, formatPct, SPORT_LABEL } from '@/lib/format';
 import { useLive } from '@/lib/live';
 import { HBars, StackedColumns } from '@/components/Bars';
 import { LineChart } from '@/components/LineChart';
@@ -131,7 +131,7 @@ export default function StatsPage() {
               />
             </Card>
             <Card title="Důvody zániku">
-              <HBars rows={data.endReasons.map((r) => ({ label: r.key, value: r.n }))} />
+              <HBars rows={data.endReasons.map((r) => ({ label: endReasonLabel(r.key), value: r.n }))} />
             </Card>
             <Card title="Podle sportu">
               <HBars rows={grp(data.bySport, (k) => SPORT_LABEL[k as Sport] ?? String(k))} />

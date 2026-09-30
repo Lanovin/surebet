@@ -1,11 +1,14 @@
 'use client';
 import { useEffect, useMemo, useState } from 'react';
+import Link from 'next/link';
 import type { BookmakerId } from '@core/types';
-import { computeStakes, computeStakesFixed } from '@core/arb';
+import { computeStakes } from '@core/arb';
 import { useLive, pushToast } from '@/lib/live';
-import { api, bkName, formatDuration, formatKc, formatKc2, formatPct, formatTime, formatCountdown, PAUSE_LABEL, SPORT_LABEL } from '@/lib/format';
-import { BookmakerChip, ModeBadge, modeColor } from './Badges';
+import { api, bkName, clockLabel, describeLeg, endReasonLabel, formatDuration, formatTime, formatCountdown, PAUSE_LABEL, SPORT_LABEL } from '@/lib/format';
+import { ModeBadge, modeColor } from './Badges';
 import { LineChart } from './LineChart';
+import { StakeCalculator, type CalcLeg } from './StakeCalculator';
+import { Icon } from './Icon';
 import { useNow } from './useNow';
 
 type ActionKind = 'placed' | 'missed' | 'rejected' | 'odds_changed';
@@ -14,10 +17,8 @@ export function ArbDetail({ id, onClose }: { id: string; onClose: () => void }) 
   const a = useLive((s) => s.arbs.get(id));
   const settings = useLive((s) => s.settings);
   const now = useNow(250);
+  const clockOffset = useLive((s) => s.clockOffset);
   const [history, setHistory] = useState<{ ts: number; margin: number }[]>([]);
-  const [bankroll, setBankroll] = useState<number>(settings?.bankroll ?? 10000);
-  const [unit, setUnit] = useState<number>(settings?.roundingUnit ?? 1);
-  const [fixed, setFixed] = useState<{ index: number; stake: number } | null>(null);
   const [form, setForm] = useState<ActionKind | null>(null);
   const [lastA, setLastA] = useState(a);
 
@@ -28,29 +29,43 @@ export function ArbDetail({ id, onClose }: { id: string; onClose: () => void }) 
 
   useEffect(() => {
     setHistory([]);
-    setFixed(null);
     setForm(null);
     void api<{ ticks: { ts: number; margin: number }[] }>(`/arbs/${id}`)
       .then((r) => setHistory(r.ticks))
       .catch(() => {});
   }, [id]);
 
-  useEffect(() => {
-    if (settings) {
-      setBankroll(settings.bankroll);
-      setUnit(settings.roundingUnit);
-    }
-  }, [settings?.bankroll, settings?.roundingUnit]);
-
+  const bankroll = settings?.bankroll ?? 10000;
+  const unit = settings?.roundingUnit ?? 1;
   const odds = arb?.legs.map((l) => l.effOdds) ?? [];
-  const plan = useMemo(() => {
-    if (!odds.length) return null;
-    if (fixed && fixed.stake > 0) return computeStakesFixed(odds, fixed.index, fixed.stake, unit);
-    return computeStakes(odds, bankroll, unit);
+  // výchozí plán pro formulář „Vsadil“ (kalkulačka si drží vlastní úpravy)
+  const plan = useMemo(
+    () => (odds.length ? computeStakes(odds, bankroll, unit) : null),
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [odds.join(','), bankroll, unit, fixed?.index, fixed?.stake]);
+    [odds.join(','), bankroll, unit],
+  );
 
   if (!arb) return null;
+  const serverNow = now + clockOffset;
+  const calcLegs: CalcLeg[] = arb.legs.map((l) => {
+    const d = describeLeg(arb, l.selection, l.swapped);
+    return {
+      key: l.selection,
+      title: d.title,
+      hint: d.atBook,
+      bookmaker: l.bookmaker,
+      url: l.url,
+      odds: l.effOdds,
+      shownOdds: l.odds,
+      confirmedAgoMs: arb.status === 'ended' ? null : Math.max(0, serverNow - l.seenAt),
+    };
+  });
+  const calcHref = `/kalkulacka?${new URLSearchParams({
+    o: arb.legs.map((l) => l.odds).join(','),
+    b: arb.legs.map((l) => l.bookmaker).join(','),
+    l: calcLegs.map((l) => l.title).join('|'),
+    t: String(bankroll),
+  })}`;
   const ticks = mergeTicks(history, arb.ticks);
   const st = arb.state;
   const ended = arb.status === 'ended';
@@ -68,11 +83,13 @@ export function ArbDetail({ id, onClose }: { id: string; onClose: () => void }) 
             </span>
             {arb.isSim && <span className="rounded bg-surface-3 px-1 text-[10px] text-ink-2">SIM</span>}
           </div>
-          <h2 className="mt-1 truncate text-lg font-semibold">{arb.eventName}</h2>
+          <h2 className="mt-1 text-lg font-semibold leading-snug break-words">{arb.eventName}</h2>
           <div className="text-ink-2">{arb.marketLabel}</div>
         </div>
         <div className="text-right">
-          <div className="num text-2xl font-semibold">{arb.margin.toFixed(2)} %</div>
+          <div className="num text-2xl font-semibold" title="Marže arbu = jistý výnos z celkového vkladu">
+            {arb.margin.toFixed(2)} %
+          </div>
           <div className="text-xs text-muted num">
             max {arb.maxMargin.toFixed(2)} · při detekci {arb.marginAtDetection.toFixed(2)}
           </div>
@@ -86,18 +103,22 @@ export function ArbDetail({ id, onClose }: { id: string; onClose: () => void }) 
       <div className="flex-1 space-y-4 overflow-y-auto px-4 py-3">
         {ended && (
           <div className="rounded-md bg-surface-2 px-3 py-2 text-sm">
-            Arb zanikl: <b>{arb.endReason}</b> po {formatDuration((arb.endedAt ?? now) - arb.firstSeen)}
+            Arb zanikl: <b>{endReasonLabel(arb.endReason)}</b> po {formatDuration((arb.endedAt ?? now) - arb.firstSeen)}
           </div>
         )}
 
         {/* herní stav */}
         <section className="grid grid-cols-3 gap-2 text-sm">
-          <Stat label="Skóre" value={st?.score ? `${st.score[0]} : ${st.score[1]}` : '–'} />
-          <Stat label="Perioda" value={st?.period ? `${st.period}.${st.statusText ? ` (${st.statusText})` : ''}` : (st?.statusText ?? '–')} />
-          <Stat
-            label={arb.sport === 'tennis' ? 'Gemy' : 'Minuta'}
-            value={arb.sport === 'tennis' ? (st?.games ? `${st.games[0]}:${st.games[1]} ${st.points ?? ''}` : '–') : st?.clockSec !== undefined ? `${Math.floor(st.clockSec / 60)}'` : '–'}
-          />
+          {arb.mode !== 'PREMATCH' && (
+            <>
+              <Stat label="Skóre" value={st?.score ? `${st.score[0]} : ${st.score[1]}` : '–'} />
+              <Stat label="Perioda" value={st?.period ? `${st.period}.${st.statusText ? ` (${st.statusText})` : ''}` : (st?.statusText ?? '–')} />
+              <Stat
+                label={arb.sport === 'tennis' ? 'Gemy' : 'Čas'}
+                value={arb.sport === 'tennis' ? (st?.games ? `${st.games[0]}:${st.games[1]} ${st.points ?? ''}` : '–') : (clockLabel(st) ?? '–')}
+              />
+            </>
+          )}
           {arb.mode === 'PAUSED' && arb.pause && (
             <div className="col-span-3 rounded-md px-3 py-2" style={{ background: 'var(--surface-2)', borderLeft: `3px solid ${modeColor('PAUSED')}` }}>
               Přestávka: <b>{PAUSE_LABEL[arb.pause.type] ?? arb.pause.type}</b> · uplynulo {formatDuration(now - arb.pause.startedAt)} z ~
@@ -114,90 +135,15 @@ export function ArbDetail({ id, onClose }: { id: string; onClose: () => void }) 
           )}
         </section>
 
-        {/* nohy + kalkulačka */}
+        {/* kalkulačka vkladů */}
         <section>
-          <div className="mb-2 flex flex-wrap items-center gap-3 text-sm">
-            <label className="flex items-center gap-1.5">
-              Bankroll
-              <input className="input w-28" type="number" value={bankroll} min={10} step={100} onChange={(e) => (setFixed(null), setBankroll(Number(e.target.value) || 0))} />
-              Kč
-            </label>
-            <label className="flex items-center gap-1.5">
-              Zaokrouhlení
-              <select className="input" value={unit} onChange={(e) => setUnit(Number(e.target.value))}>
-                {[1, 5, 10, 50, 100].map((u) => (
-                  <option key={u} value={u}>
-                    {u} Kč
-                  </option>
-                ))}
-              </select>
-            </label>
-            {fixed && (
-              <button className="btn" onClick={() => setFixed(null)}>
-                zrušit pevný vklad
-              </button>
-            )}
+          <div className="mb-2 flex items-center gap-2">
+            <h3 className="text-sm font-medium">Kde, na co a kolik vsadit</h3>
+            <Link href={calcHref} className="ml-auto inline-flex items-center gap-1 text-xs text-accent hover:underline" title="Otevřít kurzy v samostatné kalkulačce">
+              <Icon name="calc" size={13} /> otevřít v kalkulačce
+            </Link>
           </div>
-          <table className="data w-full text-sm">
-            <thead>
-              <tr>
-                <th>Sázkovka</th>
-                <th>Výběr</th>
-                <th className="text-right">Kurz</th>
-                <th className="text-right">Vklad</th>
-                <th className="text-right">Výplata</th>
-                <th className="text-right">Zisk</th>
-              </tr>
-            </thead>
-            <tbody>
-              {arb.legs.map((l, i) => (
-                <tr key={l.selection}>
-                  <td>
-                    <BookmakerChip bk={l.bookmaker} />
-                    {l.url && (
-                      <a href={l.url} target="_blank" rel="noreferrer" className="ml-1 text-xs text-accent">
-                        otevřít ↗
-                      </a>
-                    )}
-                    {l.swapped && <span className="ml-1 text-[10px] text-muted" title="Sázkovka má týmy v opačném pořadí">⇄</span>}
-                  </td>
-                  <td>{l.selectionLabel}</td>
-                  <td className="text-right num font-semibold">
-                    {l.odds.toFixed(2)}
-                    {l.effOdds !== l.odds && <div className="text-[11px] text-muted">ef. {l.effOdds.toFixed(3)}</div>}
-                  </td>
-                  <td className="text-right">
-                    <input
-                      className="input w-24 text-right"
-                      type="number"
-                      value={plan?.stakes[i] ?? 0}
-                      onChange={(e) => setFixed({ index: i, stake: Number(e.target.value) || 0 })}
-                      title="Úprava vkladu přepočítá ostatní nohy"
-                    />
-                  </td>
-                  <td className="text-right num">{plan ? formatKc2(plan.payouts[i]) : '–'}</td>
-                  <td className="text-right num" style={{ color: plan && plan.profits[i] > 0 ? 'var(--good-text)' : 'var(--critical)' }}>
-                    {plan ? formatKc2(plan.profits[i]) : '–'}
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-          {plan && (
-            <div className="mt-2 flex gap-4 text-sm">
-              <span>
-                Celkem <b className="num">{formatKc(plan.total)}</b>
-              </span>
-              <span>
-                Min. zisk{' '}
-                <b className="num" style={{ color: plan.positive ? 'var(--good-text)' : 'var(--critical)' }}>
-                  {formatKc2(plan.minProfit)}
-                </b>
-              </span>
-              <span className="text-muted">ROI {formatPct(plan.roi * 100)}</span>
-              {!plan.positive && <span style={{ color: 'var(--critical)' }}>⚠ zaokrouhlení nevychází do zisku</span>}
-            </div>
-          )}
+          <StakeCalculator legs={calcLegs} total={bankroll} unit={unit} />
         </section>
 
         {/* vývoj marže */}
