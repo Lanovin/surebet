@@ -29,6 +29,21 @@ bash scripts/stop-local.sh           # zastavit služby (infra běží dál; scr
 `scripts/local-infra.sh` stáhne balíčky Postgres 16, TimescaleDB 2.30 a Redis 7 přes `apt-get download` do `.infra/`
 – nepotřebuje sudo ani Docker.
 
+## Dashboard
+
+| Menu | Obsah |
+|---|---|
+| **Arby** | živý přehled (odznak = počet aktivních, z toho live); klik otevře detail s kalkulačkou „kde, na co a kolik vsadit“ |
+| **Kalkulačka** | ruční výpočet vkladů pro 2–3 výsledky (poplatek sázkovky, zaokrouhlení, pevný vklad jedné nohy); z detailu arbu se otevírá předvyplněná |
+| **Statistiky** | historie arbů, životnost, důvody zániku |
+| **Párování** | zápasy, které se nepodařilo spárovat automaticky |
+| **Sázkovky** | stav stahování (tečka = některá sázkovka má problém) |
+| **Nastavení** | prahy, vklady, sázkovky, upozornění |
+
+V kalkulačce se u každé nohy ukazuje přesný výběr (např. „Více než 2.5“, „2 · Slavia“), odkaz na zápas,
+stáří kurzu a upozornění, když sázkovka uvádí týmy v opačném pořadí. Přepsáním vkladu u jedné nohy
+(např. sázkovka přijala méně) se ostatní dopočítají.
+
 ## Architektura
 
 ```
@@ -67,12 +82,12 @@ přesahuje zbývající čas přestávky, je označen ⚠ jako rizikový.
 
 | Sázkovka | Stav | Strategie | Poznámka |
 |---|---|---|---|
-| Fortuna | ✅ | L2 REST `api.ifortuna.cz`, L3 websocket (live push), L5 prohlížeč | ~1 250 zápasů prematch |
-| Kingsbet | ✅ | L2 veřejné Altenar API, L5 prohlížeč | ~850 zápasů |
-| BetX | ✅ | L2 API `sportapis-cz.betx.bet`, L5 prohlížeč | web je na **bet-x.cz** (betx.cz je parkovaná doména); live cache ~10 s |
-| Sazka (Allwyn) | ✅ | L2 OpenBet REST, L3 websocket push (live) | Akamai cachuje odpovědi 30–60 s (prematch data až ~60 s stará); prohlížeč Akamai blokuje |
-| MerkurXtip | ✅ | L2 veřejné Altenar API, L5 prohlížeč | ~1 385 zápasů; live jen hlavní trhy |
-| SYNOT TIP | ✅ | L2 interní API `sport.synottip.cz` (prematch protobuf, live JSON), L5 prohlížeč | ~1 070 zápasů; vedlejší trhy jen do 24 h; live jen hlavní trhy, viz `docs/bookmakers/synot.md` |
+| Fortuna | ✅ | L2 REST `api.ifortuna.cz`, L3 websocket (live push), L5 prohlížeč | live: přehled + plné trhy až 40 zápasů (`market.{id}`), po REST snapshotu se přehrají push zprávy z doby stahování |
+| Kingsbet | ✅ | L2 veřejné Altenar API, L5 prohlížeč | sdílené Altenar parsování s MerkurXtipem ([altenar.md](docs/bookmakers/altenar.md)); kurzy zaokrouhlené na 2 místa jako web i tiket |
+| BetX | ✅ | L2 API `sportapis-cz.betx.bet`, L3 SignalR push (live), L5 prohlížeč | web je na **bet-x.cz**; live listing má serverovou cache ~11 s → v LIVE jede push (jako web) |
+| Sazka (Allwyn) | ✅ | L2 OpenBet REST, L3 websocket push (live) | push s přehráváním zpráv po REST obnově; prematch s cache-busterem (jinak Akamai až 90 s stará data) |
+| MerkurXtip | ✅ | L2 veřejné Altenar API, L5 prohlížeč | stejná platforma jako Kingsbet; web kurz ořízne na 2 místa (2.1667 → 2.16) |
+| SYNOT TIP | ✅ | L2 interní API `sport.synottip.cz` (prematch protobuf, live `GetLiveEventsWL`), L5 prohlížeč | live endpoint stránky „Live“ (víc trhů), stáří snapshotu podle `TimeStamp`, viz `docs/bookmakers/synot.md` |
 | Tipsport | ⛔ blokováno | – | Cloudflare/F5 pozná automatizaci (i v Chrome), viz `docs/bookmakers/tipsport.md` |
 | Chance | ⛔ blokováno | – | stejná platforma a ochrana jako Tipsport |
 | Betano | ⛔ blokováno | – | Cloudflare bot management, viz `docs/bookmakers/betano.md` |
@@ -80,6 +95,24 @@ přesahuje zbývající čas přestávky, je označen ⚠ jako rizikový.
 Blokované sázkovky adaptér nemají – ochrana proti botům se neobchází (žádné stealth pluginy,
 podvrhování otisků ani řešení CAPTCHA). `src/adapters/tipsport/platform.ts` umí jedním požadavkem
 ověřit, jestli se přístup neuvolnil. Jak psát adaptér: `docs/adapters.md`.
+
+## Přesnost live dat
+
+Audit 30. 9. 2026 (proti živým API a webům sázkovek) opravil hlavně tyto zdroje falešných live arbů:
+
+* **Špatně namapované trhy** – Kingsbet/MerkurXtip posílají místo zavřeného 1X2 náhradní trh „N. gól“
+  se stejným typeId (`isAlt`); Synot „zbytek zápasu“. Mapování teď kontroluje i název trhu a neznámé výsledky.
+* **Zastaralá data s čerstvým razítkem** – `fetchedAt` je okamžik vzniku dat (CDN `Age`, serverová cache
+  BetX ~11 s, Akamai u Sazky, `TimeStamp` snapshotu Synotu, čas poslední websocket zprávy), ne čas odpovědi.
+* **Websockety ztrácely zprávy** – Fortuna i Sazka přepisovaly novější push zprávy starším REST snapshotem;
+  teď se zprávy z doby stahování přehrají znovu a po výpadku spojení se nic neposílá, dokud není nový snapshot.
+* **Pozastavené zápasy** – Altenar `status 5` (i hodiny po konci s „otevřenými“ kurzy), Synot stav 3 → trhy zavřené.
+  Stav 3 Synotu už neznamená „konec zápasu“ a zápas ukončí až většina sázkovek.
+* **Detektor** v LIVE/PAUSED vytvoří arb jen z noh, jejichž data jsou novější než poslední změna kurzu
+  ostatních noh (jinak jde jen o fázi pollingu); prematch data nepřepíšou čerstvá live data téže sázkovky
+  a starší odpověď (cache mimo pořadí) nepřepíše novější.
+* **Kurzy jako na webu** – každá sázkovka zobrazuje/počítá kurz jinak (Kingsbet zaokrouhluje, MerkurXtip ořezává);
+  čtvrtinové linie (±0.25, 2.75) se nemapují vůbec (dělené sázky).
 
 ## Párování
 
@@ -114,4 +147,5 @@ cd analytics && ../.infra/bin/uv venv .venv && ../.infra/bin/uv pip install --py
 npm test                  # vitest: jádro, párování, detektor, circuit breaker, adaptéry nad fixtures
 npm run typecheck
 npx tsx scripts/try-adapter.ts fortuna live   # živá zkouška adaptéru
+npx tsx scripts/try-adapter.ts betx live --push=30   # websocket/push strategie: poslouchá 30 s
 ```
