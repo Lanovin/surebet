@@ -18,7 +18,7 @@ import { isVirtualName, uofDef, uofSelection } from './uof.js';
 export const ALTENAR_API = 'https://sb2frontend-altenar2.biahosted.com/api/widget/';
 
 /** Altenar sportId -> kanonický sport (e-sporty 145–148 se ignorují). */
-export const ALTENAR_SPORT_IDS: Record<Sport, number> = { football: 66, tennis: 68, basketball: 67, hockey: 70 };
+export const ALTENAR_SPORT_IDS: Partial<Record<Sport, number>> = { football: 66, tennis: 68, basketball: 67, hockey: 70 };
 const ID_TO_SPORT: Record<number, Sport> = { 66: 'football', 68: 'tennis', 67: 'basketball', 70: 'hockey' };
 
 // ---------- surové typy ----------

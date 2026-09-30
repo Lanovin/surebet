@@ -1,6 +1,7 @@
 // Párování událostí sázkovek na kanonické události: odkazy -> aliasy -> fuzzy shoda + čas ±15 min.
 // Nejisté páry jdou do fronty unmatched_events (ruční potvrzení v dashboardu), do arbů se nepoužijí.
 import type { BookmakerId, RawEvent, Sport } from '../../core/types.js';
+import { isIndividualSport } from '../../core/types.js';
 import { nameSimilarity, participantKey } from '../../core/names.js';
 import type { Settings } from '../../core/settings.js';
 import { db } from '../../infra/db.js';
@@ -222,7 +223,7 @@ export class Matcher {
     const second = cands[1];
     if (best) {
       const clear = !second || second.score < best.score - 0.05;
-      const swapOk = !best.swapped || ev.sport === 'tennis' || best.score >= 0.95;
+      const swapOk = !best.swapped || isIndividualSport(ev.sport) || best.score >= 0.95;
       if (best.score >= cfg.autoAccept && clear && swapOk) {
         this.stats.auto++;
         return this.link(bk, ev, best.event, best.swapped, best.score, 'auto');
@@ -232,13 +233,13 @@ export class Matcher {
     // 2b) stejná jména, ale jiný čas začátku (tenis: odhad podle pořadí zápasů vs. „ne dříve než“,
     //     posun o hodinu u části sázkovek) → jistá shoda obou jmen v širším okně
     if (!best || best.score < cfg.autoAccept) {
-      const wide = (ev.sport === 'tennis' ? 6 : 3) * 3600_000;
+      const wide = (isIndividualSport(ev.sport) ? 6 : 3) * 3600_000;
       const widePool = [...this.events.values()].filter(
         (e) => e.sport === ev.sport && e.isSim === isSim && !e.linkedBooks.has(bk) && Math.abs(e.startTime - ev.startTime) <= wide && !rejected?.has(e.id),
       );
       const wc = this.candidates(ev, widePool).filter((c) => Math.min(c.home, c.away) >= WIDE_MIN_NAME);
       const w = wc[0];
-      if (w && (!wc[1] || wc[1].score < w.score - 0.05) && (!w.swapped || ev.sport === 'tennis')) {
+      if (w && (!wc[1] || wc[1].score < w.score - 0.05) && (!w.swapped || isIndividualSport(ev.sport))) {
         this.stats.auto++;
         return this.link(bk, ev, w.event, w.swapped, w.score, 'auto');
       }
@@ -272,7 +273,7 @@ export class Matcher {
       if (closeInTime) {
         const review = this.settings().matching.review;
         if (Math.max(hs, as) >= 0.9) straight = Math.max(straight, review + 0.02);
-        if (Math.max(hsw, asw) >= 0.9 && ev.sport === 'tennis') swapped = Math.max(swapped, review + 0.01);
+        if (Math.max(hsw, asw) >= 0.9 && isIndividualSport(ev.sport)) swapped = Math.max(swapped, review + 0.01);
       }
       const c: Candidate =
         swapped > straight + 0.05 ? { event: e, score: swapped, swapped: true, home: hsw, away: asw } : { event: e, score: straight, swapped: false, home: hs, away: as };
@@ -347,7 +348,7 @@ export class Matcher {
     const r = await db().query<{ id: number }>(
       `INSERT INTO participants (sport, name, norm_key, kind) VALUES ($1,$2,$3,$4)
        ON CONFLICT (sport, norm_key) DO UPDATE SET name = participants.name RETURNING id`,
-      [sport, raw, nk, sport === 'tennis' ? (raw.includes('/') ? 'pair' : 'player') : 'team'],
+      [sport, raw, nk, isIndividualSport(sport) ? (raw.includes('/') ? 'pair' : 'player') : 'team'],
     );
     const id = r.rows[0].id;
     if (!this.participants.has(id)) this.addParticipant(id, sport, raw);

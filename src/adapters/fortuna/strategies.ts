@@ -83,7 +83,8 @@ export class FortunaApi {
 
   /** Všechny zápasy sportu (stránkovaně po 500). Live: /live/sport/{id}/matches. */
   async sportMatches(sport: Sport, scope: FeedScope, signal?: AbortSignal): Promise<FtnMatchesPage[]> {
-    const id = SPORTS_MAP[sport].id;
+    const id = SPORTS_MAP[sport]?.id;
+    if (!id) return [];
     const pages: FtnMatchesPage[] = [];
     for (let page = 0; page < 20; page++) {
       const url =
@@ -280,18 +281,19 @@ export class FortunaPollStrategy implements Strategy {
   async fetch(req: FetchRequest): Promise<RawOdds> {
     const api = new FortunaApi(this.transport);
     const t0 = Date.now();
+    const sports = req.sports.filter((s) => SPORTS_MAP[s]);
     let bundle: FortunaBundle;
     if (req.scope === 'prematch') {
-      bundle = await collectPrematch(api, req.sports, this.detailCache, this.opts.detail ?? null, req.signal);
+      bundle = await collectPrematch(api, sports, this.detailCache, this.opts.detail ?? null, req.signal);
     } else {
-      const r = await collectLive(api, req.sports, this.liveList, this.opts.liveListTtlMs ?? 10_000, this.opts.liveTyped ?? true, req.signal);
+      const r = await collectLive(api, sports, this.liveList, this.opts.liveListTtlMs ?? 10_000, this.opts.liveTyped ?? true, req.signal);
       this.liveList = r.list;
       bundle = r.bundle;
       // periody z předchozího pollu, když je feed při přestávce vynechá
       bundle.scoreboards = (bundle.scoreboards ?? []).map((s) => mergeMini(this.lastMinis.get(s.fixtureId), s));
       this.lastMinis = new Map(bundle.scoreboards.map((s) => [s.fixtureId, s]));
     }
-    const events = buildEvents(bundle, req.sports);
+    const events = buildEvents(bundle, sports);
     this.ctx.log.debug(`${this.name} ${req.scope}`, { requests: api.requests, events: events.length, ms: Date.now() - t0 });
     if (req.scope === 'prematch' && !events.length) throw new StrategyError('no prematch events parsed', 'empty');
     return { bookmaker: 'fortuna', strategy: this.name, scope: req.scope, fetchedAt: bundle.dataAt ?? t0, events };

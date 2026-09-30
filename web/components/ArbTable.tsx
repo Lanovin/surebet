@@ -210,7 +210,10 @@ function Row({ a, now, selected, onOpen }: { a: ArbRow; now: number; selected: b
         <div className="flex flex-wrap gap-1">
           {a.legs.map((l) => (
             <span key={l.selection} className="inline-flex items-center gap-1 rounded bg-surface-2 px-1.5 py-0.5 text-xs">
-              <span className="text-muted">{l.selectionLabel}</span>
+              <span className="text-muted" title={l.market && l.market !== a.market ? `sází se na trh ${l.marketLabel}` : undefined}>
+                {l.selectionLabel}
+                {l.market && l.market !== a.market && '*'}
+              </span>
               <span className="num font-semibold">{l.odds.toFixed(2)}</span>
               <BookmakerChip bk={l.bookmaker} small />
             </span>

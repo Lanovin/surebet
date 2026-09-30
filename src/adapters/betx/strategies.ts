@@ -83,7 +83,10 @@ export function livePasses(sports: Sport[], betTypes: Partial<Record<Sport, stri
   const sportIds = sports.map((s) => SPORT_IDS[s]).filter((x) => x !== undefined);
   if (!sportIds.length) return [];
   const byBt = new Map<string, number[]>();
-  for (const s of sports) for (const bt of new Set(betTypes[s] ?? [])) byBt.set(bt, [...(byBt.get(bt) ?? []), SPORT_IDS[s]]);
+  for (const s of sports) {
+    const id = SPORT_IDS[s];
+    if (id !== undefined) for (const bt of new Set(betTypes[s] ?? [])) byBt.set(bt, [...(byBt.get(bt) ?? []), id]);
+  }
   return [{ sportIds: [...new Set(sportIds)] }, ...[...byBt].map(([bt, ids]) => ({ sportIds: [...new Set(ids)], bt }))];
 }
 
@@ -141,8 +144,10 @@ abstract class BetxBase implements Strategy {
     const to = new Date(now.getTime() + this.opts.horizonHours * 3600_000).toISOString();
     const passes: { sportId: number; bt: string; to?: string }[] = [];
     for (const s of req.sports) {
+      const sportId = SPORT_IDS[s];
+      if (sportId === undefined) continue;
       const keys = this.opts.prematchBetTypes[s] ?? [];
-      keys.forEach((bt, i) => passes.push({ sportId: SPORT_IDS[s], bt, to: i === 0 ? undefined : to }));
+      keys.forEach((bt, i) => passes.push({ sportId, bt, to: i === 0 ? undefined : to }));
     }
     // 1. stránka každého průchodu -> Count -> zbylé stránky
     const first = await get(passes.map((p) => flatUrl(p.sportId, p.bt, 0, from, p.to)));
@@ -368,7 +373,7 @@ export class BetxPushStrategy extends BetxBase {
     const conns: HubConn[] = sports.flatMap((sport) =>
       (o.pushBetTypes[sport]?.length ? o.pushBetTypes[sport]! : [undefined]).map((bt) => ({
         sport,
-        sid: SPORT_IDS[sport],
+        sid: SPORT_IDS[sport]!,
         bt,
         open: false,
         live: true,

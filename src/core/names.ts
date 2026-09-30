@@ -1,5 +1,6 @@
 // Normalizace a fuzzy porovnání jmen týmů/hráčů napříč sázkovkami.
 import type { Sport } from './types.js';
+import { isIndividualSport } from './types.js';
 import { NAME_SYNONYMS, TEAM_CODES } from '../../config/aliases.js';
 
 /** Odstraní diakritiku, převede na malá písmena, interpunkci na mezery. */
@@ -26,6 +27,8 @@ const NOISE = new Set([
   'tsg', 'fsv', 'spvgg', 'ssc', 'us', 'asd', 'ca', 'se', 'ec', 'if', 'ik', 'bk', 'ff', 'fbk', 'aik', 'sl', 'cfc',
   'ssd', 'usd', 'ifk', 'jk', 'fotbal', 'football', 'futbol', 'a', 's', 'de', 'the', 'and', 'a s', 'mfk', 'sfc',
   'bv', 'kv', 'kvc', 'krc', 'royal', 'hockey', 'basket', 'basketball', 'team',
+  // házená, volejbal
+  'hsg', 'sg', 'tus', 'hbc', 'vk', 'vc', 'volley', 'volleyball', 'handball', 'hazena',
 ]);
 
 /** Značky, které tým odlišují a musí se shodovat (U21 ≠ A-tým, ženy ≠ muži, B-tým ≠ A-tým). */
@@ -36,7 +39,7 @@ const TAG_PATTERNS: [RegExp, string][] = [
   [/\b(youth|mladez|dorost|dorostenci)\b/g, 'youth'],
 ];
 
-/** Tenis: jednopísmenné "z"/"w" jsou iniciály křestního jména, ne značka žen. */
+/** Jednotlivci: jednopísmenné "z"/"w" jsou iniciály křestního jména, ne značka žen. */
 const TENNIS_WOMEN = /\b(women|woman|zeny|wom|fem|feminino|femenino|dames|frauen|damen|zen|ladies)\b/g;
 
 export interface NormName {
@@ -77,12 +80,14 @@ export function normalizeName(raw: string, sport: Sport): NormName {
   const codes = sport === 'basketball' || sport === 'hockey' ? TEAM_CODES[sport] : undefined;
   if (codes) raw = raw.split(/\s+/).map((tok) => (/^[A-Z]{2,3}$/.test(tok) && codes[tok] ? codes[tok] : tok)).join(' ');
   let s = fold(raw);
+  // jednotlivci (tenis, šipky, snooker, MMA …): jména hráčů, žádné značky týmů
+  const individual = isIndividualSport(sport);
   // "(ž)" "(W)" apod. v závorkách se po fold() stanou samostatným tokenem – řeší TAG_PATTERNS
   const tags = new Set<string>();
   for (const [re, tag] of TAG_PATTERNS) {
     // u tenisu by koncové "B." (iniciála) vypadalo jako B-tým a "Bergs Z." / "Kwon W." jako ženy
-    if (sport === 'tennis' && tag === 'reserve') continue;
-    const pattern = sport === 'tennis' && tag === 'women' ? TENNIS_WOMEN : re;
+    if (individual && tag === 'reserve') continue;
+    const pattern = individual && tag === 'women' ? TENNIS_WOMEN : re;
     s = s.replace(pattern, (...m) => {
       tags.add(tag.includes('$1') ? tag.replace('$1', m[1]) : tag);
       return ' ';
@@ -94,7 +99,7 @@ export function normalizeName(raw: string, sport: Sport): NormName {
     .flatMap((t) => t.split(' '))
     .filter(Boolean);
   const clean = (ts: string[]) => {
-    if (sport === 'tennis') {
+    if (individual) {
       // české přechýlení: "Sabalenková" ~ "Sabalenka", "Krejčíková" ~ "Krejcikova"
       return ts.map((t) => (t.length > 5 && t.endsWith('ova') ? t.slice(0, -3) : t));
     }
@@ -311,7 +316,7 @@ export function nameSimilarity(rawA: string, rawB: string, sport: Sport): number
   const b = normalizeName(rawB, sport);
   if (a.tags.join() !== b.tags.join()) return 0;
   if (a.core === b.core) return 1;
-  if (sport === 'tennis') return tennisScore(a.core, b.core);
+  if (isIndividualSport(sport)) return tennisScore(a.core, b.core);
   const tok = Math.max(
     tokenSetScore(a.tokens, b.tokens),
     tokenSetScore(a.rawTokens, b.rawTokens),

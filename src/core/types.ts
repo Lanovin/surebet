@@ -13,8 +13,29 @@ export const BOOKMAKERS = [
 ] as const;
 export type BookmakerId = (typeof BOOKMAKERS)[number];
 
-export const SPORTS = ['football', 'tennis', 'basketball', 'hockey'] as const;
+export const SPORTS = [
+  'football',
+  'tennis',
+  'basketball',
+  'hockey',
+  'handball',
+  'volleyball',
+  'baseball',
+  'american_football',
+  'mma',
+  'boxing',
+  'darts',
+  'snooker',
+  'table_tennis',
+] as const;
 export type Sport = (typeof SPORTS)[number];
+
+/** Sporty jednotlivců – jména hráčů ve tvarech „Příjmení, Jméno“ / „Příjmení J.“, pořadí se u sázkovek často prohazuje. */
+export const INDIVIDUAL_SPORTS: readonly Sport[] = ['tennis', 'mma', 'boxing', 'darts', 'snooker', 'table_tennis'];
+
+export function isIndividualSport(sport: Sport): boolean {
+  return INDIVIDUAL_SPORTS.includes(sport);
+}
 
 export const MODES = ['PREMATCH', 'PAUSED', 'LIVE'] as const;
 export type Mode = (typeof MODES)[number];
@@ -24,20 +45,27 @@ export type FeedScope = 'prematch' | 'live';
 
 /**
  * Typ trhu. Jednotka OU/AH je "primární skóre" sportu:
- * góly (fotbal, hokej), body (basket), gemy (tenis).
+ * góly (fotbal, hokej, házená), body (basket, volejbal, americký fotbal, stolní tenis), gemy (tenis),
+ * běhy (baseball), legy (šipky), framy (snooker), kola (MMA, box).
  */
 export const MARKET_TYPES = [
   '1X2', // HOME / DRAW / AWAY
   'ML', // vítěz bez remízy (tenis, basket vč. prodl., hokej vč. prodl. a nájezdů) HOME / AWAY
   'DNB', // sázka bez remízy (remíza = vrácení) HOME / AWAY
+  'DC', // dvojtip 1X / 12 / X2 – výběry se překrývají, sám o sobě arb netvoří (jen ve skupinách níže)
   'OU', // celkový počet (góly/body/gemy) OVER / UNDER
   'AH', // handicap 2-cestný (asijský / ±x.5), linie z pohledu domácích HOME / AWAY
   'BTTS', // oba týmy skórují YES / NO
   'OE', // lichý / sudý ODD / EVEN
   'OU_HOME', // počet skóre domácích OVER / UNDER
   'OU_AWAY', // počet skóre hostů OVER / UNDER
-  'OU_SETS', // tenis: počet setů OVER / UNDER
-  'AH_SETS', // tenis: handicap na sety HOME / AWAY
+  'OU_SETS', // tenis, volejbal: počet setů OVER / UNDER
+  'AH_SETS', // tenis, volejbal: handicap na sety HOME / AWAY
+  // Skupiny ekvivalentních trhů (jen v detektoru, sázkovky je neposílají – viz src/core/groups.ts):
+  // rozklad 1X2 na dva výsledky, každý se dá vsadit jako 1X2, dvojtip nebo asijský handicap ±0.5.
+  'H_DA', // 1 proti X2
+  'A_HD', // 2 proti 1X
+  'D_HA', // X proti 12
 ] as const;
 export type MarketType = (typeof MARKET_TYPES)[number];
 
@@ -67,7 +95,7 @@ export const MARKET_SCOPES = [
 ] as const;
 export type MarketScope = (typeof MARKET_SCOPES)[number];
 
-export const SELECTION_KEYS = ['HOME', 'DRAW', 'AWAY', 'OVER', 'UNDER', 'YES', 'NO', 'ODD', 'EVEN'] as const;
+export const SELECTION_KEYS = ['HOME', 'DRAW', 'AWAY', 'OVER', 'UNDER', 'YES', 'NO', 'ODD', 'EVEN', 'HOME_DRAW', 'HOME_AWAY', 'DRAW_AWAY'] as const;
 export type SelectionKey = (typeof SELECTION_KEYS)[number];
 
 /** Parsovaný trh; `key` vytvářej výhradně přes marketKey() ze src/core/markets.ts. */
@@ -203,7 +231,12 @@ export type PauseType =
   | 'basketball_ht'
   | 'basketball_quarter'
   | 'hockey_intermission'
-  | 'tennis_set_break';
+  | 'tennis_set_break'
+  | 'handball_ht'
+  | 'volleyball_set_break'
+  | 'american_football_ht'
+  | 'american_football_quarter'
+  | 'other_break';
 
 export interface PauseInfo {
   type: PauseType;

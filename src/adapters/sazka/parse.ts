@@ -20,7 +20,7 @@ import type {
 export const SITE = 'https://www.allwyn.cz/kurzove-sazky';
 
 /** OpenBet drilldown ID sportu (level 2) → náš sport. Pozor: kód "hockey" je pozemní hokej. */
-export const SPORT_NODES: Record<Sport, { id: string; code: string }> = {
+export const SPORT_NODES: Partial<Record<Sport, { id: string; code: string }>> = {
   football: { id: '11', code: 'football' },
   tennis: { id: '12', code: 'tennis' },
   basketball: { id: '5', code: 'basketball' },
@@ -141,7 +141,7 @@ const byName = (fallback: MarketScope | null) => (m: ObMarket): MarketScope | nu
   return fallback;
 };
 
-const RULES: Record<Sport, Record<string, Rule>> = {
+const RULES: Partial<Record<Sport, Record<string, Rule>>> = {
   football: {
     MATCH_RESULT: { type: '1X2', scope: 'REG' },
     NO_BET_DRAW: { type: 'DNB', scope: 'REG' },
@@ -320,13 +320,13 @@ const NAME_BLACKLIST = /zbyt(?:ek|ku|kem)|zbývající|po \d+\s*minut|mega kurz|
 
 /** Má groupCode pro daný sport mapovací pravidlo? (push: zprávy k nemapovaným trhům nevyžadují resync) */
 export function isMappedMarketCode(sport: Sport, code: string | null | undefined): boolean {
-  return !!code && !!RULES[sport][code];
+  return !!code && !!RULES[sport]?.[code];
 }
 
 /** Převede jeden surový trh na kanonický (nebo null, když ho neumíme přesně namapovat). */
 export function mapMarket(sport: Sport, m: ObMarket, home: string, away: string): RawMarket | null {
   if (m.displayed === false || !m.groupCode) return null;
-  const rule = RULES[sport][m.groupCode];
+  const rule = RULES[sport]?.[m.groupCode];
   if (!rule) return null;
   if (NAME_BLACKLIST.test(m.name)) return null;
   const scope = typeof rule.scope === 'function' ? rule.scope(m) : rule.scope;

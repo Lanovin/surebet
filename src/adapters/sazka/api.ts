@@ -24,7 +24,7 @@ export const HTTP_HEADERS: Record<string, string> = { ...API_HEADERS, origin: OR
  */
 export function listingUrl(sports: Sport[], scope: 'prematch' | 'live', bust = scope === 'live'): string {
   const p = new URLSearchParams();
-  p.set('drilldownTagIds', sports.map((s) => SPORT_NODES[s].id).join(','));
+  p.set('drilldownTagIds', sports.flatMap((s) => SPORT_NODES[s]?.id ?? []).join(','));
   if (scope === 'live') p.set('liveNowOrSoon', 'true');
   else p.set('eventState', 'OPEN_EVENT');
   if (scope === 'prematch' && sports.length === 1 && sports[0] === 'football') {

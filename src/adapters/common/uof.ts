@@ -47,7 +47,7 @@ const H2_MARKETS: Record<number, UofDef> = {
   92: d('OU_AWAY', 'H2', 'total'),
 };
 
-const UOF_BY_SPORT: Record<Sport, Record<number, UofDef>> = {
+const UOF_BY_SPORT: Partial<Record<Sport, Record<number, UofDef>>> = {
   football: {
     ...REG_MARKETS,
     ...H1_MARKETS,
@@ -100,7 +100,7 @@ const UOF_BY_SPORT: Record<Sport, Record<number, UofDef>> = {
 };
 
 export function uofDef(sport: Sport, marketId: number): UofDef | undefined {
-  return UOF_BY_SPORT[sport][marketId];
+  return UOF_BY_SPORT[sport]?.[marketId];
 }
 
 /** Výběr podle UOF id výsledku (Altenar u vítěze/DNB používá 1/3 místo 4/5). */

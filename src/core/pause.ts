@@ -58,6 +58,14 @@ export function pauseTypeFor(sport: Sport, state: GameState | undefined, competi
         state?.period ?? (state?.clockSec !== undefined ? Math.max(1, Math.round(state.clockSec / q)) : undefined);
       return p === 2 ? 'basketball_ht' : 'basketball_quarter';
     }
+    case 'handball':
+      return 'handball_ht';
+    case 'volleyball':
+      return 'volleyball_set_break';
+    case 'american_football':
+      return (state?.period ?? 0) === 2 || /polocas|half/.test(state?.statusText ? fold(state.statusText) : '') ? 'american_football_ht' : 'american_football_quarter';
+    default:
+      return 'other_break';
   }
 }
 
@@ -78,7 +86,14 @@ export function atPeriodBoundary(sport: Sport, state: GameState, competition?: s
       const into = c % q;
       return c >= q - 5 && c < 4 * q && (into <= 3 || into >= q - 3);
     }
-    case 'tennis':
+    case 'handball':
+      return c >= 30 * 60 - 30 && c <= 40 * 60 && (state.period === undefined || state.period <= 1);
+    case 'american_football': {
+      const into = c % (15 * 60);
+      return c >= 15 * 60 - 5 && c < 60 * 60 && (into <= 3 || into >= 15 * 60 - 3);
+    }
+    default:
+      // tenis, volejbal a další sporty bez herních hodin
       return false;
   }
 }

@@ -185,15 +185,16 @@ export class SimWorld {
   }
 
   private populate(now: number): void {
-    const plan: Record<Sport, { pre: number; live: number }> = {
+    // simulátor generuje jen původní čtyři sporty
+    const plan: Partial<Record<Sport, { pre: number; live: number }>> = {
       football: { pre: 18, live: 8 },
       hockey: { pre: 10, live: 5 },
       basketball: { pre: 8, live: 5 },
       tennis: { pre: 10, live: 7 },
     };
     for (const sport of Object.keys(plan) as Sport[]) {
-      for (let i = 0; i < plan[sport].live; i++) this.createLiveEvent(sport, now, i);
-      for (let i = 0; i < plan[sport].pre; i++) {
+      for (let i = 0; i < plan[sport]!.live; i++) this.createLiveEvent(sport, now, i);
+      for (let i = 0; i < plan[sport]!.pre; i++) {
         // pár zápasů začne během pár minut, ať je vidět přechod PREMATCH -> LIVE
         const start = i < 2 ? now + this.uniform(2, 8) * 60e3 : now + this.uniform(4, 40) * 3600e3;
         this.createEvent(sport, start, now);
@@ -270,6 +271,8 @@ export class SimWorld {
       }
       case 'tennis':
         return { ou: [], ah: [], tennisTotal: this.pick([20.5, 21.5, 22.5]) };
+      default:
+        return { ou: [], ah: [], tennisTotal: 0 };
     }
   }
 
@@ -705,11 +708,11 @@ export class SimWorld {
   }
 
   private replenish(now: number): void {
-    const counts: Record<Sport, number> = { football: 0, hockey: 0, basketball: 0, tennis: 0 };
-    for (const e of this.events.values()) if (e.status === 'pre') counts[e.sport]++;
-    const target: Record<Sport, number> = { football: 18, hockey: 10, basketball: 8, tennis: 10 };
+    const counts: Partial<Record<Sport, number>> = { football: 0, hockey: 0, basketball: 0, tennis: 0 };
+    for (const e of this.events.values()) if (e.status === 'pre') counts[e.sport] = (counts[e.sport] ?? 0) + 1;
+    const target: Partial<Record<Sport, number>> = { football: 18, hockey: 10, basketball: 8, tennis: 10 };
     for (const s of Object.keys(target) as Sport[])
-      if (counts[s] < target[s] && this.rnd() < 0.02) this.createEvent(s, now + this.uniform(0.1, 30) * 3600e3, now);
+      if ((counts[s] ?? 0) < target[s]! && this.rnd() < 0.02) this.createEvent(s, now + this.uniform(0.1, 30) * 3600e3, now);
     // a průběžně pár zápasů těsně před začátkem
     if (this.rnd() < 0.0015) this.createEvent(this.pick(['football', 'hockey', 'basketball', 'tennis'] as Sport[]), now + this.uniform(3, 10) * 60e3, now);
   }
@@ -811,6 +814,8 @@ export class SimWorld {
         return inBreak ? (e.breakKind === 'ht' ? 'Poločas' : 'Přestávka') : `${e.period}. čtvrtina`;
       case 'tennis':
         return inBreak ? 'Přestávka' : `${e.period}. set`;
+      default:
+        return inBreak ? 'Přestávka' : `${e.period}. perioda`;
     }
   }
 

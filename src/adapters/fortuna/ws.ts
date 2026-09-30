@@ -7,7 +7,10 @@
 // market.{id} (jako stránka zápasu) + REST detail načtený až po přihlášení topicu (s přehráním zpráv).
 import WebSocket from 'ws';
 import type { HealthResult, RawOdds, Sport } from '../../core/types.js';
-import { SPORTS } from '../../core/types.js';
+import { SPORTS_MAP } from './parse.js';
+
+/** Sporty, které Fortuna adaptér umí (runner posílá všechny kanonické sporty). */
+const SPORTS = Object.keys(SPORTS_MAP) as Sport[];
 import type { AdapterContext, FetchRequest, Strategy } from '../types.js';
 import { StrategyError } from '../types.js';
 import { DEFAULT_UA } from '../http.js';

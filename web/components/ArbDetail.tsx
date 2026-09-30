@@ -48,10 +48,12 @@ export function ArbDetail({ id, onClose }: { id: string; onClose: () => void }) 
   if (!arb) return null;
   const serverNow = now + clockOffset;
   const calcLegs: CalcLeg[] = arb.legs.map((l) => {
-    const d = describeLeg(arb, l.selection, l.swapped);
+    const d = describeLeg(l.market ?? arb.market, l.marketSelection ?? l.selection, arb, l.swapped);
+    const other = l.market && l.market !== arb.market ? l.marketLabel : undefined;
     return {
       key: l.selection,
       title: d.title,
+      sub: other ? `sází se na trh „${other}“` : undefined,
       hint: d.atBook,
       bookmaker: l.bookmaker,
       url: l.url,

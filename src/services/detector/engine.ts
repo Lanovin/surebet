@@ -2,7 +2,8 @@
 import { randomUUID } from 'node:crypto';
 import type { BookmakerId, EndReason, Mode, SelectionKey } from '../../core/types.js';
 import { BOOKMAKERS } from '../../core/types.js';
-import { REQUIRED_SELECTIONS, marketLabel, parseMarketKey, selectionLabel } from '../../core/markets.js';
+import { marketLabel, parseMarketKey, selectionLabel } from '../../core/markets.js';
+import { groupDef, groupsForMarket } from '../../core/groups.js';
 import { arbMargin, computeStakes, effectiveOdds, marginBand } from '../../core/arb.js';
 import { pauseRemainingSec } from '../../core/pause.js';
 import type { Settings } from '../../core/settings.js';
@@ -11,7 +12,12 @@ import type { ArbDTO, ArbEventKind, BookEventState, EventView, OddsDiffMessage, 
 
 export interface LegState {
   bookmaker: BookmakerId;
+  /** výsledek skupiny (výběr trhu arbu) */
   selection: SelectionKey;
+  /** trh, který se u sázkovky skutečně sází (u skupin se může lišit od trhu arbu) */
+  market: string;
+  /** výběr v tomto trhu */
+  marketSelection: SelectionKey;
   odds: number;
   effOdds: number;
   changedAt: number;
@@ -142,7 +148,18 @@ export class ArbEngine {
         }
       }
     }
-    for (const { eventId, market } of affected.values()) this.evaluate(eventId, market, dataAt, msg.bk ?? undefined);
+    const groups = new Map<string, { eventId: number; key: string }>();
+    for (const { eventId, market } of affected.values())
+      for (const key of this.groupKeys(eventId, market)) groups.set(`${eventId}|${key}`, { eventId, key });
+    for (const { eventId, key } of groups.values()) this.evaluate(eventId, key, dataAt, msg.bk ?? undefined);
+  }
+
+  /** Skupiny (klíče arbů) dotčené změnou trhu; existující arby na trhu se přehodnotí vždy. */
+  private groupKeys(eventId: number, market: string): string[] {
+    const sport = this.events.get(eventId)?.sport;
+    const keys = new Set(sport ? groupsForMarket(sport, market) : [market]);
+    for (const arb of this.active.values()) if (arb.eventId === eventId && arb.legs.some((l) => l.market === market)) keys.add(arb.market);
+    return [...keys];
   }
 
   /** Periodická kontrola: zastaralé nohy, začátek zápasu u PREMATCH arbů. */
@@ -229,7 +246,8 @@ export class ArbEngine {
   }
 
   private evaluateEvent(eventId: number, dataAt: number): void {
-    for (const m of this.marketsOf(eventId)) this.evaluate(eventId, m, dataAt);
+    const keys = new Set(this.marketsOf(eventId).flatMap((m) => this.groupKeys(eventId, m)));
+    for (const k of keys) this.evaluate(eventId, k, dataAt);
   }
 
   private endAllForEvent(eventId: number, reason: EndReason, at: number): void {
@@ -286,33 +304,48 @@ export class ArbEngine {
     this.create(ev!, market, found.combo, found.best, found.margin, dataAt, since);
   }
 
-  /** Nejlepší kurzy na každý výsledek → kandidát na nový arb (nebo null). */
+  /** Nejlepší kurzy na každý výsledek skupiny (ze všech sázkovek a ekvivalentních trhů) → kandidát (nebo null). */
   private candidate(eventId: number, market: string, mode: Mode, bookMap: Map<BookmakerId, BookEventState>): { best: LegState[]; margin: number; combo: string } | null {
     const now = this.deps.now();
     const key = `${eventId}|${market}`;
     const settings = this.deps.settings();
     const cfg = settings.modes[mode];
-    // nejlepší kurz na každý výsledek
-    const type = parseMarketKey(market).type;
-    const sels = REQUIRED_SELECTIONS[type];
+    const ev = this.events.get(eventId);
+    const group = ev ? groupDef(ev.sport, market) : null;
+    if (!group) return null;
     const alive = [...(this.byKey.get(key) ?? [])].map((id) => this.active.get(id)!).filter(Boolean);
-    const sticky = new Set(alive.flatMap((a) => a.legs.map((l) => `${l.selection}:${l.bookmaker}`)));
+    const sticky = new Set(alive.flatMap((a) => a.legs.map((l) => `${l.selection}:${l.bookmaker}:${l.market}`)));
     const best: LegState[] = [];
-    for (const sel of sels) {
+    for (const leg of group.legs) {
       let b: LegState | undefined;
       for (const bk of BOOKMAKERS) {
         const st = bookMap.get(bk);
         if (!st || settings.bookmakers[bk]?.enabled === false) continue;
-        const m = st.markets[market];
-        const s = m?.sels[sel];
-        if (!m || !s || !m.open || !s.open) continue;
         // nový arb jen z nohou, kterým zbývá aspoň 20 % limitu stáří (jinak hned zanikne jako stale)
         if (now - st.seenAt > cfg.maxLegAgeMs * 0.8) continue;
-        if (this.isOutlier(eventId, market, sel, bk, s.odds)) continue;
-        const eff = effectiveOdds(s.odds, settings.bookmakers[bk]?.feePct ?? 0);
-        const better = !b || eff > b.effOdds || (eff === b.effOdds && sticky.has(`${sel}:${bk}`));
-        if (better)
-          b = { bookmaker: bk, selection: sel, odds: s.odds, effOdds: eff, changedAt: s.changedAt, seenAt: st.seenAt, swapped: st.swapped, sourceEventId: st.sourceEventId, url: st.url };
+        for (const source of leg.sources) {
+          const m = st.markets[source.market];
+          const s = m?.sels[source.sel];
+          if (!m || !s || !m.open || !s.open) continue;
+          if (this.isOutlier(eventId, source.market, source.sel, bk, s.odds)) continue;
+          const eff = effectiveOdds(s.odds, settings.bookmakers[bk]?.feePct ?? 0);
+          // při shodě vyhrává hlavní trh skupiny (první zdroj) a noha běžícího arbu
+          const better = !b || eff > b.effOdds || (eff === b.effOdds && sticky.has(`${leg.sel}:${bk}:${source.market}`));
+          if (better)
+            b = {
+              bookmaker: bk,
+              selection: leg.sel,
+              market: source.market,
+              marketSelection: source.sel,
+              odds: s.odds,
+              effOdds: eff,
+              changedAt: s.changedAt,
+              seenAt: st.seenAt,
+              swapped: st.swapped,
+              sourceEventId: st.sourceEventId,
+              url: st.url,
+            };
+        }
       }
       if (!b) return null;
       best.push(b);
@@ -329,7 +362,7 @@ export class ArbEngine {
       s.add(market);
       return null;
     }
-    const combo = best.map((l) => `${l.selection}:${l.bookmaker}`).join(',');
+    const combo = best.map((l) => `${l.selection}:${l.bookmaker}:${l.market}`).join(',');
     if (alive.some((a) => a.combo === combo)) return null;
     if (alive.length >= MAX_PER_MARKET) return null;
     if (alive.some((a) => a.margin >= margin - 0.05)) return null; // jiná kombinace s podobnou marží už běží
@@ -346,8 +379,8 @@ export class ArbEngine {
     const legs: LegState[] = [];
     for (const leg of arb.legs) {
       const st = bookMap?.get(leg.bookmaker);
-      const m = st?.markets[arb.market];
-      const s = m?.sels[leg.selection];
+      const m = st?.markets[leg.market];
+      const s = m?.sels[leg.marketSelection];
       if (!st || !m || !s || !m.open || !s.open) {
         this.end(arb, 'suspended', leg.bookmaker, dataAt);
         return;
@@ -485,6 +518,9 @@ export class ArbEngine {
         bookmaker: l.bookmaker,
         selection: l.selection,
         selectionLabel: selectionLabel(l.selection, p.type),
+        market: l.market,
+        marketSelection: l.marketSelection,
+        marketLabel: marketLabel(l.market, ev.sport),
         odds: l.odds,
         effOdds: l.effOdds,
         stake: plan.stakes[i] ?? 0,

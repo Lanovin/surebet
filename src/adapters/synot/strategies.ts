@@ -5,7 +5,7 @@ import { StrategyError } from '../types.js';
 import type { PbEventsResponse } from './proto.js';
 import { decodeEventsResponse } from './proto.js';
 import type { SynLiveDiscipline } from './parse.js';
-import { ORIGIN, parseLive, parsePrematch, PREMATCH_GAME_IDS } from './parse.js';
+import { ORIGIN, parseLive, parsePrematch, PREMATCH_GAME_IDS, SPORT_IDS } from './parse.js';
 import type { CallStats, Transport } from './api.js';
 import { API, HTTP_HEADERS, LANGUAGE_ID, LIVE_URL, liveBody, liveHeaders, mainBody, marketsBody, SESSION_API, SnapshotClock, SynotApi } from './api.js';
 
@@ -59,8 +59,9 @@ export class SynotCore {
       const to = now + this.o.marketsHorizonHours * 3600_000;
       const perSport = async (s: Sport) => {
         const main = await this.events((t) => mainBody(t, s), stats, 30_000);
-        const extra = PREMATCH_GAME_IDS[s].length
-          ? await this.events((t) => marketsBody(t, s, PREMATCH_GAME_IDS[s], now, to), stats, 45_000).catch((err: Error) => {
+        const gameIds = PREMATCH_GAME_IDS[s] ?? [];
+        const extra = gameIds.length
+          ? await this.events((t) => marketsBody(t, s, gameIds, now, to), stats, 45_000).catch((err: Error) => {
               // vedlejší trhy nejsou nutné – hlavní trh stačí, zbytek dorazí příště
               this.ctx.log.debug('markets request failed', { sport: s, err: err.message });
               return null;
@@ -69,7 +70,7 @@ export class SynotCore {
         if ((main.UnpaginatedEventCount ?? 0) > 5000) this.ctx.log.warn('synot listing truncated', { sport: s, total: main.UnpaginatedEventCount });
         return extra ? [main, extra] : [main];
       };
-      const responses = (await Promise.all(req.sports.map(perSport))).flat();
+      const responses = (await Promise.all(req.sports.filter((s) => SPORT_IDS[s] !== undefined).map(perSport))).flat();
       events = parsePrematch(responses, { now, sports: req.sports });
       if (!events.length) throw new StrategyError('synot: no prematch events parsed', 'empty', { ...stats });
       fetchedAt = Math.min(Date.now(), stats.oldest ?? Date.now());

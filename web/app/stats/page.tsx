@@ -40,7 +40,21 @@ interface Stats {
   profit: { day: string; n: number; staked: number; profit: number; cumulative: number }[];
 }
 
-const SPORT_COLORS: Record<Sport, string> = { football: 'var(--s1)', tennis: 'var(--s2)', basketball: 'var(--s3)', hockey: 'var(--s4)' };
+const SPORT_COLORS: Record<Sport, string> = {
+  football: 'var(--s1)',
+  tennis: 'var(--s2)',
+  basketball: 'var(--s3)',
+  hockey: 'var(--s4)',
+  handball: '#8b5cf6',
+  volleyball: '#0ea5e9',
+  baseball: '#a3a3a3',
+  american_football: '#b45309',
+  mma: '#e11d48',
+  boxing: '#be123c',
+  darts: '#16a34a',
+  snooker: '#15803d',
+  table_tennis: '#db2777',
+};
 const ACTION_LABEL: Record<string, string> = { placed: 'Vsadil', missed: 'Nestihl', rejected: 'Odmítnuto', odds_changed: 'Změna kurzu' };
 
 export default function StatsPage() {

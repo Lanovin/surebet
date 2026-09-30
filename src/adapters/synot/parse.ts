@@ -17,7 +17,7 @@ import type { PbCategory, PbDetail, PbEvent, PbEventsResponse, PbGame } from './
 export const ORIGIN = 'https://sport.synottip.cz';
 
 /** Kořenové kategorie sportů (CategoryID pro GetWebStandardEvents) = DisciplineID v live feedu. */
-export const SPORT_IDS: Record<Sport, number> = { football: 12, hockey: 14, tennis: 19, basketball: 21 };
+export const SPORT_IDS: Partial<Record<Sport, number>> = { football: 12, hockey: 14, tennis: 19, basketball: 21 };
 const ID_TO_SPORT: Record<number, Sport> = { 12: 'football', 14: 'hockey', 19: 'tennis', 21: 'basketball' };
 
 /** Texty feedu obsahují nezlomitelné mezery ("Tým 1 (-1.5)") → sjednotit bílé znaky. */
@@ -93,7 +93,7 @@ const R = (type: MarketType, kind: Kind, scope: Rule['scope'], name?: RegExp): R
  * (GetWebStandardEvents → AvailableGames). Evropský handicap "Handicap 0:1" (5), kombinace,
  * hráčské trhy, přesné výsledky … vynechány.
  */
-const RULES: Record<Sport, Record<number, Rule>> = {
+const RULES: Partial<Record<Sport, Record<number, Rule>>> = {
   football: {
     2: R('1X2', '1X2', 'REG', /^Zápas$/),
     4: R('DNB', 'ML', 'REG', /^Sázka bez remízy$/),
@@ -182,11 +182,11 @@ const RULES: Record<Sport, Record<number, Rule>> = {
  * ID typů trhů, které prematch stahuje filtrem GameIds (druhý požadavek na sport). Hlavní trh
  * (`Zápas` / `Vítěz zápasu` / `Vítěz (včetně prodloužení)`) přichází bez filtru.
  */
-export const PREMATCH_GAME_IDS: Record<Sport, number[]> = {
-  football: Object.keys(RULES.football).map(Number).filter((id) => id !== 2),
-  hockey: Object.keys(RULES.hockey).map(Number).filter((id) => id !== 2),
-  tennis: Object.keys(RULES.tennis).map(Number).filter((id) => id !== 178),
-  basketball: Object.keys(RULES.basketball).map(Number).filter((id) => id !== 2 && id !== 251),
+export const PREMATCH_GAME_IDS: Partial<Record<Sport, number[]>> = {
+  football: Object.keys(RULES.football ?? {}).map(Number).filter((id) => id !== 2),
+  hockey: Object.keys(RULES.hockey ?? {}).map(Number).filter((id) => id !== 2),
+  tennis: Object.keys(RULES.tennis ?? {}).map(Number).filter((id) => id !== 178),
+  basketball: Object.keys(RULES.basketball ?? {}).map(Number).filter((id) => id !== 2 && id !== 251),
 };
 
 const REQUIRED: Record<Kind, number> = { '1X2': 3, ML: 2, OU: 2, AH: 2, BTTS: 2, OE: 2 };
@@ -268,7 +268,7 @@ function odds2dp(rate: number | undefined): number | null {
 export function mapGame(sport: Sport, g: PbGame, eventOpen = true): RawMarket[] {
   const typeId = gameTypeId(g.ID);
   if (typeId === undefined) return [];
-  const rule = RULES[sport][typeId];
+  const rule = RULES[sport]?.[typeId];
   const name = norm(g.Name);
   if (!rule || (rule.name && !rule.name.test(name))) return [];
   // pojistka rozsahu: REG/periody nesmí mluvit o prodloužení, MATCH hokeje/basketu ho mít musí

@@ -17,7 +17,7 @@ export const SITE = 'https://www.ifortuna.cz';
 export const API = 'https://api.ifortuna.cz';
 
 /** Naše sporty -> Fortuna sportId a dvouznakový kód (prefix ID kategorií a typů trhů). */
-export const SPORTS_MAP: Record<Sport, { id: string; code: string }> = {
+export const SPORTS_MAP: Partial<Record<Sport, { id: string; code: string }>> = {
   football: { id: 'ufo:sprt:00', code: '00' },
   hockey: { id: 'ufo:sprt:0w', code: '0w' },
   basketball: { id: 'ufo:sprt:0i', code: '0i' },
@@ -29,7 +29,7 @@ const SPORT_BY_ID = new Map<string, Sport>(Object.entries(SPORTS_MAP).map(([s, v
  * Typy trhů, které vrací hromadný endpoint /markets/api/v1_0/fixtures/markets/overview
  * (jen „overview“ typy; s explicitním marketTypeIds vrací víc linií). Ostatní jen v detailu zápasu.
  */
-export const OVERVIEW_TYPES: Record<Sport, string[]> = {
+export const OVERVIEW_TYPES: Partial<Record<Sport, string[]>> = {
   football: ['00-00', '00-03', '00-0u'],
   hockey: ['0w-00', '0w-02', '0w-05', '0w-0d', '0w-0j'],
   basketball: ['0i-00', '0i-04', '0i-06', '0i-07'],
@@ -362,7 +362,8 @@ function parseHandicap(m: FtnMarket, home: string, away: string): { line: number
 export function mapMarket(m: FtnMarket, sport: Sport, home: string, away: string): RawMarket | null {
   const typeId = m.marketTypeId?.replace(/^ufo:mtyp:/, '');
   const def = DEFS[typeId];
-  if (!def || !typeId.startsWith(SPORTS_MAP[sport].code + '-')) return null;
+  const sportCode = SPORTS_MAP[sport]?.code;
+  if (!def || !sportCode || !typeId.startsWith(sportCode + '-')) return null;
   if (!m.outcomes?.length) return null;
   // jiná varianta téhož typu (hráčské, kombinované, náhradní trhy) nemá stejná pravidla vyhodnocení
   if (m.variant && m.variant !== 'STANDARD') return null;
@@ -433,7 +434,7 @@ export function mapMarket(m: FtnMarket, sport: Sport, home: string, away: string
 
 /** E-sporty a simulace, které Fortuna řadí pod reálné sporty (kategorie eFotbal/eHokej/eBasketbal). */
 export function isEsport(f: FtnFixture, tournament?: FtnTournament, category?: FtnCategory): boolean {
-  const code = SPORTS_MAP[SPORT_BY_ID.get(f.sportId) ?? 'football'].code;
+  const code = SPORTS_MAP[SPORT_BY_ID.get(f.sportId) ?? 'football']?.code;
   const catCode = /^ufo:ctgr:([0-9a-z]{2})-/i.exec(f.categoryId ?? '')?.[1];
   if (catCode && catCode !== code) return true;
   if (/^e(fotbal|hokej|basketbal|tenis)|esport|cyber|virtu/i.test(category?.name ?? '')) return true;

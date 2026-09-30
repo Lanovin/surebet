@@ -14,6 +14,30 @@ export const REQUIRED_SELECTIONS: Record<MarketType, SelectionKey[]> = {
   OU_AWAY: ['OVER', 'UNDER'],
   OU_SETS: ['OVER', 'UNDER'],
   AH_SETS: ['HOME', 'AWAY'],
+  DC: ['HOME_DRAW', 'HOME_AWAY', 'DRAW_AWAY'],
+  H_DA: ['HOME', 'DRAW_AWAY'],
+  A_HD: ['AWAY', 'HOME_DRAW'],
+  D_HA: ['DRAW', 'HOME_AWAY'],
+};
+
+/** Typy, které nejsou úplným rozkladem výsledků (výběry se překrývají) – samy arb netvoří. */
+export const NON_PARTITION_TYPES = new Set<MarketType>(['DC']);
+
+/** Jednotka primárního skóre sportu (počet X / handicap X). */
+export const SCORE_UNIT: Record<Sport, string> = {
+  football: 'gólů',
+  hockey: 'gólů',
+  handball: 'gólů',
+  basketball: 'bodů',
+  volleyball: 'bodů',
+  american_football: 'bodů',
+  table_tennis: 'bodů',
+  tennis: 'gemů',
+  baseball: 'běhů',
+  darts: 'legů',
+  snooker: 'framů',
+  mma: 'kol',
+  boxing: 'kol',
 };
 
 const LINE_TYPES = new Set<MarketType>(['OU', 'AH', 'OU_HOME', 'OU_AWAY', 'OU_SETS', 'AH_SETS']);
@@ -69,22 +93,35 @@ export function swapMarketKey(key: string): string {
       return marketKey('OU_AWAY', p.scope, p.line);
     case 'OU_AWAY':
       return marketKey('OU_HOME', p.scope, p.line);
+    case 'H_DA':
+      return marketKey('A_HD', p.scope);
+    case 'A_HD':
+      return marketKey('H_DA', p.scope);
     default:
       return key;
   }
 }
 
 export function swapSelection(sel: SelectionKey): SelectionKey {
-  if (sel === 'HOME') return 'AWAY';
-  if (sel === 'AWAY') return 'HOME';
-  return sel;
+  switch (sel) {
+    case 'HOME':
+      return 'AWAY';
+    case 'AWAY':
+      return 'HOME';
+    case 'HOME_DRAW':
+      return 'DRAW_AWAY';
+    case 'DRAW_AWAY':
+      return 'HOME_DRAW';
+    default:
+      return sel;
+  }
 }
 
 /** Popisek trhu pro UI (česky). */
 export function marketLabel(key: string, sport?: Sport): string {
   const p = parseMarketKey(key);
   const scope = SCOPE_LABEL[p.scope];
-  const unit = sport === 'tennis' ? 'gemů' : sport === 'basketball' ? 'bodů' : 'gólů';
+  const unit = SCORE_UNIT[sport ?? 'football'];
   const isTotal = p.type.startsWith('OU');
   const l = p.line === undefined ? '' : isTotal ? String(p.line) : formatLine(p.line);
   const base: Record<MarketType, string> = {
@@ -99,6 +136,10 @@ export function marketLabel(key: string, sport?: Sport): string {
     OU_AWAY: `Hosté ${unit} ${l}`,
     OU_SETS: `Počet setů ${l}`,
     AH_SETS: `Handicap setů ${l}`,
+    DC: 'Dvojtip',
+    H_DA: '1 vs. X2',
+    A_HD: '2 vs. 1X',
+    D_HA: 'X vs. 12',
   };
   return scope ? `${base[p.type]} · ${scope}` : base[p.type];
 }
@@ -106,11 +147,17 @@ export function marketLabel(key: string, sport?: Sport): string {
 export function selectionLabel(sel: SelectionKey, marketType: MarketType): string {
   switch (sel) {
     case 'HOME':
-      return marketType === '1X2' ? '1' : 'Domácí';
+      return marketType === '1X2' || marketType === 'H_DA' ? '1' : 'Domácí';
     case 'DRAW':
       return 'X';
     case 'AWAY':
-      return marketType === '1X2' ? '2' : 'Hosté';
+      return marketType === '1X2' || marketType === 'A_HD' ? '2' : 'Hosté';
+    case 'HOME_DRAW':
+      return '1X';
+    case 'HOME_AWAY':
+      return '12';
+    case 'DRAW_AWAY':
+      return 'X2';
     case 'OVER':
       return 'Více';
     case 'UNDER':

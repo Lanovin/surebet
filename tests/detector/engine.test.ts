@@ -202,6 +202,57 @@ describe('ArbEngine', () => {
     expect(events.filter((x) => x.kind === 'new')).toHaveLength(1);
   });
 
+  it('arb napříč trhy: 1 (1X2) u jedné sázkovky proti X2 (dvojtip) u druhé', () => {
+    const e = engine();
+    const book = (markets: Record<string, Record<string, number>>): BookEventState => {
+      const st = state({});
+      st.markets = {};
+      for (const [m, odds] of Object.entries(markets)) {
+        const sels: BookEventState['markets'][string]['sels'] = {};
+        for (const [k, o] of Object.entries(odds)) sels[k as 'HOME'] = { odds: o, open: true, changedAt: now };
+        st.markets[m] = { open: true, sels };
+      }
+      return st;
+    };
+    e.applyDiff(diff('tipsport', { 1: book({ '1X2|REG': { HOME: 2.6, DRAW: 3.2, AWAY: 2.8 } }) }, [ev()]));
+    e.applyDiff(diff('fortuna', { 1: book({ 'DC|REG': { HOME_DRAW: 1.3, HOME_AWAY: 1.35, DRAW_AWAY: 1.75 } }) }));
+    const created = events.filter((x) => x.kind === 'new').map((x) => x.arb);
+    expect(created).toHaveLength(1);
+    const a = created[0];
+    expect(a.market).toBe('H_DA|REG');
+    expect(a.legs.map((l) => `${l.selection}:${l.bookmaker}:${l.market}:${l.marketSelection}`)).toEqual([
+      'HOME:tipsport:1X2|REG:HOME',
+      'DRAW_AWAY:fortuna:DC|REG:DRAW_AWAY',
+    ]);
+    expect(a.margin).toBeCloseTo((1 / (1 / 2.6 + 1 / 1.75) - 1) * 100, 5);
+    const dto = e.toDTO(a);
+    expect(dto.legs[1]).toMatchObject({ market: 'DC|REG', marketSelection: 'DRAW_AWAY', selectionLabel: 'X2', marketLabel: 'Dvojtip · zákl. doba' });
+  });
+
+  it('arb napříč trhy: asijský handicap −0.5 jako noha 1X2 a AH 0 jako sázka bez remízy', () => {
+    const e = engine();
+    const book = (markets: Record<string, Record<string, number>>): BookEventState => {
+      const st = state({});
+      st.markets = {};
+      for (const [m, odds] of Object.entries(markets)) {
+        const sels: BookEventState['markets'][string]['sels'] = {};
+        for (const [k, o] of Object.entries(odds)) sels[k as 'HOME'] = { odds: o, open: true, changedAt: now };
+        st.markets[m] = { open: true, sels };
+      }
+      return st;
+    };
+    e.applyDiff(diff('tipsport', { 1: book({ '1X2|REG': { HOME: 2.1, DRAW: 3.6, AWAY: 3.9 }, 'DNB|REG': { HOME: 1.5, AWAY: 2.9 } }) }, [ev()]));
+    e.applyDiff(diff('fortuna', { 1: book({ 'AH|REG|-0.5': { HOME: 2.35, AWAY: 1.6 }, 'AH|REG|0': { HOME: 1.72, AWAY: 2.2 } }) }));
+    const created = events.filter((x) => x.kind === 'new').map((x) => x.arb);
+    const byMarket = new Map(created.map((a) => [a.market, a]));
+    // 1X2: domácí přes AH −0.5 (2.35) + X 3.6 + 2 3.9 → 1/2.35+1/3.6+1/3.9 = 0.96
+    expect(byMarket.get('1X2|REG')!.legs.map((l) => `${l.selection}:${l.market}`)).toEqual(['HOME:AH|REG|-0.5', 'DRAW:1X2|REG', 'AWAY:1X2|REG']);
+    // bez remízy: DNB hosté 2.9 u tipsportu + AH 0 domácí 1.72 u fortuny → 1/1.72+1/2.9 = 0.926
+    expect(byMarket.get('DNB|REG')!.legs.map((l) => `${l.selection}:${l.bookmaker}:${l.market}`)).toEqual(['HOME:fortuna:AH|REG|0', 'AWAY:tipsport:DNB|REG']);
+    // AH −0.5 samotný se nevyhodnocuje zvlášť (pokrývá ho 1 vs. X2) – žádný duplicitní arb pod AH klíčem
+    expect(created.some((a) => a.market.startsWith('AH|'))).toBe(false);
+  });
+
   it('does not duplicate an arb when equal odds flip between bookmakers', () => {
     const e = engine();
     e.applyDiff(diff('tipsport', { 1: state({ HOME: 2.2, AWAY: 1.7 }) }, [ev()]));

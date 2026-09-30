@@ -33,6 +33,11 @@ export const PAUSE_EXPECTED_SEC: Record<PauseType, number> = {
   hockey_intermission: 17 * 60,
   tennis_set_break: 120,
   basketball_quarter: 120,
+  handball_ht: 10 * 60,
+  volleyball_set_break: 3 * 60,
+  american_football_ht: 13 * 60,
+  american_football_quarter: 120,
+  other_break: 120,
 };
 
 /**
@@ -45,6 +50,15 @@ export const PAUSE_FALLBACK_SEC: Record<Sport, number> = {
   hockey: 45,
   basketball: 45,
   tennis: 30,
+  handball: 45,
+  volleyball: 30,
+  baseball: 60,
+  american_football: 60,
+  mma: 60,
+  boxing: 60,
+  darts: 60,
+  snooker: 60,
+  table_tennis: 30,
 };
 
 /** Délky period (s) pro určení „konce periody“ ve fallbacku. */
@@ -53,6 +67,15 @@ export const PERIOD_LENGTH_SEC: Record<Sport, number | null> = {
   hockey: 20 * 60,
   basketball: 10 * 60, // FIBA; NBA 12 min – rozpoznává se podle soutěže
   tennis: null,
+  handball: 30 * 60,
+  volleyball: null,
+  baseball: null,
+  american_football: 15 * 60,
+  mma: null,
+  boxing: null,
+  darts: null,
+  snooker: null,
+  table_tennis: null,
 };
 
 export const MODE_COLORS: Record<Mode, string> = {

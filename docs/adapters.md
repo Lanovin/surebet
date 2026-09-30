@@ -56,6 +56,34 @@ Priorita trhů: `1X2|REG` (fotbal, hokej), `ML|MATCH` (tenis, basket, hokej), `O
 potom periody (`H1`, `P1`, `S1`, `Q1`) a totaly/handicapy setů. Víc trhů = víc arbů, ale přesnost je
 přednější.
 
+## Dvojtip a ekvivalentní trhy
+
+* `DC|scope` = dvojtip, výběry `HOME_DRAW` (1X), `HOME_AWAY` (12), `DRAW_AWAY` (X2). Jen pro rozsahy, které
+  můžou skončit remízou (`REG`, `H1`, `H2`, `P1–P3`, `Q1–Q4`). Sám o sobě arb netvoří – detektor ho kombinuje
+  s 1X2 a s asijským handicapem ±0.5 (`src/core/groups.ts`: 1 vs. X2, 2 vs. 1X, X vs. 12).
+* Asijský handicap `0` a `±0.5` mapuj normálně jako `AH` – detektor ví, že AH 0 = DNB a AH −0.5 domácích = „1“,
+  u hokeje/basketu/házené vč. prodloužení AH ±0.5 = vítěz (`ML|MATCH`).
+
+## Další sporty – konvence
+
+Jednotka OU/AH: házená góly, volejbal/americký fotbal/stolní tenis body, baseball běhy, šipky legy,
+snooker framy. Sporty jednotlivců (tenis, stolní tenis, šipky, snooker, MMA, box) párují jména hráčů.
+
+| sport | trhy | pozor |
+|---|---|---|
+| házená `handball` | `1X2|REG` (60 min), `DNB`, `DC`, `OU|REG`, `AH|REG`, `OE`, poločasy `H1/H2`; `ML|MATCH` jen výslovně vč. prodloužení a 7m | vyřazovací zápasy mají prodloužení – bez něj je to `REG` |
+| volejbal `volleyball` | `ML|MATCH`, `AH_SETS|MATCH`, `OU_SETS|MATCH`, `OU|MATCH` (body celkem), `AH|MATCH` (body), sety `ML|Sn`, `OU|Sn`, `AH|Sn` | remíza neexistuje; zlatý set / „2 sety do“ formát vynech |
+| baseball `baseball` | `ML|MATCH`, `AH|MATCH` (run line), `OU|MATCH` – vše vč. extra směn; `1X2|REG` = 9 směn | trhy „jen s nadhazovači“ (void při změně nadhazovače) vynech; první 3/5 směn vynech |
+| americký fotbal `american_football` | `ML|MATCH`, `AH|MATCH`, `OU|MATCH` vč. prodloužení; `1X2|REG`; `H1/H2`, `Q1–Q4` | NFL může skončit remízou i po prodloužení – `ML` jen když sázkovka při remíze vrací vklad; jinak vynech |
+| MMA `mma`, box `boxing` | `1X2|REG` = výsledek vč. remízy, `DNB|REG` = vítěz s vrácením vkladu při remíze | `ML` nepoužívej (remíza je možná); totaly kol a způsob výhry vynech |
+| šipky `darts` | `ML|MATCH` (turnajové zápasy bez remízy), `1X2|REG` kde remíza jde; `AH/OU|MATCH` jen na **legy**, na sety `AH_SETS/OU_SETS` | nemíchej handicap na legy a na sety |
+| snooker `snooker` | `ML|MATCH`, `AH|MATCH` a `OU|MATCH` na framy | |
+| stolní tenis `table_tennis` | `ML|MATCH`, `AH_SETS|MATCH`, `OU_SETS|MATCH`, `OU|MATCH` / `AH|MATCH` na body, sety `ML|Sn`, `OU|Sn` | |
+
+U jednotlivců (tenis, stolní tenis, šipky, snooker) se liší pravidla při skreči/nenastoupení – trh, u kterého
+sázkovka výslovně uvádí nestandardní pravidlo (např. vyhodnocení i při nedohraném zápase), popiš v docs.
+E-sporty a virtuální/simulované zápasy dál vynech.
+
 ## Události a herní stav
 
 * `sourceId` = stabilní ID události u sázkovky, `startTime` epoch ms, `live` = právě se hraje.
@@ -64,8 +92,9 @@ přednější.
   „Přestávka“, „2. třetina“), `period`, `breakFlag` (feed výslovně hlásí přestávku), `clockSec`
   (uplynulý čas od začátku zápasu), `periodRemainingSec`, `clockRunning`, `score`, `periodScores`,
   `games`/`points` (tenis), `finished`. Na tomhle stojí detekce režimu PAUSED.
-* Sporty: `football`, `tennis`, `basketball`, `hockey` (lední hokej). Ostatní sporty zahoď
-  (e-sporty, virtuální/simulované zápasy, speciály).
+* Sporty: `SPORTS` v `src/core/types.ts` (fotbal, tenis, basket, lední hokej, házená, volejbal, baseball,
+  americký fotbal, MMA, box, šipky, snooker, stolní tenis). Runner posílá v `req.sports` všechny – adaptér
+  vrací jen ty, které umí. E-sporty, virtuální/simulované zápasy a speciály zahoď.
 
 ## Chování vůči sázkovce
 

@@ -70,8 +70,13 @@ export interface OddsDiffMessage {
 
 export interface ArbLegDTO {
   bookmaker: BookmakerId;
+  /** výsledek arbu (výběr trhu/skupiny arbu) */
   selection: SelectionKey;
   selectionLabel: string;
+  /** trh, který se u sázkovky skutečně sází (u arbů napříč trhy se liší od trhu arbu) */
+  market: string;
+  marketSelection: SelectionKey;
+  marketLabel: string;
   odds: number;
   effOdds: number;
   stake: number;

@@ -7,7 +7,7 @@ import { isVirtualName, MarketCollector, uofDef, uofMarketKey, uofSelection, val
 
 /** betx SportId -> kanonický sport. */
 export const BETX_SPORTS: Record<number, Sport> = { 388: 'football', 389: 'tennis', 391: 'basketball', 398: 'hockey' };
-export const SPORT_IDS: Record<Sport, number> = { football: 388, tennis: 389, basketball: 391, hockey: 398 };
+export const SPORT_IDS: Partial<Record<Sport, number>> = { football: 388, tennis: 389, basketball: 391, hockey: 398 };
 /** betx SportId -> Sportradar sport (jen pro složení UofKey z push dat). */
 const SR_SPORT: Record<number, number> = { 388: 1, 389: 5, 391: 2, 398: 4 };
 

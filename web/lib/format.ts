@@ -1,11 +1,21 @@
-import type { BookmakerId, MarketType, Mode, SelectionKey, Sport } from '@core/types';
+import type { BookmakerId, Mode, SelectionKey, Sport } from '@core/types';
 import { BOOKMAKER_INFO } from '@config/bookmakers';
+import { parseMarketKey, swapSelection } from '@core/markets';
 
 export const SPORT_LABEL: Record<Sport, string> = {
   football: 'Fotbal',
   tennis: 'Tenis',
   basketball: 'Basket',
   hockey: 'Hokej',
+  handball: 'Házená',
+  volleyball: 'Volejbal',
+  baseball: 'Baseball',
+  american_football: 'Am. fotbal',
+  mma: 'MMA',
+  boxing: 'Box',
+  darts: 'Šipky',
+  snooker: 'Snooker',
+  table_tennis: 'Stolní tenis',
 };
 
 export const MODE_LABEL: Record<Mode, string> = { PREMATCH: 'PREMATCH', PAUSED: 'PAUSED', LIVE: 'LIVE' };
@@ -16,6 +26,11 @@ export const PAUSE_LABEL: Record<string, string> = {
   basketball_quarter: 'mezi čtvrtinami',
   hockey_intermission: 'přestávka mezi třetinami',
   tennis_set_break: 'mezi sety',
+  handball_ht: 'poločas',
+  volleyball_set_break: 'mezi sety',
+  american_football_ht: 'poločas',
+  american_football_quarter: 'mezi čtvrtinami',
+  other_break: 'přestávka',
 };
 
 export function bkName(bk: BookmakerId | string): string {
@@ -81,28 +96,34 @@ function signed(x: number): string {
 }
 
 /**
- * Co přesně vsadit: srozumitelný popis výběru (týmy, linie) a jak se výběr jmenuje u sázkovky,
- * která má týmy v opačném pořadí (swapped) – tam je kanonický „domácí“ uvedený jako druhý.
+ * Co přesně vsadit: srozumitelný popis výběru (týmy, linie) v trhu, který se u sázkovky skutečně sází
+ * (u arbů napříč trhy se liší od trhu arbu – např. výsledek „X2“ vsazený jako asijský handicap hostů +0.5),
+ * a jak se výběr jmenuje u sázkovky s týmy v opačném pořadí (swapped).
  */
-export function describeLeg(
-  a: { marketType: MarketType; line: number | null; home: string; away: string },
-  sel: SelectionKey,
-  swapped: boolean,
-): { title: string; atBook?: string } {
-  const line = a.line ?? 0;
+export function describeLeg(market: string, sel: SelectionKey, a: { home: string; away: string }, swapped: boolean): { title: string; atBook?: string } {
+  const p = parseMarketKey(market);
+  const line = p.line ?? 0;
   const team = sel === 'HOME' ? a.home : a.away;
-  const pos = (s: SelectionKey) => (s === 'HOME' ? (swapped ? '2' : '1') : swapped ? '1' : '2');
-  const at = swapped && (sel === 'HOME' || sel === 'AWAY') ? `u sázkovky jako „${pos(sel)}“ – týmy má v opačném pořadí` : undefined;
-  switch (a.marketType) {
+  const flip = (s: SelectionKey) => (swapped ? swapSelection(s) : s);
+  const code: Partial<Record<SelectionKey, string>> = { HOME: '1', AWAY: '2', HOME_DRAW: '1X', HOME_AWAY: '12', DRAW_AWAY: 'X2' };
+  const at = swapped && code[sel] && code[flip(sel)] !== code[sel] ? `u sázkovky jako „${code[flip(sel)]}“ – týmy má v opačném pořadí` : undefined;
+  switch (p.type) {
     case '1X2':
+    case 'H_DA':
+    case 'A_HD':
+    case 'D_HA':
       if (sel === 'DRAW') return { title: 'X · remíza' };
       return { title: `${sel === 'HOME' ? '1' : '2'} · ${team}`, atBook: at };
+    case 'DC':
+      if (sel === 'HOME_DRAW') return { title: `1X · ${a.home} nebo remíza (dvojtip)`, atBook: at };
+      if (sel === 'DRAW_AWAY') return { title: `X2 · remíza nebo ${a.away} (dvojtip)`, atBook: at };
+      return { title: `12 · bez remízy – vyhraje kdokoli (dvojtip)` };
     case 'ML':
       return { title: team, atBook: at };
     case 'DNB':
       return { title: `${team} (bez remízy)`, atBook: at };
     case 'AH':
-      return { title: `${team} ${signed(sel === 'HOME' ? line : -line)}`, atBook: at };
+      return { title: `${team} ${signed(sel === 'HOME' ? line : -line)} (handicap)`, atBook: at };
     case 'AH_SETS':
       return { title: `${team} ${signed(sel === 'HOME' ? line : -line)} setu`, atBook: at };
     case 'OU':

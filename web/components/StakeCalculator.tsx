@@ -12,6 +12,8 @@ export interface CalcLeg {
   key: string;
   /** co vsadit, např. „Více než 2.5“, „1 · Sparta Praha“ */
   title: string;
+  /** doplňující řádek (např. že se sází jiný, ekvivalentní trh) */
+  sub?: string;
   /** upozornění k výběru u sázkovky (prohozené pořadí týmů apod.) */
   hint?: string;
   bookmaker?: string;
@@ -117,6 +119,7 @@ export function StakeCalculator({ legs, total: total0, unit: unit0 }: { legs: Ca
                     {l.confirmedAgoMs != null && <span className="text-[11px] text-muted">kurz ověřen před {formatDuration(l.confirmedAgoMs)}</span>}
                   </div>
                   <div className="mt-0.5 font-medium">{l.title}</div>
+                  {l.sub && <div className="text-xs text-muted">{l.sub}</div>}
                   {l.hint && (
                     <div className="mt-0.5 flex items-center gap-1 text-xs" style={{ color: 'var(--warning)' }}>
                       <Icon name="swap" size={12} /> {l.hint}
