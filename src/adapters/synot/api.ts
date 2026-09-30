@@ -29,24 +29,38 @@ export const initBody = () => ({ Version: 'CZ-I', LanguageID: LANGUAGE_ID, AppTy
 /** WCF JSON datum. */
 export const wcfDate = (ms: number) => `/Date(${Math.round(ms)})/`;
 
-/** Prematch: všechny zápasy sportu s hlavním trhem (bez filtru GameIds). */
-export const mainBody = (token: string, sport: Sport) => ({
+/** Velikost stránky výpisu (`Top`); další stránka přes `Skip`, když `UnpaginatedEventCount` > Skip + Top. */
+export const PAGE_SIZE = 5000;
+
+/**
+ * CategoryID: kořenová kategorie sportu, nebo `null` = všechny sporty jedním požadavkem (web tak volá
+ * úvodní nabídku). Seznam kategorií (`"12,14"`) API nepodporuje – vrátí prázdnou odpověď.
+ */
+const categoryId = (sport: Sport | null) => (sport ? String(SPORT_IDS[sport]) : null);
+
+/** Prematch: všechny zápasy sportu (null = všech sportů) s hlavním trhem (bez filtru GameIds). */
+export const mainBody = (token: string, sport: Sport | null, skip = 0) => ({
   LanguageID: LANGUAGE_ID,
   Token: token,
-  CategoryID: String(SPORT_IDS[sport]),
-  Top: 5000,
+  CategoryID: categoryId(sport),
+  Top: PAGE_SIZE,
+  ...(skip ? { Skip: skip } : {}),
   IncludeLiveCategories: false,
 });
 
-/** Prematch: vybrané typy trhů (GameIds) pro zápasy začínající v okně [from, to]. */
-export const marketsBody = (token: string, sport: Sport, gameIds: number[], from: number, to: number) => ({
+/**
+ * Prematch: vybrané typy trhů (GameIds) pro zápasy začínající v okně [from, to]. Filtr GameIds platí
+ * pro všechny sporty požadavku najednou (ID typu trhu je číslo, jeho význam se ale liší podle sportu).
+ */
+export const marketsBody = (token: string, sport: Sport | null, gameIds: number[], from: number, to: number, skip = 0) => ({
   LanguageID: LANGUAGE_ID,
   Token: token,
-  CategoryID: String(SPORT_IDS[sport]),
+  CategoryID: categoryId(sport),
   GameIds: gameIds,
   From: wcfDate(from),
   To: wcfDate(to),
-  Top: 5000,
+  Top: PAGE_SIZE,
+  ...(skip ? { Skip: skip } : {}),
   IncludeLiveCategories: false,
 });
 

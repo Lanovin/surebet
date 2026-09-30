@@ -1,0 +1,1588 @@
+{
+ "Result": 1,
+ "Token": "00000000000000000000000000000000",
+ "ReturnValue": [
+  {
+   "DisciplineID": 23,
+   "Events": [
+    {
+     "CanCustomBet": false,
+     "DisciplineID": 23,
+     "CatIds": [
+      221,
+      5228
+     ],
+     "DetailsCount": 3,
+     "ActiveCompetitor": 1,
+     "MatchTracker": {
+      "Id": "72066036"
+     },
+     "Results": [
+      {
+       "ID": 1,
+       "Name": "Zápas",
+       "Score": "0:1",
+       "MainResult": true,
+       "IconID": 0
+      },
+      {
+       "ID": 9,
+       "Name": "1. set",
+       "Score": "17:25",
+       "ImportantResult": true,
+       "Flags": 64,
+       "IconID": 0
+      },
+      {
+       "ID": 10,
+       "Name": "2. set",
+       "Score": "19:23",
+       "ImportantResult": true,
+       "Flags": 64,
+       "IconID": 0
+      }
+     ],
+     "State": 2,
+     "StateName": "2. set",
+     "ClockStopped": false,
+     "SportExtId": "sr:sport:23",
+     "RegionExtId": "sr:category:373",
+     "TournamentExtId": "sr:simple_tournament:60521",
+     "ID": 3704720,
+     "Name": "Bebedouro U21 - Volei Mania Itaqua U21",
+     "Date": "2026-09-30T23:45:00+02:00",
+     "GameGroups": [
+      {
+       "ID": 70,
+       "Name": "Hlavní sázky",
+       "Games": [
+        {
+         "ID": "178d463123900",
+         "Name": "Vítěz zápasu",
+         "Details": [
+          {
+           "ID": 463123900,
+           "OddsList": [
+            {
+             "TipID": "1015421822",
+             "Name": "1",
+             "Rate": 8.85,
+             "State": 2
+            },
+            {
+             "TipID": "1015421823",
+             "Name": "2",
+             "Rate": 0,
+             "State": 3
+            }
+           ],
+           "State": 2,
+           "LineNumber": 694341
+          }
+         ],
+         "State": 2,
+         "IsDetails": false,
+         "Sequence": 0,
+         "Initial": true,
+         "SelectionVisualisationFlags": 2
+        }
+       ],
+       "Sequence": 1
+      },
+      {
+       "ID": 71,
+       "Name": "Set",
+       "Games": [
+        {
+         "ID": "221d463124556",
+         "Name": "2. set - Vítěz",
+         "Details": [
+          {
+           "ID": 463124556,
+           "OddsList": [
+            {
+             "TipID": "1015423126",
+             "Name": "1",
+             "Rate": 9.08,
+             "State": 2
+            },
+            {
+             "TipID": "1015423127",
+             "Name": "2",
+             "Rate": 0,
+             "State": 3
+            }
+           ],
+           "State": 2,
+           "LineNumber": 699282
+          }
+         ],
+         "State": 2,
+         "IsDetails": false,
+         "Sequence": 0,
+         "Initial": false,
+         "SelectionVisualisationFlags": 1
+        }
+       ],
+       "Sequence": 4
+      }
+     ],
+     "CategoryPath": "Brazílie / Paulista, U21",
+     "ExternalID": "72066036",
+     "Sequence": 18005229
+    },
+    {
+     "CanCustomBet": false,
+     "DisciplineID": 23,
+     "CatIds": [
+      221,
+      19518
+     ],
+     "DetailsCount": 11,
+     "ActiveCompetitor": 1,
+     "MatchTracker": {
+      "Id": "73266126"
+     },
+     "Results": [
+      {
+       "ID": 1,
+       "Name": "Zápas",
+       "Score": "0:1",
+       "MainResult": true,
+       "IconID": 0
+      },
+      {
+       "ID": 9,
+       "Name": "1. set",
+       "Score": "16:25",
+       "ImportantResult": true,
+       "Flags": 64,
+       "IconID": 0
+      },
+      {
+       "ID": 10,
+       "Name": "2. set",
+       "Score": "7:8",
+       "ImportantResult": true,
+       "Flags": 64,
+       "IconID": 0
+      }
+     ],
+     "State": 2,
+     "StateName": "2. set",
+     "ClockStopped": false,
+     "Stats": {
+      "Id": "73266126"
+     },
+     "SportExtId": "sr:sport:23",
+     "RegionExtId": "sr:category:373",
+     "TournamentExtId": "sr:tournament:48307",
+     "ID": 3810602,
+     "Name": "Renasce Voleibol Sorocaba - Sao Caetano",
+     "Date": "2026-09-30T23:55:00+02:00",
+     "GameGroups": [
+      {
+       "ID": 70,
+       "Name": "Hlavní sázky",
+       "Games": [
+        {
+         "ID": "178d462838265",
+         "Name": "Vítěz zápasu",
+         "Details": [
+          {
+           "ID": 462838265,
+           "OddsList": [
+            {
+             "TipID": "1014822555",
+             "Name": "1",
+             "Rate": 4.26,
+             "State": 2
+            },
+            {
+             "TipID": "1014822556",
+             "Name": "2",
+             "Rate": 1.16,
+             "State": 2
+            }
+           ],
+           "State": 2,
+           "LineNumber": 296497
+          }
+         ],
+         "State": 2,
+         "IsDetails": false,
+         "Sequence": 0,
+         "Initial": true,
+         "SelectionVisualisationFlags": 2
+        }
+       ],
+       "Sequence": 1
+      },
+      {
+       "ID": 71,
+       "Name": "Set",
+       "Games": [
+        {
+         "ID": "221d463127317",
+         "Name": "2. set - Vítěz",
+         "Details": [
+          {
+           "ID": 463127317,
+           "OddsList": [
+            {
+             "TipID": "1015428687",
+             "Name": "1",
+             "Rate": 2.73,
+             "State": 2
+            },
+            {
+             "TipID": "1015428688",
+             "Name": "2",
+             "Rate": 1.36,
+             "State": 2
+            }
+           ],
+           "State": 2,
+           "LineNumber": 919503
+          }
+         ],
+         "State": 2,
+         "IsDetails": false,
+         "Sequence": 0,
+         "Initial": false,
+         "SelectionVisualisationFlags": 1
+        }
+       ],
+       "Sequence": 4
+      }
+     ],
+     "CategoryPath": "Brazílie / Paulista, ženy",
+     "ExternalID": "73266126",
+     "Sequence": 18019519
+    },
+    {
+     "CanCustomBet": false,
+     "DisciplineID": 23,
+     "CatIds": [
+      402,
+      16549
+     ],
+     "DetailsCount": 6,
+     "ActiveCompetitor": 2,
+     "MatchTracker": {
+      "Id": "73907718"
+     },
+     "Results": [
+      {
+       "ID": 1,
+       "Name": "Zápas",
+       "Score": "0:0",
+       "MainResult": true,
+       "IconID": 0
+      },
+      {
+       "ID": 9,
+       "Name": "1. set",
+       "Score": "13:20",
+       "ImportantResult": true,
+       "Flags": 64,
+       "IconID": 0
+      }
+     ],
+     "State": 2,
+     "StateName": "1. set",
+     "ClockStopped": false,
+     "Stats": {
+      "Id": "73907718"
+     },
+     "SportExtId": "sr:sport:23",
+     "RegionExtId": "sr:category:814",
+     "TournamentExtId": "sr:tournament:43847",
+     "ID": 3853061,
+     "Name": "Hampton Pirates - Norfolk State Spartans",
+     "Date": "2026-10-01T00:00:00+02:00",
+     "GameGroups": [
+      {
+       "ID": 70,
+       "Name": "Hlavní sázky",
+       "Games": [
+        {
+         "ID": "178d463121486",
+         "Name": "Vítěz zápasu",
+         "Details": [
+          {
+           "ID": 463121486,
+           "OddsList": [
+            {
+             "TipID": "1015416951",
+             "Name": "1",
+             "Rate": 2.47,
+             "State": 2
+            },
+            {
+             "TipID": "1015416952",
+             "Name": "2",
+             "Rate": 1.42,
+             "State": 2
+            }
+           ],
+           "State": 2,
+           "LineNumber": 686667
+          }
+         ],
+         "State": 2,
+         "IsDetails": false,
+         "Sequence": 0,
+         "Initial": true,
+         "SelectionVisualisationFlags": 2
+        }
+       ],
+       "Sequence": 1
+      },
+      {
+       "ID": 71,
+       "Name": "Set",
+       "Games": [
+        {
+         "ID": "221d463121487",
+         "Name": "1. set - Vítěz",
+         "Details": [
+          {
+           "ID": 463121487,
+           "OddsList": [
+            {
+             "TipID": "1015416953",
+             "Name": "1",
+             "Rate": 8.61,
+             "State": 2
+            },
+            {
+             "TipID": "1015416954",
+             "Name": "2",
+             "Rate": 0,
+             "State": 3
+            }
+           ],
+           "State": 2,
+           "LineNumber": 686668
+          }
+         ],
+         "State": 2,
+         "IsDetails": false,
+         "Sequence": 0,
+         "Initial": false,
+         "SelectionVisualisationFlags": 1
+        }
+       ],
+       "Sequence": 4
+      }
+     ],
+     "CategoryPath": "USA / NCAA, ženy",
+     "ExternalID": "73907718",
+     "Sequence": 87016550
+    },
+    {
+     "CanCustomBet": false,
+     "DisciplineID": 23,
+     "CatIds": [
+      221,
+      5228
+     ],
+     "DetailsCount": 6,
+     "ActiveCompetitor": 2,
+     "MatchTracker": {
+      "Id": "72066036"
+     },
+     "Results": [
+      {
+       "ID": 1,
+       "Name": "Zápas",
+       "Score": "0:2",
+       "MainResult": true,
+       "IconID": 0
+      },
+      {
+       "ID": 9,
+       "Name": "1. set",
+       "Score": "17:25",
+       "ImportantResult": true,
+       "Flags": 64,
+       "IconID": 0
+      },
+      {
+       "ID": 10,
+       "Name": "2. set",
+       "Score": "19:25",
+       "ImportantResult": true,
+       "Flags": 64,
+       "IconID": 0
+      }
+     ],
+     "State": 2,
+     "StateName": "Přestávka",
+     "ClockStopped": false,
+     "SportExtId": "sr:sport:23",
+     "RegionExtId": "sr:category:373",
+     "TournamentExtId": "sr:simple_tournament:60521",
+     "ID": 3804720,
+     "Name": "Bebedouro U21 - Volei Mania Itaqua U21",
+     "Date": "2026-09-30T23:45:00+02:00",
+     "GameGroups": [
+      {
+       "ID": 70,
+       "Name": "Hlavní sázky",
+       "Games": [
+        {
+         "ID": "178d463123900",
+         "Name": "Vítěz zápasu",
+         "Details": [
+          {
+           "ID": 463123900,
+           "OddsList": [
+            {
+             "TipID": "1015421822",
+             "Name": "1",
+             "Rate": 8.93,
+             "State": 2
+            },
+            {
+             "TipID": "1015421823",
+             "Name": "2",
+             "Rate": 0,
+             "State": 3
+            }
+           ],
+           "State": 2,
+           "LineNumber": 694341
+          }
+         ],
+         "State": 2,
+         "IsDetails": false,
+         "Sequence": 0,
+         "Initial": true,
+         "SelectionVisualisationFlags": 2
+        }
+       ],
+       "Sequence": 1
+      },
+      {
+       "ID": 71,
+       "Name": "Set",
+       "Games": [
+        {
+         "ID": "221d463129105",
+         "Name": "3. set - Vítěz",
+         "Details": [
+          {
+           "ID": 463129105,
+           "OddsList": [
+            {
+             "TipID": "1015432884",
+             "Name": "1",
+             "Rate": 4.62,
+             "State": 2
+            },
+            {
+             "TipID": "1015432885",
+             "Name": "2",
+             "Rate": 1.12,
+             "State": 2
+            }
+           ],
+           "State": 2,
+           "LineNumber": 921537
+          }
+         ],
+         "State": 2,
+         "IsDetails": false,
+         "Sequence": 0,
+         "Initial": false,
+         "SelectionVisualisationFlags": 1
+        }
+       ],
+       "Sequence": 4
+      }
+     ],
+     "CategoryPath": "Brazílie / Paulista, U21",
+     "ExternalID": "72066036",
+     "Sequence": 18005229
+    }
+   ]
+  },
+  {
+   "DisciplineID": 20,
+   "Events": [
+    {
+     "CanCustomBet": false,
+     "DisciplineID": 20,
+     "CatIds": [
+      43,
+      8379
+     ],
+     "DetailsCount": 0,
+     "ActiveCompetitor": 1,
+     "MatchTracker": {
+      "Id": "75139020"
+     },
+     "Results": [
+      {
+       "ID": 1,
+       "Name": "Zápas",
+       "Score": "3:0",
+       "MainResult": true,
+       "IconID": 0
+      },
+      {
+       "ID": 9,
+       "Name": "1. set",
+       "Score": "11:4",
+       "ImportantResult": true,
+       "Flags": 64,
+       "IconID": 0
+      },
+      {
+       "ID": 10,
+       "Name": "2. set",
+       "Score": "12:10",
+       "ImportantResult": true,
+       "Flags": 64,
+       "IconID": 0
+      },
+      {
+       "ID": 11,
+       "Name": "3. set",
+       "Score": "14:12",
+       "ImportantResult": true,
+       "Flags": 64,
+       "IconID": 0
+      }
+     ],
+     "State": 3,
+     "StateName": "Ukončeno",
+     "ClockStopped": false,
+     "SportExtId": "sr:sport:20",
+     "RegionExtId": "sr:category:88",
+     "TournamentExtId": "sr:tournament:36377",
+     "ID": 3856292,
+     "Name": "Tkaczyk, Henryk - Lewczuk, Miroslaw",
+     "Date": "2026-10-01T00:10:00+02:00",
+     "GameGroups": [],
+     "CategoryPath": "Mezinárodní / TT Elite Series",
+     "ExternalID": "75139020",
+     "Sequence": 541
+    },
+    {
+     "CanCustomBet": false,
+     "DisciplineID": 20,
+     "CatIds": [
+      43,
+      8379
+     ],
+     "DetailsCount": 10,
+     "ActiveCompetitor": 2,
+     "MatchTracker": {
+      "Id": "75139026"
+     },
+     "Results": [
+      {
+       "ID": 1,
+       "Name": "Zápas",
+       "Score": "1:0",
+       "MainResult": true,
+       "IconID": 0
+      },
+      {
+       "ID": 9,
+       "Name": "1. set",
+       "Score": "11:6",
+       "ImportantResult": true,
+       "Flags": 64,
+       "IconID": 0
+      },
+      {
+       "ID": 10,
+       "Name": "2. set",
+       "Score": "10:9",
+       "ImportantResult": true,
+       "Flags": 64,
+       "IconID": 0
+      }
+     ],
+     "State": 2,
+     "StateName": "2. set",
+     "ClockStopped": false,
+     "SportExtId": "sr:sport:20",
+     "RegionExtId": "sr:category:88",
+     "TournamentExtId": "sr:tournament:36377",
+     "ID": 3856320,
+     "Name": "Kurek, Pawel - Oracz, Lukasz",
+     "Date": "2026-10-01T00:25:00+02:00",
+     "GameGroups": [
+      {
+       "ID": 63,
+       "Name": "Hlavní sázky",
+       "Games": [
+        {
+         "ID": "178d463090558",
+         "Name": "Vítěz zápasu",
+         "Details": [
+          {
+           "ID": 463090558,
+           "OddsList": [
+            {
+             "TipID": "1015351187",
+             "Name": "1",
+             "Rate": 1.24,
+             "State": 2
+            },
+            {
+             "TipID": "1015351188",
+             "Name": "2",
+             "Rate": 3.38,
+             "State": 2
+            }
+           ],
+           "State": 2,
+           "LineNumber": 668409
+          }
+         ],
+         "State": 2,
+         "IsDetails": false,
+         "Sequence": 0,
+         "Initial": true,
+         "SelectionVisualisationFlags": 2
+        }
+       ],
+       "Sequence": 1
+      },
+      {
+       "ID": 65,
+       "Name": "Počet bodů",
+       "Games": [
+        {
+         "ID": "269",
+         "Name": "Celkový počet bodů",
+         "Details": [
+          {
+           "ID": 463090255,
+           "OddsList": [
+            {
+             "TipID": "1015350229",
+             "Name": "Pod (74.5)",
+             "Rate": 1.93,
+             "State": 2
+            },
+            {
+             "TipID": "1015350228",
+             "Name": "Nad (74.5)",
+             "Rate": 1.75,
+             "State": 2
+            }
+           ],
+           "State": 2,
+           "LineNumber": 637301
+          }
+         ],
+         "State": 2,
+         "IsDetails": false,
+         "Sequence": 0,
+         "Initial": false,
+         "SelectionVisualisationFlags": 1
+        }
+       ],
+       "Sequence": 2
+      },
+      {
+       "ID": 62,
+       "Name": "Handicap",
+       "Games": [
+        {
+         "ID": "209",
+         "Name": "Sety - Handicap",
+         "Details": [
+          {
+           "ID": 463127947,
+           "OddsList": [
+            {
+             "TipID": "1015429960",
+             "Name": "Tým 1 (-2.5)",
+             "Rate": 2.54,
+             "State": 2
+            },
+            {
+             "TipID": "1015429961",
+             "Name": "Tým 2 (+2.5)",
+             "Rate": 1.42,
+             "State": 2
+            }
+           ],
+           "State": 2,
+           "LineNumber": 920197
+          }
+         ],
+         "State": 2,
+         "IsDetails": false,
+         "Sequence": 0,
+         "Initial": false,
+         "SelectionVisualisationFlags": 1
+        }
+       ],
+       "Sequence": 3
+      }
+     ],
+     "CategoryPath": "Mezinárodní / TT Elite Series",
+     "ExternalID": "75139026",
+     "Sequence": 541
+    },
+    {
+     "CanCustomBet": false,
+     "DisciplineID": 20,
+     "CatIds": [
+      43,
+      49
+     ],
+     "DetailsCount": 10,
+     "ActiveCompetitor": 2,
+     "MatchTracker": {
+      "Id": "75180694"
+     },
+     "Results": [
+      {
+       "ID": 1,
+       "Name": "Zápas",
+       "Score": "0:0",
+       "MainResult": true,
+       "IconID": 0
+      },
+      {
+       "ID": 9,
+       "Name": "1. set",
+       "Score": "6:9",
+       "ImportantResult": true,
+       "Flags": 64,
+       "IconID": 0
+      }
+     ],
+     "State": 2,
+     "StateName": "1. set",
+     "ClockStopped": false,
+     "SportExtId": "sr:sport:20",
+     "RegionExtId": "sr:category:88",
+     "TournamentExtId": "sr:tournament:32129",
+     "ID": 3860406,
+     "Name": "Kedzierski, Piotr - Buklat, Lukasz",
+     "Date": "2026-10-01T00:30:00+02:00",
+     "GameGroups": [
+      {
+       "ID": 63,
+       "Name": "Hlavní sázky",
+       "Games": [
+        {
+         "ID": "178d463119374",
+         "Name": "Vítěz zápasu",
+         "Details": [
+          {
+           "ID": 463119374,
+           "OddsList": [
+            {
+             "TipID": "1015412778",
+             "Name": "1",
+             "Rate": 4.14,
+             "State": 2
+            },
+            {
+             "TipID": "1015412779",
+             "Name": "2",
+             "Rate": 1.15,
+             "State": 2
+            }
+           ],
+           "State": 2,
+           "LineNumber": 681054
+          }
+         ],
+         "State": 2,
+         "IsDetails": false,
+         "Sequence": 0,
+         "Initial": true,
+         "SelectionVisualisationFlags": 2
+        }
+       ],
+       "Sequence": 1
+      },
+      {
+       "ID": 65,
+       "Name": "Počet bodů",
+       "Games": [
+        {
+         "ID": "269",
+         "Name": "Celkový počet bodů",
+         "Details": [
+          {
+           "ID": 463128988,
+           "OddsList": [
+            {
+             "TipID": "1015432683",
+             "Name": "Pod (71.5)",
+             "Rate": 1.84,
+             "State": 2
+            },
+            {
+             "TipID": "1015432682",
+             "Name": "Nad (71.5)",
+             "Rate": 1.76,
+             "State": 2
+            }
+           ],
+           "State": 2,
+           "LineNumber": 921411
+          }
+         ],
+         "State": 2,
+         "IsDetails": false,
+         "Sequence": 0,
+         "Initial": false,
+         "SelectionVisualisationFlags": 1
+        }
+       ],
+       "Sequence": 2
+      },
+      {
+       "ID": 62,
+       "Name": "Handicap",
+       "Games": [
+        {
+         "ID": "268",
+         "Name": "Body - Handicap",
+         "Details": [
+          {
+           "ID": 463128481,
+           "OddsList": [
+            {
+             "TipID": "1015431029",
+             "Name": "Tým 1 (+7.5)",
+             "Rate": 2.02,
+             "State": 2
+            },
+            {
+             "TipID": "1015431030",
+             "Name": "Tým 2 (-7.5)",
+             "Rate": 1.62,
+             "State": 2
+            }
+           ],
+           "State": 2,
+           "LineNumber": 920903
+          }
+         ],
+         "State": 2,
+         "IsDetails": false,
+         "Sequence": 0,
+         "Initial": false,
+         "SelectionVisualisationFlags": 1
+        }
+       ],
+       "Sequence": 3
+      }
+     ],
+     "CategoryPath": "Mezinárodní / TT Cup",
+     "ExternalID": "75180694",
+     "Sequence": 542
+    },
+    {
+     "CanCustomBet": false,
+     "DisciplineID": 20,
+     "CatIds": [
+      43,
+      49
+     ],
+     "DetailsCount": 17,
+     "MatchTracker": {
+      "Id": "75181132"
+     },
+     "Results": [
+      {
+       "ID": 1,
+       "Name": "Zápas",
+       "Score": "0:0",
+       "MainResult": true,
+       "IconID": 0
+      }
+     ],
+     "State": 2,
+     "StateName": "Nezačalo",
+     "ClockStopped": false,
+     "SportExtId": "sr:sport:20",
+     "RegionExtId": "sr:category:88",
+     "TournamentExtId": "sr:tournament:32129",
+     "ID": 3860445,
+     "Name": "Kulisek, Marek - Sulc, Martin",
+     "Date": "2026-10-01T00:35:00+02:00",
+     "GameGroups": [
+      {
+       "ID": 63,
+       "Name": "Hlavní sázky",
+       "Games": [
+        {
+         "ID": "178d463125555",
+         "Name": "Vítěz zápasu",
+         "Details": [
+          {
+           "ID": 463125555,
+           "OddsList": [
+            {
+             "TipID": "1015424950",
+             "Name": "1",
+             "Rate": 1.56,
+             "State": 2
+            },
+            {
+             "TipID": "1015424951",
+             "Name": "2",
+             "Rate": 2.14,
+             "State": 2
+            }
+           ],
+           "State": 2,
+           "LineNumber": 726596
+          }
+         ],
+         "State": 2,
+         "IsDetails": false,
+         "Sequence": 0,
+         "Initial": true,
+         "SelectionVisualisationFlags": 2
+        }
+       ],
+       "Sequence": 1
+      },
+      {
+       "ID": 65,
+       "Name": "Počet bodů",
+       "Games": [
+        {
+         "ID": "269",
+         "Name": "Celkový počet bodů",
+         "Details": [
+          {
+           "ID": 463128152,
+           "OddsList": [
+            {
+             "TipID": "1015430379",
+             "Name": "Pod (74.5)",
+             "Rate": 1.87,
+             "State": 2
+            },
+            {
+             "TipID": "1015430378",
+             "Name": "Nad (74.5)",
+             "Rate": 1.74,
+             "State": 2
+            }
+           ],
+           "State": 2,
+           "LineNumber": 920411
+          }
+         ],
+         "State": 2,
+         "IsDetails": false,
+         "Sequence": 0,
+         "Initial": false,
+         "SelectionVisualisationFlags": 1
+        }
+       ],
+       "Sequence": 2
+      },
+      {
+       "ID": 62,
+       "Name": "Handicap",
+       "Games": [
+        {
+         "ID": "268",
+         "Name": "Body - Handicap",
+         "Details": [
+          {
+           "ID": 463128151,
+           "OddsList": [
+            {
+             "TipID": "1015430362",
+             "Name": "Tým 1 (-4.5)",
+             "Rate": 1.93,
+             "State": 2
+            },
+            {
+             "TipID": "1015430363",
+             "Name": "Tým 2 (+4.5)",
+             "Rate": 1.69,
+             "State": 2
+            }
+           ],
+           "State": 2,
+           "LineNumber": 920410
+          }
+         ],
+         "State": 2,
+         "IsDetails": false,
+         "Sequence": 0,
+         "Initial": false,
+         "SelectionVisualisationFlags": 1
+        }
+       ],
+       "Sequence": 3
+      }
+     ],
+     "CategoryPath": "Mezinárodní / TT Cup",
+     "ExternalID": "75181132",
+     "Sequence": 542
+    },
+    {
+     "CanCustomBet": false,
+     "DisciplineID": 20,
+     "CatIds": [
+      43,
+      8379
+     ],
+     "DetailsCount": 25,
+     "ActiveCompetitor": 2,
+     "MatchTracker": {
+      "Id": "75139026"
+     },
+     "Results": [
+      {
+       "ID": 1,
+       "Name": "Zápas",
+       "Score": "2:0",
+       "MainResult": true,
+       "IconID": 0
+      },
+      {
+       "ID": 9,
+       "Name": "1. set",
+       "Score": "11:6",
+       "ImportantResult": true,
+       "Flags": 64,
+       "IconID": 0
+      },
+      {
+       "ID": 10,
+       "Name": "2. set",
+       "Score": "12:10",
+       "ImportantResult": true,
+       "Flags": 64,
+       "IconID": 0
+      }
+     ],
+     "State": 2,
+     "StateName": "Přestávka",
+     "ClockStopped": false,
+     "SportExtId": "sr:sport:20",
+     "RegionExtId": "sr:category:88",
+     "TournamentExtId": "sr:tournament:36377",
+     "ID": 3956320,
+     "Name": "Kurek, Pawel - Oracz, Lukasz",
+     "Date": "2026-10-01T00:25:00+02:00",
+     "GameGroups": [
+      {
+       "ID": 63,
+       "Name": "Hlavní sázky",
+       "Games": [
+        {
+         "ID": "178d463090558",
+         "Name": "Vítěz zápasu",
+         "Details": [
+          {
+           "ID": 463090558,
+           "OddsList": [
+            {
+             "TipID": "1015351187",
+             "Name": "1",
+             "Rate": 1.09,
+             "State": 2
+            },
+            {
+             "TipID": "1015351188",
+             "Name": "2",
+             "Rate": 5.39,
+             "State": 2
+            }
+           ],
+           "State": 2,
+           "LineNumber": 668409
+          }
+         ],
+         "State": 2,
+         "IsDetails": false,
+         "Sequence": 0,
+         "Initial": true,
+         "SelectionVisualisationFlags": 2
+        }
+       ],
+       "Sequence": 1
+      },
+      {
+       "ID": 65,
+       "Name": "Počet bodů",
+       "Games": [
+        {
+         "ID": "269",
+         "Name": "Celkový počet bodů",
+         "Details": [
+          {
+           "ID": 463129097,
+           "OddsList": [
+            {
+             "TipID": "1015432817",
+             "Name": "Pod (69.5)",
+             "Rate": 1.86,
+             "State": 2
+            },
+            {
+             "TipID": "1015432816",
+             "Name": "Nad (69.5)",
+             "Rate": 1.81,
+             "State": 2
+            }
+           ],
+           "State": 2,
+           "LineNumber": 921508
+          }
+         ],
+         "State": 2,
+         "IsDetails": false,
+         "Sequence": 0,
+         "Initial": false,
+         "SelectionVisualisationFlags": 1
+        }
+       ],
+       "Sequence": 2
+      },
+      {
+       "ID": 62,
+       "Name": "Handicap",
+       "Games": [
+        {
+         "ID": "209",
+         "Name": "Sety - Handicap",
+         "Details": [
+          {
+           "ID": 463127947,
+           "OddsList": [
+            {
+             "TipID": "1015429960",
+             "Name": "Tým 1 (-2.5)",
+             "Rate": 1.88,
+             "State": 2
+            },
+            {
+             "TipID": "1015429961",
+             "Name": "Tým 2 (+2.5)",
+             "Rate": 1.76,
+             "State": 2
+            }
+           ],
+           "State": 2,
+           "LineNumber": 920197
+          }
+         ],
+         "State": 2,
+         "IsDetails": false,
+         "Sequence": 0,
+         "Initial": false,
+         "SelectionVisualisationFlags": 1
+        }
+       ],
+       "Sequence": 3
+      }
+     ],
+     "CategoryPath": "Mezinárodní / TT Elite Series",
+     "ExternalID": "75139026",
+     "Sequence": 541
+    },
+    {
+     "CanCustomBet": false,
+     "DisciplineID": 20,
+     "CatIds": [
+      43,
+      49
+     ],
+     "DetailsCount": 0,
+     "ActiveCompetitor": 2,
+     "MatchTracker": {
+      "Id": "75180694"
+     },
+     "Results": [
+      {
+       "ID": 1,
+       "Name": "Zápas",
+       "Score": "0:1",
+       "MainResult": true,
+       "IconID": 0
+      },
+      {
+       "ID": 9,
+       "Name": "1. set",
+       "Score": "6:11",
+       "ImportantResult": true,
+       "Flags": 64,
+       "IconID": 0
+      }
+     ],
+     "State": 2,
+     "StateName": "Přestávka",
+     "ClockStopped": false,
+     "SportExtId": "sr:sport:20",
+     "RegionExtId": "sr:category:88",
+     "TournamentExtId": "sr:tournament:32129",
+     "ID": 3960406,
+     "Name": "Kedzierski, Piotr - Buklat, Lukasz",
+     "Date": "2026-10-01T00:30:00+02:00",
+     "GameGroups": [],
+     "CategoryPath": "Mezinárodní / TT Cup",
+     "ExternalID": "75180694",
+     "Sequence": 542
+    },
+    {
+     "CanCustomBet": false,
+     "DisciplineID": 20,
+     "CatIds": [
+      43,
+      8379
+     ],
+     "DetailsCount": 21,
+     "MatchTracker": {
+      "Id": "75139032"
+     },
+     "Results": [
+      {
+       "ID": 1,
+       "Name": "Zápas",
+       "Score": "0:0",
+       "MainResult": true,
+       "IconID": 0
+      }
+     ],
+     "State": 2,
+     "StateName": "Nezačalo",
+     "ClockStopped": false,
+     "SportExtId": "sr:sport:20",
+     "RegionExtId": "sr:category:88",
+     "TournamentExtId": "sr:tournament:36377",
+     "ID": 3856384,
+     "Name": "Mucha, Grzegorz - Nocun, Zbigniew",
+     "Date": "2026-10-01T00:35:00+02:00",
+     "GameGroups": [
+      {
+       "ID": 63,
+       "Name": "Hlavní sázky",
+       "Games": [
+        {
+         "ID": "178d463097388",
+         "Name": "Vítěz zápasu",
+         "Details": [
+          {
+           "ID": 463097388,
+           "OddsList": [
+            {
+             "TipID": "1015364967",
+             "Name": "1",
+             "Rate": 2.21,
+             "State": 2
+            },
+            {
+             "TipID": "1015364968",
+             "Name": "2",
+             "Rate": 1.55,
+             "State": 2
+            }
+           ],
+           "State": 2,
+           "LineNumber": 909795
+          }
+         ],
+         "State": 2,
+         "IsDetails": false,
+         "Sequence": 0,
+         "Initial": true,
+         "SelectionVisualisationFlags": 2
+        }
+       ],
+       "Sequence": 1
+      },
+      {
+       "ID": 65,
+       "Name": "Počet bodů",
+       "Games": [
+        {
+         "ID": "80",
+         "Name": "Tým1 celkový počet bodů",
+         "Details": [
+          {
+           "ID": 463129245,
+           "OddsList": [
+            {
+             "TipID": "1015433199",
+             "Name": "Pod (36.5)",
+             "Rate": 1.97,
+             "State": 2
+            },
+            {
+             "TipID": "1015433198",
+             "Name": "Nad (36.5)",
+             "Rate": 1.72,
+             "State": 2
+            }
+           ],
+           "State": 2,
+           "LineNumber": 921692
+          }
+         ],
+         "State": 2,
+         "IsDetails": false,
+         "Sequence": 0,
+         "Initial": false,
+         "SelectionVisualisationFlags": 1
+        }
+       ],
+       "Sequence": 2
+      },
+      {
+       "ID": 62,
+       "Name": "Handicap",
+       "Games": [
+        {
+         "ID": "209",
+         "Name": "Sety - Handicap",
+         "Details": [
+          {
+           "ID": 463129244,
+           "OddsList": [
+            {
+             "TipID": "1015433196",
+             "Name": "Tým 1 (-2.5)",
+             "Rate": 6.71,
+             "State": 2
+            },
+            {
+             "TipID": "1015433197",
+             "Name": "Tým 2 (+2.5)",
+             "Rate": 1.05,
+             "State": 2
+            }
+           ],
+           "State": 2,
+           "LineNumber": 921691
+          }
+         ],
+         "State": 2,
+         "IsDetails": false,
+         "Sequence": 0,
+         "Initial": false,
+         "SelectionVisualisationFlags": 1
+        }
+       ],
+       "Sequence": 3
+      }
+     ],
+     "CategoryPath": "Mezinárodní / TT Elite Series",
+     "ExternalID": "75139032",
+     "Sequence": 541
+    }
+   ]
+  },
+  {
+   "DisciplineID": 13,
+   "Events": [
+    {
+     "CanCustomBet": false,
+     "DisciplineID": 13,
+     "CatIds": [
+      95,
+      162
+     ],
+     "DetailsCount": 52,
+     "ActiveCompetitor": 1,
+     "MatchTracker": {
+      "Id": "75060844"
+     },
+     "Results": [
+      {
+       "ID": 1,
+       "Name": "Zápas",
+       "Score": "3:4",
+       "MainResult": true,
+       "IconID": 0
+      },
+      {
+       "ID": 150,
+       "Name": "1. směna",
+       "Score": "1:4",
+       "ImportantResult": true,
+       "Flags": 64,
+       "IconID": 0
+      },
+      {
+       "ID": 151,
+       "Name": "2. směna",
+       "Score": "1:0",
+       "ImportantResult": true,
+       "Flags": 64,
+       "IconID": 0
+      },
+      {
+       "ID": 152,
+       "Name": "3. směna",
+       "Score": "0:0",
+       "ImportantResult": true,
+       "Flags": 64,
+       "IconID": 0
+      },
+      {
+       "ID": 153,
+       "Name": "4. směna",
+       "Score": "1:0",
+       "ImportantResult": true,
+       "Flags": 64,
+       "IconID": 0
+      }
+     ],
+     "State": 2,
+     "StateName": "4. směna bottom",
+     "ClockStopped": false,
+     "Stats": {
+      "Id": "75060844"
+     },
+     "SportExtId": "sr:sport:3",
+     "RegionExtId": "sr:category:16",
+     "TournamentExtId": "sr:tournament:109",
+     "ID": 3849593,
+     "Name": "Houston Astros - Chicago White Sox",
+     "Date": "2026-09-30T23:00:00+02:00",
+     "GameGroups": [
+      {
+       "ID": 19,
+       "Name": "Hlavní sázky",
+       "Games": [
+        {
+         "ID": "2d462764931",
+         "Name": "Zápas",
+         "Details": [
+          {
+           "ID": 462764931,
+           "OddsList": [
+            {
+             "TipID": "1014653337",
+             "Name": "1",
+             "Rate": 2.3,
+             "State": 2
+            },
+            {
+             "TipID": "1014653338",
+             "Name": "0",
+             "Rate": 6.55,
+             "State": 2
+            },
+            {
+             "TipID": "1014653339",
+             "Name": "2",
+             "Rate": 1.99,
+             "State": 2
+            }
+           ],
+           "State": 2,
+           "LineNumber": 852285
+          }
+         ],
+         "State": 2,
+         "IsDetails": false,
+         "Sequence": 0,
+         "Initial": true,
+         "SelectionVisualisationFlags": 2
+        }
+       ],
+       "Sequence": 1
+      },
+      {
+       "ID": 22,
+       "Name": "Body",
+       "Games": [
+        {
+         "ID": "295",
+         "Name": "Počet bodů (včetně extra směn)",
+         "Details": [
+          {
+           "ID": 462764953,
+           "OddsList": [
+            {
+             "TipID": "1014653406",
+             "Name": "Pod (10.5)",
+             "Rate": 2.58,
+             "State": 2
+            },
+            {
+             "TipID": "1014653405",
+             "Name": "Nad (10.5)",
+             "Rate": 1.42,
+             "State": 2
+            }
+           ],
+           "State": 2,
+           "LineNumber": 852307
+          }
+         ],
+         "State": 2,
+         "IsDetails": false,
+         "Sequence": 0,
+         "Initial": false,
+         "SelectionVisualisationFlags": 1
+        }
+       ],
+       "Sequence": 2
+      },
+      {
+       "ID": 18,
+       "Name": "Směny",
+       "Games": [
+        {
+         "ID": "432",
+         "Name": "Počet bezbodových směn",
+         "Details": [
+          {
+           "ID": 463128959,
+           "OddsList": [
+            {
+             "TipID": "1015432631",
+             "Name": "Pod (3.5)",
+             "Rate": 2.45,
+             "State": 2
+            },
+            {
+             "TipID": "1015432630",
+             "Name": "Nad (3.5)",
+             "Rate": 1.47,
+             "State": 2
+            }
+           ],
+           "State": 2,
+           "LineNumber": 921382
+          }
+         ],
+         "State": 2,
+         "IsDetails": false,
+         "Sequence": 0,
+         "Initial": false,
+         "SelectionVisualisationFlags": 1
+        }
+       ],
+       "Sequence": 5
+      }
+     ],
+     "CategoryPath": "USA / MLB",
+     "ExternalID": "75060844",
+     "Sequence": 1000163
+    }
+   ]
+  }
+ ],
+ "TimeStamp": 1124732629,
+ "Type": 0
+}

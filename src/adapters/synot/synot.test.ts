@@ -31,8 +31,8 @@ describe('synot prematch (ebet-api / browser-fetch: GetWebStandardEvents, protob
   it('decodes and parses all four sports and validates', () => {
     const by: Record<string, number> = {};
     for (const e of events) by[e.sport] = (by[e.sport] ?? 0) + 1;
-    expect(events.length).toBe(1066);
-    expect(by).toEqual({ football: 689, hockey: 133, tennis: 118, basketball: 126 });
+    expect(events.length).toBe(1055); // 11 událostí bez jediného trhu se zahazuje
+    expect(by).toEqual({ football: 687, hockey: 133, tennis: 116, basketball: 119 });
     expect(events.every((e) => !e.live && !e.state && e.startTime > NOW)).toBe(true);
     expect(new Set(events.map((e) => e.sourceId)).size).toBe(events.length);
     const v = validateRawOdds(odds(events, 'prematch'), { minEvents: 5, maxAgeMs: 60_000, now: NOW });
@@ -125,10 +125,11 @@ describe('synot live – starší endpoint GetLIPEvtsDsk (stejný tvar JSON)', a
   const events = parseLive(live, { now: NOW });
   const byId = (id: string) => events.find((e) => e.sourceId === id)!;
 
-  it('parses live events of the four sports and validates', () => {
+  it('parses live events of all supported sports and validates', () => {
     const by: Record<string, number> = {};
     for (const e of events) by[e.sport] = (by[e.sport] ?? 0) + 1;
-    expect(by).toEqual({ football: 12, hockey: 18, tennis: 19, basketball: 5 });
+    // od přidání dalších sportů parsuje i házenou, volejbal, stolní tenis a snooker
+    expect(by).toEqual({ football: 12, hockey: 18, tennis: 19, basketball: 5, handball: 2, volleyball: 1, table_tennis: 11, snooker: 1 });
     expect(events.every((e) => e.state)).toBe(true);
     // "Nezačalo" = v live nabídce, ale ještě se nehraje → live: false
     expect(events.every((e) => e.live === (e.state?.statusText !== 'Nezačalo'))).toBe(true);
@@ -176,8 +177,8 @@ describe('synot live – starší endpoint GetLIPEvtsDsk (stejný tvar JSON)', a
 
   it('older snapshot with more breaks parses too', async () => {
     const older = parseLive(await loadFixture<SynLiveResponse>('synot', 'live-breaks.json'), { now: NOW });
-    expect(older.length).toBe(40);
-    expect(older.filter((e) => e.state?.breakFlag).map((e) => e.sport).sort()).toEqual(['football', 'football', 'football', 'hockey']);
+    expect(older.length).toBe(55);
+    expect(older.filter((e) => e.state?.breakFlag).map((e) => e.sport).sort()).toEqual(['football', 'football', 'football', 'handball', 'hockey']);
   });
 });
 
