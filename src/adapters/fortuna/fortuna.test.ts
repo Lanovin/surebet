@@ -2,12 +2,16 @@ import { describe, expect, it } from 'vitest';
 import { loadFixture } from '../fixtures.js';
 import { isValidMarketKey, parseMarketKey } from '../../core/markets.js';
 import { validateRawOdds } from '../../core/validate.js';
-import type { RawEvent, RawOdds } from '../../core/types.js';
+import type { RawEvent, RawOdds, Sport } from '../../core/types.js';
 import {
+  PRIMARY_SPORTS,
   buildEvents,
+  isSkipped,
+  isUnsupportedFormat,
   mapMarket,
   mergeMini,
   parseGameState,
+  sportOfFixture,
   type FortunaBundle,
   type FtnMarket,
   type FtnMarketsByFixture,
@@ -18,7 +22,7 @@ import { FortunaLiveStore, TOPIC, type FtnWsMessage } from './live-store.js';
 import { FortunaWsStrategy, SNAPSHOT_REPLAY_MARGIN_MS, parseSockJs, unescapeHeader } from './ws.js';
 import { WebSocketServer, type WebSocket as WsClient } from 'ws';
 import { StrategyError, type AdapterContext } from '../types.js';
-import { FortunaApi, collectLive, type Transport } from './strategies.js';
+import { DEFAULT_DETAIL, FortunaApi, collectLive, detailTargets, type Transport } from './strategies.js';
 
 const odds = (e: RawEvent | undefined, key: string) =>
   Object.fromEntries((e?.markets.find((m) => m.key === key)?.selections ?? []).map((s) => [s.key, s.odds]));
@@ -666,6 +670,13 @@ describe('fortuna live listing: sport without live fixtures', () => {
       kind: 'http',
       get: async <T,>(url: string) => {
         urls.push(url);
+        // /live/sports: hokej hlášený s live zápasem (výpis ale mezitím 404 – CDN), fotbal a basket bez live zápasů
+        if (url.endsWith('/live/sports'))
+          return [
+            { id: 'ufo:sprt:0x', fixturesCount: 3 },
+            { id: 'ufo:sprt:0w', fixturesCount: 1 },
+            { id: 'ufo:sprt:0c', fixturesCount: 7 },
+          ] as T;
         if (url.includes('/live/sport/ufo:sprt:0x/')) return tennis as T;
         if (url.includes('/live/sport/')) {
           throw new StrategyError(`HTTP 404 ${url}`, 'http', { status: 404, sample: 'Structure with id ufo:sprt:0w not found' });
@@ -679,8 +690,421 @@ describe('fortuna live listing: sport without live fixtures', () => {
     expect(events.length).toBeGreaterThan(0);
     expect(new Set(events.map((e) => e.sport))).toEqual(new Set(['tennis']));
     expect(urls.some((u) => u.includes('/overview'))).toBe(true);
+    // výpis jen pro sporty, které /live/sports hlásí (fotbal a basket se nestahují)
+    expect(urls.filter((u) => u.includes('/live/sport/')).map((u) => /sprt:(\w+)/.exec(u)?.[1])).toEqual(['0w', '0x']);
     // jiná chyba než 404 se dál propaguje
     const t500: Transport = { kind: 'http', get: async () => { throw new StrategyError('HTTP 500 x', 'http', { status: 500 }); } };
     await expect(collectLive(new FortunaApi(t500), ['hockey'], null, 0, false)).rejects.toThrow('HTTP 500');
+  });
+});
+
+// ---------- dvojtip (DC) a další sporty (fixtures z 1. 10. 2026, zkrácené na namapované trhy + pár nenamapovaných) ----------
+
+const newSportsBundle = async (): Promise<FortunaBundle> => ({
+  scope: 'prematch',
+  ...(await loadFixture<{ pages: FtnMatchesPage[]; markets: FtnMarketsByFixture }>('fortuna', 'prematch-new-sports.json')),
+});
+
+describe('fortuna double chance (DC) – recorded 1. 10. 2026', async () => {
+  const events = buildEvents(await newSportsBundle());
+  const byName = (home: string) => events.find((e) => e.home === home)!;
+  const selKeys = (e: RawEvent, key: string) => (e.markets.find((m) => m.key === key)?.selections ?? []).map((s) => s.key).sort();
+
+  it('football: match (base time) and halves; 10 = 1X, 12, 02 = X2', () => {
+    const e = byName('Argentina');
+    expect(odds(e, 'DC|REG')).toEqual({ HOME_DRAW: 1.01, HOME_AWAY: 1.03, DRAW_AWAY: 5.4 });
+    expect(odds(e, 'DC|H1')).toEqual({ HOME_DRAW: 1.03, DRAW_AWAY: 2.85, HOME_AWAY: 1.17 });
+    // dvojtip sedí na 1X2: 1/1.01 ≈ P(1)+P(X) při maržích kolem 1.1
+    expect(odds(e, '1X2|REG')).toEqual({ HOME: 1.06, DRAW: 11, AWAY: 30 });
+  });
+
+  it('hockey: 60 min and periods P1–P3 (not „do rozhodnutí“)', () => {
+    const e = byName('Philadelphia Flyers');
+    expect(odds(e, 'DC|REG')).toEqual({ HOME_DRAW: 1.4, DRAW_AWAY: 1.66, HOME_AWAY: 1.23 });
+    expect(odds(e, 'DC|P1')).toEqual({ DRAW_AWAY: 1.44, HOME_AWAY: 1.41, HOME_DRAW: 1.34 });
+    expect(odds(e, 'DC|P2')).toEqual({ HOME_AWAY: 1.34, DRAW_AWAY: 1.49, HOME_DRAW: 1.36 });
+    expect(Object.keys(odds(e, 'DC|P3')).length).toBe(3);
+    expect(e.markets.some((m) => m.key.startsWith('DC|MATCH'))).toBe(false);
+  });
+
+  it('handball: match and first half', () => {
+    const e = byName('Helsingborg');
+    expect(odds(e, 'DC|REG')).toEqual({ DRAW_AWAY: 2.08, HOME_AWAY: 1.09, HOME_DRAW: 1.33 });
+    expect(odds(e, 'DC|H1')).toEqual({ HOME_AWAY: 1.09, DRAW_AWAY: 1.91, HOME_DRAW: 1.38 });
+  });
+
+  it('every DC market has exactly the three canonical selections, valid keys, only draw-capable scopes', () => {
+    for (const e of events)
+      for (const m of e.markets.filter((x) => x.key.startsWith('DC|'))) {
+        expect(isValidMarketKey(m.key)).toBe(true);
+        expect(['REG', 'H1', 'H2', 'P1', 'P2', 'P3', 'Q1', 'Q2', 'Q3', 'Q4']).toContain(parseMarketKey(m.key).scope);
+        expect(m.selections.map((s) => s.key).sort()).toEqual(['DRAW_AWAY', 'HOME_AWAY', 'HOME_DRAW']);
+      }
+    expect(selKeys(byName('Argentina'), 'DC|REG')).toEqual(['DRAW_AWAY', 'HOME_AWAY', 'HOME_DRAW']);
+  });
+
+  it('mapMarket: DC needs 10/12/02, sports without a DC type or another sport prefix are skipped', () => {
+    const mk = (typeId: string, outcomes: [string, number][]): FtnMarket => ({
+      id: 'm',
+      fixtureId: 'f',
+      marketTypeId: `ufo:mtyp:${typeId}`,
+      name: 'Výsledek zápasu - dvojtip',
+      outcomes: outcomes.map(([n, o], i) => ({ id: `o${i}`, name: n, odds: o, displayType: 'OPEN' })),
+    });
+    const ok = mapMarket(mk('00-01', [['10', 1.2], ['12', 1.3], ['02', 2]]), 'football', 'A', 'B')!;
+    expect(ok.key).toBe('DC|REG');
+    expect(ok.selections.map((s) => s.key)).toEqual(['HOME_DRAW', 'HOME_AWAY', 'DRAW_AWAY']);
+    expect(mapMarket(mk('00-01', [['1', 1.2], ['12', 1.3], ['02', 2]]), 'football', 'A', 'B')).toBeNull();
+    expect(mapMarket(mk('00-01', [['10', 1.2], ['10', 1.3], ['02', 2]]), 'football', 'A', 'B')).toBeNull();
+    expect(mapMarket(mk('00-01', [['10', 1.2], ['12', 1.3], ['02', 2]]), 'handball', 'A', 'B')).toBeNull();
+    // fotbalový dvojtip 2. poločasu / hokejový za třetinu podle čísla v názvu
+    const p = mk('0w-0t', [['10', 1.4], ['12', 1.3], ['02', 1.6]]);
+    p.name = 'Výsledek 3. třetiny - dvojtip';
+    p.syntheticGroupKey = '3rd_period_-_double_chance';
+    expect(mapMarket(p, 'hockey', 'A', 'B')!.key).toBe('DC|P3');
+    p.name = 'Výsledek třetiny - dvojtip';
+    p.syntheticGroupKey = undefined;
+    expect(mapMarket(p, 'hockey', 'A', 'B')).toBeNull(); // bez čísla třetiny
+  });
+});
+
+describe('fortuna new sports – prematch (recorded 1. 10. 2026)', async () => {
+  const bundle = await newSportsBundle();
+  const events = buildEvents(bundle);
+  const by = (sport: string, home?: string) => events.find((e) => e.sport === sport && (!home || e.home === home))!;
+  const keys = (e: RawEvent) => e.markets.map((m) => m.key);
+  const scopes = (e: RawEvent) => new Set(e.markets.map((m) => parseMarketKey(m.key).scope));
+  const types = (e: RawEvent) => new Set(e.markets.map((m) => parseMarketKey(m.key).type));
+
+  it('all nine new sports are returned with valid keys and validateRawOdds passes', () => {
+    expect(new Set(events.map((e) => e.sport))).toEqual(
+      new Set(['football', 'hockey', 'handball', 'volleyball', 'baseball', 'american_football', 'boxing', 'mma', 'darts', 'snooker', 'table_tennis']),
+    );
+    for (const e of events) for (const m of e.markets) expect(isValidMarketKey(m.key)).toBe(true);
+    const v = validateRawOdds(raw(events, 'prematch', 'rest-api'), { minEvents: 1, maxAgeMs: 60_000 });
+    expect(v.errors).toEqual([]);
+    expect(v.ok).toBe(true);
+    // nenamapované trhy (kombinace, přesný výsledek, hráčské…) se nedostanou ven
+    const rawCount = Object.values(bundle.markets).flat().length;
+    expect(events.flatMap((e) => e.markets).length).toBeLessThan(rawCount);
+  });
+
+  it('handball: 60 min – 1X2, DNB, AH, totals, odd/even, halves; nothing with overtime', () => {
+    const e = by('handball');
+    expect(e).toMatchObject({ home: 'Helsingborg', away: 'Skanela', competition: '1. Švédsko - muži', country: 'Švédsko' });
+    expect(odds(e, '1X2|REG')).toEqual({ HOME: 1.59, DRAW: 8, AWAY: 2.95 });
+    expect(odds(e, 'DNB|REG')).toEqual({ HOME: 1.43, AWAY: 2.65 });
+    expect(odds(e, 'AH|REG|-1.5')).toEqual({ HOME: 1.81, AWAY: 1.89 }); // „1 -1.5“ / „2 +1.5“ bez závorek
+    expect(odds(e, 'OU|REG|59.5')).toEqual({ OVER: 2.07, UNDER: 1.68 });
+    expect(odds(e, 'OU_HOME|REG|29.5')).toEqual({ OVER: 1.65, UNDER: 2.06 });
+    expect(odds(e, 'OU_AWAY|REG|27.5')).toEqual({ OVER: 1.59, UNDER: 2.16 });
+    expect(odds(e, 'OE|REG')).toEqual({ EVEN: 1.85, ODD: 1.97 });
+    expect(odds(e, '1X2|H1')).toEqual({ HOME: 1.67, DRAW: 8.2, AWAY: 2.65 });
+    expect(odds(e, 'AH|H1|-0.5')).toEqual({ HOME: 1.68, AWAY: 2.06 });
+    expect(odds(e, 'OU|H1|28.5')).toEqual({ OVER: 1.73, UNDER: 1.99 });
+    expect([...scopes(e)].sort()).toEqual(['H1', 'REG']);
+    // kombinace a „vítězný náskok“ se nemapují
+    expect(e.markets.some((m) => /náskok|^Výsledek .* a /i.test(m.rawName ?? ''))).toBe(false);
+  });
+
+  it('volleyball: points vs. sets kept apart (AH/OU on points, AH_SETS/OU_SETS on sets), set markets S1', () => {
+    const e = by('volleyball');
+    expect(e).toMatchObject({ home: 'Indie', away: 'Pákistán' });
+    expect(odds(e, 'ML|MATCH')).toEqual({ HOME: 2.29, AWAY: 1.6 });
+    expect(odds(e, 'AH_SETS|MATCH|-1.5')).toEqual({ HOME: 3.5, AWAY: 1.26 }); // „Indie -1.5“ / „Pákistán +1.5“
+    expect(odds(e, 'AH_SETS|MATCH|1.5')).toEqual({ HOME: 1.61, AWAY: 2.17 });
+    expect(odds(e, 'OU_SETS|MATCH|3.5')).toEqual({ OVER: 1.41, UNDER: 2.7 });
+    expect(odds(e, 'OU|MATCH|180.5')).toEqual({ OVER: 1.71, UNDER: 2.02 });
+    expect(odds(e, 'AH|MATCH|8.5')).toEqual({ HOME: 1.52, AWAY: 2.36 }); // body
+    expect(odds(e, 'OU_HOME|MATCH|91.5')).toEqual({ OVER: 1.87, UNDER: 1.84 });
+    expect(odds(e, 'OU_AWAY|MATCH|94.5')).toEqual({ OVER: 1.85, UNDER: 1.85 });
+    expect(odds(e, 'ML|S1')).toEqual({ HOME: 2.12, AWAY: 1.64 });
+    expect(odds(e, 'OU|S1|44.5')).toEqual({ OVER: 1.54, UNDER: 2.33 });
+    expect(odds(e, 'AH|S1|-2.5')).toEqual({ HOME: 2.85, AWAY: 1.37 });
+    expect(types(e).has('1X2')).toBe(false); // remíza neexistuje
+    // „vyhraje alespoň set“ / přesný výsledek / kombinace 1. set + zápas se nemapují
+    expect(e.markets.some((m) => /alespoň set|přesný výsledek|vítěz 1\. setu a/i.test(m.rawName ?? ''))).toBe(false);
+  });
+
+  it('baseball: everything incl. extra innings (MATCH), 1X2 only for 9 innings (REG), no 5-inning / hits markets', () => {
+    const e = by('baseball');
+    expect(e).toMatchObject({ home: 'NY Yankees', away: 'Boston Red Sox', competition: 'MLB' });
+    expect(odds(e, 'ML|MATCH')).toEqual({ HOME: 1.75, AWAY: 2.14 });
+    expect(odds(e, '1X2|REG')).toEqual({ HOME: 1.88, DRAW: 8, AWAY: 2.36 });
+    expect(odds(e, 'AH|MATCH|-1.5')).toEqual({ HOME: 2.55, AWAY: 1.51 }); // run line
+    expect(odds(e, 'AH|MATCH|1')).toEqual({ HOME: 1.5, AWAY: 2.6 });
+    expect(odds(e, 'OU|MATCH|5')).toEqual({ OVER: 1.36, UNDER: 3.15 }); // celá linie = vrácení
+    expect(odds(e, 'OU_HOME|MATCH|4.5')).toEqual({ OVER: 2.7, UNDER: 1.43 });
+    expect(odds(e, 'OU_AWAY|MATCH|2.5')).toEqual({ OVER: 1.68, UNDER: 2.11 });
+    expect([...scopes(e)].sort()).toEqual(['MATCH', 'REG']);
+    expect(e.markets.some((m) => /po 5\. inningu|v \d\. inningu|hitů|1 - 5|1-5/i.test(m.rawName ?? ''))).toBe(false);
+    expect(bundle.markets[e.sourceId].some((m) => m.marketTypeId === 'ufo:mtyp:0q-0c')).toBe(true); // „Vítěz po 5. inningu“ je ve zdroji
+  });
+
+  it('american football: 1X2 = regular time, AH/OU incl. overtime, halves and quarters; no ML (tie not refunded)', () => {
+    const e = by('american_football');
+    expect(e).toMatchObject({ home: 'Cleveland', away: 'Pittsburgh', competition: 'NFL' });
+    expect(odds(e, '1X2|REG')).toEqual({ HOME: 2.34, DRAW: 13, AWAY: 1.71 });
+    expect(odds(e, 'AH|MATCH|0.5')).toEqual({ HOME: 2.16, AWAY: 1.62 });
+    expect(odds(e, 'OU|MATCH|38.5')).toEqual({ OVER: 1.87, UNDER: 1.84 });
+    expect(odds(e, 'OU_HOME|MATCH|17.5')).toEqual({ OVER: 1.92, UNDER: 1.78 });
+    expect(odds(e, 'OU_AWAY|MATCH|20.5')).toEqual({ OVER: 1.98, UNDER: 1.74 });
+    expect(odds(e, 'OE|MATCH')).toEqual({ EVEN: 2.07, ODD: 1.68 });
+    expect(odds(e, '1X2|H1')).toEqual({ HOME: 2.35, DRAW: 8.6, AWAY: 1.83 });
+    expect(odds(e, 'AH|H1|3.5')).toEqual({ HOME: 1.55, AWAY: 2.29 });
+    expect(odds(e, 'DNB|Q1')).toEqual({ HOME: 2.05, AWAY: 1.69 });
+    expect(odds(e, 'OU|Q1|7.5')).toEqual({ OVER: 2.28, UNDER: 1.56 });
+    expect(keys(e).some((k) => k.startsWith('ML|'))).toBe(false);
+    // „Vítěz zápasu včetně prodloužení“ (0g-05) je ve zdroji, ale nenamapuje se
+    const ml = bundle.markets[e.sourceId].find((m) => m.marketTypeId === 'ufo:mtyp:0g-05');
+    expect(ml).toBeDefined();
+    expect(mapMarket(ml!, 'american_football', e.home, e.away)).toBeNull();
+  });
+
+  it('boxing: 1X2|REG incl. draw and DNB|REG (winner, draw = refund) – never ML', () => {
+    const e = by('boxing');
+    expect(e).toMatchObject({ home: 'Sulaimaan, Ibraheem', away: 'Hardy, Sonny', country: 'Mezinárodní' });
+    expect(odds(e, '1X2|REG')).toEqual({ HOME: 1.08, DRAW: 23, AWAY: 8.6 });
+    expect(odds(e, 'DNB|REG')).toEqual({ HOME: 1.05, AWAY: 7.8 });
+    expect(keys(e).some((k) => k.startsWith('ML|'))).toBe(false);
+    // „Počet kol“, „Způsob vítězství“ a „na body“ se nemapují
+    expect(keys(e).sort()).toEqual(['1X2|REG', 'DNB|REG']);
+  });
+
+  it('mma: UFC has 1X2 (draw) + DNB, other promotions DNB only (text: „V případě remízy budou sázky vráceny“)', () => {
+    const ufc = by('mma', 'Figueiredo, Deiveson');
+    expect(odds(ufc, '1X2|REG')).toEqual({ HOME: 5.2, DRAW: 50, AWAY: 1.14 });
+    expect(odds(ufc, 'DNB|REG')).toEqual({ HOME: 5.2, AWAY: 1.13 });
+    const fm = by('mma', 'Rybak, Dominika');
+    expect(keys(fm)).toEqual(['DNB|REG']);
+    expect(odds(fm, 'DNB|REG')).toEqual({ HOME: 1.22, AWAY: 3.75 });
+    for (const e of [ufc, fm]) expect(keys(e).some((k) => k.startsWith('ML|') || k.startsWith('OU|'))).toBe(false);
+  });
+
+  it('darts: sets and legs are never mixed (AH_SETS/OU_SETS vs. AH/OU|MATCH on legs)', () => {
+    const sets = by('darts', 'Zonneveld N.');
+    expect(odds(sets, 'ML|MATCH')).toEqual({ HOME: 2.7, AWAY: 1.43 });
+    expect(odds(sets, 'AH_SETS|MATCH|1.5')).toEqual({ HOME: 1.77, AWAY: 1.91 });
+    expect(odds(sets, 'OU_SETS|MATCH|3.5')).toEqual({ OVER: 1.38, UNDER: 2.8 });
+    expect(odds(sets, 'ML|S1')).toEqual({ HOME: 2.22, AWAY: 1.57 });
+    expect(odds(sets, 'AH|S1|1.5')).toEqual({ HOME: 1.6, AWAY: 2.16 }); // legy v 1. setu
+    expect(odds(sets, 'OU|S1|4.5')).toEqual({ OVER: 2.7, UNDER: 1.39 });
+    const legs = by('darts', 'Thornton R.');
+    expect(odds(legs, 'AH|MATCH|1.5')).toEqual({ HOME: 2.23, AWAY: 1.56 }); // legy
+    expect(odds(legs, 'OU|MATCH|5.5')).toEqual({ OVER: 1.62, UNDER: 2.11 });
+    expect(keys(legs).some((k) => k.startsWith('AH_SETS') || k.startsWith('OU_SETS'))).toBe(false);
+    expect(keys(sets).some((k) => k.startsWith('AH|MATCH'))).toBe(false);
+    // 180 / zavření se nemapují
+    expect(events.filter((e) => e.sport === 'darts').every((e) => e.markets.every((m) => !/180|zavření/i.test(m.rawName ?? '')))).toBe(true);
+  });
+
+  it('snooker: ML and frame handicap/total', () => {
+    const e = by('snooker');
+    expect(e).toMatchObject({ home: 'Trump J.', away: 'Jiahui Si' });
+    expect(odds(e, 'ML|MATCH')).toEqual({ HOME: 1.21, AWAY: 4.3 });
+    expect(odds(e, 'AH|MATCH|-1.5')).toEqual({ HOME: 1.38, AWAY: 2.75 });
+    expect(odds(e, 'OU|MATCH|7.5')).toEqual({ OVER: 2.22, UNDER: 1.56 });
+  });
+
+  it('table tennis: points vs. sets, set markets S1', () => {
+    const e = by('table_tennis');
+    expect(e).toMatchObject({ home: 'Tkaczyk H.', away: 'Lewczuk M.', competition: 'TT Elite Series' });
+    expect(odds(e, 'ML|MATCH')).toEqual({ HOME: 1.47, AWAY: 2.31 });
+    expect(odds(e, 'AH|MATCH|-4.5')).toEqual({ HOME: 1.86, AWAY: 1.78 }); // body
+    expect(odds(e, 'OU|MATCH|77.5')).toEqual({ OVER: 1.86, UNDER: 1.78 });
+    expect(odds(e, 'ML|S1')).toEqual({ HOME: 1.62, AWAY: 2.05 });
+    expect(odds(e, 'OU|S1|18.5')).toEqual({ OVER: 1.74, UNDER: 1.9 });
+    expect(odds(e, 'AH|S1|-3.5')).toEqual({ HOME: 2.93, AWAY: 1.29 });
+  });
+
+  it('sets above the 5th (best of 7) and unparseable set numbers are skipped', () => {
+    const mk = (name: string): FtnMarket => ({
+      id: 'm',
+      fixtureId: 'f',
+      marketTypeId: 'ufo:mtyp:0j-0a',
+      name,
+      outcomes: [{ id: 'a', name: '1', odds: 1.5, displayType: 'OPEN' }, { id: 'b', name: '2', odds: 2.5, displayType: 'OPEN' }],
+    });
+    expect(mapMarket(mk('Vítěz 5. setu'), 'table_tennis', 'A', 'B')!.key).toBe('ML|S5');
+    expect(mapMarket(mk('Vítěz 6. setu'), 'table_tennis', 'A', 'B')).toBeNull();
+    expect(mapMarket(mk('Vítěz setu'), 'table_tennis', 'A', 'B')).toBeNull();
+  });
+
+  it('handicap without parentheses: team names, „1 -1.5“, „2+0.5“, line 0 and mixed-up lines', () => {
+    const mk = (typeId: string, outcomes: [string, number][]): FtnMarket => ({
+      id: 'm',
+      fixtureId: 'f',
+      marketTypeId: `ufo:mtyp:${typeId}`,
+      name: 'Handicap',
+      outcomes: outcomes.map(([n, o], i) => ({ id: `o${i}`, name: n, odds: o, displayType: 'OPEN' })),
+    });
+    expect(mapMarket(mk('0h-03', [['1 +0.5\t', 2], ['2 -0.5', 1.6]]), 'snooker', 'A', 'B')!.key).toBe('AH|MATCH|0.5');
+    expect(mapMarket(mk('0q-0p'.replace('0q-0p', '0q-0f'), [['1 -1.5\t', 2.5], ['2 +1.5', 1.5]]), 'baseball', 'A', 'B')!.key).toBe('AH|MATCH|-1.5');
+    expect(mapMarket(mk('0m-01', [['Pákistán -1.5', 1.3], ['Indie +1.5', 3.4]]), 'volleyball', 'Indie', 'Pákistán')!.key).toBe('AH_SETS|MATCH|1.5');
+    expect(mapMarket(mk('0h-03', [['1 0', 1.9], ['2 0', 1.9]]), 'snooker', 'A', 'B')!.key).toBe('AH|MATCH|0');
+    expect(mapMarket(mk('0h-03', [['1 +0.5', 2], ['2 +0.5', 1.6]]), 'snooker', 'A', 'B')).toBeNull(); // obě strany stejné znaménko
+    expect(mapMarket(mk('0h-03', [['A 3', 2], ['B -3', 1.6]]), 'snooker', 'A', 'B')).toBeNull(); // číslo bez znaménka = součást jména
+    expect(mapMarket(mk('0h-03', [['C -1.5', 2], ['B +1.5', 1.6]]), 'snooker', 'A', 'B')).toBeNull(); // cizí jméno
+    // typy trhů jiných sportů (kódy 14-/05-/19- jen box a MMA)
+    expect(mapMarket(mk('14-01', [['1', 1.2], ['0', 20], ['2', 5]]), 'boxing', 'A', 'B')!.key).toBe('1X2|REG');
+    expect(mapMarket(mk('14-01', [['1', 1.2], ['0', 20], ['2', 5]]), 'mma', 'A', 'B')).toBeNull();
+    expect(mapMarket(mk('05-00', [['1', 1.2], ['0', 20], ['2', 5]]), 'mma', 'A', 'B')!.key).toBe('1X2|REG');
+    expect(mapMarket(mk('19-00', [['1', 1.2], ['2', 5]]), 'mma', 'A', 'B')!.key).toBe('DNB|REG');
+    expect(mapMarket(mk('19-00', [['1', 1.2], ['2', 5]]), 'boxing', 'A', 'B')).toBeNull();
+  });
+
+  it('volleyball: beach volleyball and golden-set formats are dropped, e-sports in new sports too', () => {
+    const f = (o: object) => ({ id: 'x', sportId: 'ufo:sprt:0m', categoryId: 'ufo:ctgr:0m-00', tournamentId: 't', name: 'A - B', participants: [], ...o }) as never;
+    expect(isUnsupportedFormat(f({}), { id: 't', name: 'Plážový volejbal - muži' } as never)).toBe(true);
+    expect(isUnsupportedFormat(f({}), { id: 't', name: 'Liga (zlatý set)' } as never)).toBe(true);
+    expect(isUnsupportedFormat(f({}), { id: 't', name: 'Asijské hry - muži' } as never)).toBe(false);
+    expect(isUnsupportedFormat(f({ sportId: 'ufo:sprt:0x', name: 'Beach A - B' }), undefined)).toBe(false); // jen volejbal
+    // kategorie cizího kódu pod reálným sportem = e-sport (box smí `01-`/`14-`, MMA `19-`/`05-`)
+    const cat = (sportId: string, code: string) => f({ sportId, categoryId: `ufo:ctgr:${code}-00` });
+    expect(isSkipped(cat('ufo:sprt:01', '01'))).toBe(false);
+    expect(isSkipped(cat('ufo:sprt:19', '05'))).toBe(false);
+    expect(isSkipped(cat('ufo:sprt:19', '19'))).toBe(false);
+    expect(isSkipped(cat('ufo:sprt:0j', '0c'))).toBe(true);
+    expect(isSkipped(cat('ufo:sprt:0y', '0y'))).toBe(false);
+  });
+});
+
+describe('fortuna new sports – live game state (recorded 1. 10. 2026)', async () => {
+  const rec = await loadFixture<{ pages: FtnMatchesPage[]; markets: FtnMarketsByFixture; scoreboards: FtnMiniScoreboard[] }>('fortuna', 'live-new-sports.json');
+  const events = buildEvents({ scope: 'live', ...rec });
+  const byId = new Map(events.map((e) => [e.sourceId, e]));
+
+  it('table tennis: sets won, set scores, points in the running set', () => {
+    const e = byId.get('ufo:mtch:1wg-22z')!;
+    expect(e).toMatchObject({ sport: 'table_tennis', home: 'Midori Mihai', away: 'Uzun Alexandr', live: true });
+    expect(e.state).toEqual({
+      statusText: '4. set',
+      period: 4,
+      breakFlag: false,
+      score: [1, 2],
+      periodScores: [[10, 12], [11, 6], [4, 11], [6, 2]],
+      points: '6:2',
+    });
+    // stav setů neobsahuje minutovou hodinu ani odpočet
+    expect(e.state!.clockSec).toBeUndefined();
+    expect(e.state!.periodRemainingSec).toBeUndefined();
+    expect(Object.keys(odds(e, 'ML|MATCH')).sort()).toEqual(['AWAY', 'HOME']);
+    expect(Object.keys(odds(e, 'AH_SETS|MATCH|1.5'))).toHaveLength(2);
+  });
+
+  it('volleyball: sets and points in the running set', () => {
+    expect(byId.get('ufo:mtch:1un-02p')!.state).toMatchObject({ period: 2, score: [0, 1], periodScores: [[17, 25], [6, 9]], points: '6:9' });
+    expect(byId.get('ufo:mtch:1wg-0bn')!.state).toMatchObject({ period: 1, score: [0, 0], periodScores: [[11, 8]], points: '11:8' });
+  });
+
+  it('baseball: innings as periods, runs per inning, no clock', () => {
+    const e = byId.get('ufo:mtch:1wg-05t')!;
+    expect(e).toMatchObject({ sport: 'baseball', live: true });
+    expect(e.state).toEqual({ statusText: '3. směna', period: 3, breakFlag: false, score: [2, 4], periodScores: [[1, 4], [1, 0], [0, 0]] });
+    expect(odds(e, 'ML|MATCH')).toEqual({ HOME: 2.66, AWAY: 1.41 });
+    expect(odds(e, '1X2|REG')).toEqual({ HOME: 3.35, DRAW: 8, AWAY: 1.5 });
+  });
+
+  it('validateRawOdds passes', () => {
+    const v = validateRawOdds(raw(events, 'live', 'rest-api'), { minEvents: 1, maxAgeMs: 60_000 });
+    expect(v.errors).toEqual([]);
+  });
+
+  it('game state texts of the other new sports', () => {
+    const mini = (gameTime: string, over: Partial<FtnMiniScoreboard['overview']> = {}): FtnMiniScoreboard =>
+      ({ fixtureId: 'f', columns: { TotalScore: { Home: '1', Away: '0' } }, overview: { gameTime, ...over } }) as never;
+    // házená: uplynulá minuta jako ve fotbale, poločas „Přestávka“
+    expect(parseGameState('handball', mini('1. pol. - 24m')).state).toMatchObject({ period: 1, clockSec: 24 * 60, breakFlag: false });
+    expect(parseGameState('handball', mini('Přestávka', { info: [{ order: 1, home: 14, away: 12, finished: true }] })).state).toMatchObject({ breakFlag: true, clockRunning: false, period: 1 });
+    // americký fotbal: čtvrtiny s odpočtem, prodloužení je 5. perioda
+    expect(parseGameState('american_football', mini('2. čt. < 6m')).state).toMatchObject({ period: 2, periodRemainingSec: 360 });
+    expect(parseGameState('american_football', mini('Prodl. < 4m')).state).toMatchObject({ period: 5, periodRemainingSec: 240 });
+  });
+});
+
+describe('fortuna request budget and websocket priorities for the new sports', async () => {
+  it('overview batches: all sports in one stream, only the types of sports in the batch, URL < maxUrl', () => {
+    const api = new FortunaApi({ kind: 'http', get: async () => ({}) as never });
+    const items = [
+      ...Array.from({ length: 400 }, (_, i) => ({ id: `ufo:mtch:1wf-${i.toString(36).padStart(3, '0')}`, sport: 'football' as const })),
+      ...Array.from({ length: 60 }, (_, i) => ({ id: `ufo:mtch:1wg-${i.toString(36).padStart(3, '0')}`, sport: 'handball' as const })),
+      ...Array.from({ length: 30 }, (_, i) => ({ id: `ufo:mtch:1wh-${i.toString(36).padStart(3, '0')}`, sport: 'mma' as const })),
+    ];
+    const urls = api.overviewUrls(items, true);
+    expect(urls.length).toBeLessThanOrEqual(5);
+    for (const u of urls) expect(u.length).toBeLessThan(7_000);
+    const ids = urls.flatMap((u) => [...u.matchAll(/fixtureIds=([^&]+)/g)].map((x) => decodeURIComponent(x[1])));
+    expect(ids.sort()).toEqual(items.map((i) => i.id).sort());
+    // typy trhů jen sportů, které jsou v dávce
+    const types = (u: string) => [...u.matchAll(/marketTypeIds=ufo%3Amtyp%3A([^&]+)/g)].map((x) => x[1]);
+    expect(types(urls[0]).every((t) => t.startsWith('00-'))).toBe(true);
+    expect(types(urls[0])).toContain('00-01'); // dvojtip je v overview fotbalu
+    const last = urls[urls.length - 1];
+    expect(types(last).some((t) => t.startsWith('05-') || t.startsWith('19-'))).toBe(true);
+    expect(types(last).some((t) => t.startsWith('0j-'))).toBe(false);
+    // netypovaný režim (websocket snapshot) typy neposílá
+    expect(api.overviewUrls(items, false).every((u) => !u.includes('marketTypeIds'))).toBe(true);
+  });
+
+  it('prematch detail budget: main sports first (own quota), extra sports have their own small quota', () => {
+    const now = 1_790_000_000_000;
+    const fx = (id: string, code: string, inMin: number) => ({ id, sportId: `ufo:sprt:${code}`, startDatetime: now + inMin * 60_000, kind: 'PREMATCH', name: id, participants: [] }) as never;
+    // kvóty: hlavní sporty max. maxTracked nejbližších, další sporty zvlášť extraMaxTracked (i když začínají dřív)
+    const crowded = [
+      ...Array.from({ length: 60 }, (_, i) => fx(`f${i}`, '00', 10 + i)),
+      ...Array.from({ length: 30 }, (_, i) => fx(`h${i}`, '0y', 5 + i)),
+    ];
+    const a = detailTargets(crowded, DEFAULT_DETAIL, now).map((f) => f.id);
+    expect(a.filter((id) => id.startsWith('f')).length).toBe(DEFAULT_DETAIL.maxTracked);
+    expect(a.filter((id) => id.startsWith('h')).length).toBe(DEFAULT_DETAIL.extraMaxTracked);
+    // okna: hokej 24 h, fotbal 3 h, další sporty 12 h; stolní tenis / MMA / box detail nedostanou (vše v overview)
+    const list = [fx('t1', '0x', 20), fx('tt1', '0j', 1), fx('hk1', '0w', 20 * 60), fx('late', '00', 4 * 60), fx('hb1', '0y', 11 * 60), fx('hb2', '0y', 13 * 60), fx('mma', '19', 30), fx('bx', '01', 30)];
+    const b = detailTargets(list, DEFAULT_DETAIL, now).map((f) => f.id);
+    expect(b.sort()).toEqual(['hb1', 'hk1', 't1']);
+  });
+
+  it('websocket detail subscriptions (cap 40): original sports before the new ones, even if the new ones start earlier', async () => {
+    const rec = await loadFixture<{ pages: FtnMatchesPage[]; markets: FtnMarketsByFixture; scoreboards: FtnMiniScoreboard[] }>('fortuna', 'live-new-sports.json');
+    const old = await loadFixture<FtnMatchesPage[]>('fortuna', 'live-matches.json');
+    // nové sporty mají nejdřívější začátek – bez prioritizace by obsadily všechny odběry
+    const pages = [
+      ...rec.pages.map((p) => ({ ...p, fixtures: p.fixtures!.map((f) => ({ ...f, startDatetime: 1 })) })),
+      ...old,
+    ];
+    const store = new FortunaLiveStore();
+    store.loadSnapshot({ scope: 'live', pages, markets: {} }, 1_790_000_000_000);
+    const all: Sport[] = ['football', 'hockey', 'basketball', 'tennis', 'volleyball', 'baseball', 'table_tennis'];
+    const cand = store.detailCandidates(all);
+    const sportOf = (id: string) => sportOfFixture(pages.flatMap((p) => p.fixtures ?? []).find((f) => f.id === id)!);
+    const firstNew = cand.findIndex((id) => !PRIMARY_SPORTS.includes(sportOf(id)!));
+    const lastOld = cand.map((id) => PRIMARY_SPORTS.includes(sportOf(id)!)).lastIndexOf(true);
+    expect(firstNew).toBeGreaterThan(-1);
+    expect(lastOld).toBeGreaterThan(-1);
+    expect(lastOld).toBeLessThan(firstNew);
+    // nové sporty jsou v seznamu (dostanou zbytek odběrů)
+    expect(new Set(cand.map((id) => sportOf(id)))).toContain('table_tennis');
+  });
+
+  it('live listing asks only the sports that /live/sports reports with live fixtures', async () => {
+    const urls: string[] = [];
+    const t: Transport = {
+      kind: 'http',
+      get: async <T,>(url: string) => {
+        urls.push(url);
+        if (url.endsWith('/live/sports'))
+          return [{ id: 'ufo:sprt:0j', fixturesCount: 8 }, { id: 'ufo:sprt:0m', fixturesCount: 0 }, { id: 'ufo:sprt:0q', fixturesCount: 1 }] as T;
+        if (url.includes('/live/sport/')) return { fixtures: [], categories: [], tournaments: [], pagingInfo: { hasNext: false } } as T;
+        return {} as T;
+      },
+    };
+    const api = new FortunaApi(t);
+    expect(await api.liveSportsWithFixtures(['table_tennis', 'volleyball', 'baseball', 'football'])).toEqual(['table_tennis', 'baseball']);
+    // neznámý tvar / chyba = ptát se všech
+    const bad = new FortunaApi({ kind: 'http', get: async () => ({ nope: 1 }) as never });
+    expect(await bad.liveSportsWithFixtures(['football'])).toBeNull();
+    const err = new FortunaApi({ kind: 'http', get: async () => { throw new StrategyError('HTTP 500 x', 'http', { status: 500 }); } });
+    expect(await err.liveSportsWithFixtures(['football'])).toBeNull();
+    await collectLive(api, ['table_tennis', 'volleyball', 'baseball'], null, 0, false);
+    expect(urls.filter((u) => u.includes('/live/sport/')).map((u) => /sprt:(\w+)/.exec(u)?.[1])).toEqual(['0j', '0q']);
   });
 });

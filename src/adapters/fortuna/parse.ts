@@ -16,24 +16,50 @@ import type {
 export const SITE = 'https://www.ifortuna.cz';
 export const API = 'https://api.ifortuna.cz';
 
-/** Naše sporty -> Fortuna sportId a dvouznakový kód (prefix ID kategorií a typů trhů). */
-export const SPORTS_MAP: Partial<Record<Sport, { id: string; code: string }>> = {
-  football: { id: 'ufo:sprt:00', code: '00' },
-  hockey: { id: 'ufo:sprt:0w', code: '0w' },
-  basketball: { id: 'ufo:sprt:0i', code: '0i' },
-  tennis: { id: 'ufo:sprt:0x', code: '0x' },
+/**
+ * Naše sporty -> Fortuna sportId a dvouznakové kódy (prefix ID kategorií a typů trhů). Obvykle jeden
+ * kód = kód sportu; box má trhy pod `14-…` (kategorie `01-…`), bojové sporty (MMA) mají vedle `19-…`
+ * i UFC kategorii a trhy `05-…`. Kategorie s jiným kódem = e-sport (eFotbal `0c`, eHokej `35`…).
+ */
+export const SPORTS_MAP: Partial<Record<Sport, { id: string; codes: string[] }>> = {
+  football: { id: 'ufo:sprt:00', codes: ['00'] },
+  hockey: { id: 'ufo:sprt:0w', codes: ['0w'] },
+  basketball: { id: 'ufo:sprt:0i', codes: ['0i'] },
+  tennis: { id: 'ufo:sprt:0x', codes: ['0x'] },
+  handball: { id: 'ufo:sprt:0y', codes: ['0y'] },
+  volleyball: { id: 'ufo:sprt:0m', codes: ['0m'] },
+  baseball: { id: 'ufo:sprt:0q', codes: ['0q'] },
+  american_football: { id: 'ufo:sprt:0g', codes: ['0g'] },
+  boxing: { id: 'ufo:sprt:01', codes: ['01', '14'] },
+  mma: { id: 'ufo:sprt:19', codes: ['19', '05'] }, // „Bojové sporty“ (UFC, KSW, Oktagon, PFL, One FC…)
+  darts: { id: 'ufo:sprt:0l', codes: ['0l'] },
+  snooker: { id: 'ufo:sprt:0h', codes: ['0h'] },
+  table_tennis: { id: 'ufo:sprt:0j', codes: ['0j'] },
 };
 const SPORT_BY_ID = new Map<string, Sport>(Object.entries(SPORTS_MAP).map(([s, v]) => [v.id, s as Sport]));
 
+/** Původní (hlavní) sporty – přednost v rozpočtu detailů zápasů (prematch i websocket). */
+export const PRIMARY_SPORTS: Sport[] = ['football', 'hockey', 'basketball', 'tennis'];
+
 /**
  * Typy trhů, které vrací hromadný endpoint /markets/api/v1_0/fixtures/markets/overview
- * (jen „overview“ typy; s explicitním marketTypeIds vrací víc linií). Ostatní jen v detailu zápasu.
+ * (jen „overview“ typy – seznam per sport dává /markets/api/v1_0/codebook/sport/{id}/overview-market-types;
+ * s explicitním marketTypeIds vrací víc linií). Ostatní jen v detailu zápasu. Jen typy, které mapujeme.
  */
 export const OVERVIEW_TYPES: Partial<Record<Sport, string[]>> = {
-  football: ['00-00', '00-03', '00-0u'],
+  football: ['00-00', '00-01', '00-03', '00-0u'],
   hockey: ['0w-00', '0w-02', '0w-05', '0w-0d', '0w-0j'],
   basketball: ['0i-00', '0i-04', '0i-06', '0i-07'],
   tennis: ['0x-01', '0x-0e', '0x-0g', '0x-04', '0x-02'],
+  handball: ['0y-00', '0y-04', '0y-05', '0y-0c'],
+  volleyball: ['0m-00', '0m-09', '0m-0b', '0m-0d', '0m-0f'],
+  baseball: ['0q-0d', '0q-0g'],
+  american_football: ['0g-08', '0g-0q'],
+  boxing: ['14-00', '14-01'],
+  mma: ['05-00', '05-02', '19-00'],
+  darts: ['0l-01', '0l-02', '0l-04', '0l-05', '0l-06'],
+  snooker: ['0h-01', '0h-04'],
+  table_tennis: ['0j-00', '0j-02', '0j-03', '0j-0a'],
 };
 
 // ---------- surové typy feedu ----------
@@ -175,7 +201,8 @@ interface MarketDef {
 /**
  * Typ trhu Fortuny (bez prefixu „ufo:mtyp:“) -> kanonický trh. Scope ověřen podle
  * marketTypeDesc/syntheticGroupKey („v zápasu“ = základní doba, „do rozhodnutí“ / „včetně
- * prodloužení“ = vč. prodloužení a nájezdů). Kombinace, dvojtipy, hráčské trhy vynechány.
+ * prodloužení“ = vč. prodloužení a nájezdů). Dvojtipy (`DC`) jen pro rozsahy, které můžou skončit
+ * remízou. Kombinace, přesné výsledky, hráčské trhy, totaly kol a způsob výhry (MMA/box) vynechány.
  */
 const DEFS: Record<string, MarketDef> = {
   // fotbal (vše základní doba)
@@ -200,6 +227,9 @@ const DEFS: Record<string, MarketDef> = {
   '00-3g': { type: 'BTTS', scope: 'H2' },
   '00-3c': { type: 'OU_HOME', scope: 'H2', team: 'HOME' },
   '00-3d': { type: 'OU_AWAY', scope: 'H2', team: 'AWAY' },
+  '00-01': { type: 'DC', scope: 'REG' }, // Výsledek zápasu - dvojtip („v základní hrací době“), výběry 10 / 12 / 02
+  '00-2f': { type: 'DC', scope: 'H1' }, // Výsledek 1. poločasu - dvojtip
+  '00-2y': { type: 'DC', scope: 'H2' }, // Výsledek 2. poločasu - dvojtip
   // lední hokej
   '0w-00': { type: '1X2', scope: 'REG' }, // Výsledek zápasu (60 min)
   '0w-02': { type: 'DNB', scope: 'REG' },
@@ -220,6 +250,8 @@ const DEFS: Record<string, MarketDef> = {
   '0w-0o': { type: 'BTTS', scope: 'P' },
   '0w-0m': { type: 'OU_HOME', scope: 'P', team: 'HOME' },
   '0w-0n': { type: 'OU_AWAY', scope: 'P', team: 'AWAY' },
+  '0w-01': { type: 'DC', scope: 'REG' }, // Výsledek zápasu - dvojtip (60 min)
+  '0w-0t': { type: 'DC', scope: 'P' }, // Výsledek N. třetiny - dvojtip
   // basketbal
   '0i-00': { type: '1X2', scope: 'REG' }, // Výsledek zápasu (3-cestný, bez prodloužení)
   '0i-04': { type: 'ML', scope: 'MATCH' }, // Vítěz zápasu (včetně prodloužení)
@@ -252,6 +284,92 @@ const DEFS: Record<string, MarketDef> = {
   '0x-0e': { type: 'ML', scope: 'S' }, // Vítěz N. setu
   '0x-0f': { type: 'AH', scope: 'S' }, // Handicap gamů v N. setu
   '0x-0g': { type: 'OU', scope: 'S' }, // Počet gamů v N. setu
+  // házená (vše základní hrací doba 60 min; výběry handicapu „1 -1.5“ / „2 +1.5“)
+  '0y-00': { type: '1X2', scope: 'REG' }, // Výsledek zápasu
+  '0y-01': { type: 'DC', scope: 'REG' }, // Výsledek zápasu - dvojtip
+  '0y-02': { type: 'DNB', scope: 'REG' }, // Výsledek zápasu bez remízy
+  '0y-04': { type: 'AH', scope: 'REG' }, // Handicap v zápasu
+  '0y-05': { type: 'OU', scope: 'REG' }, // Počet gólů v zápasu
+  '0y-06': { type: 'OU_HOME', scope: 'REG', team: 'HOME' }, // {1. tým} počet gólů v zápasu
+  '0y-07': { type: 'OU_AWAY', scope: 'REG', team: 'AWAY' },
+  '0y-08': { type: 'OE', scope: 'REG' }, // Součet gólů v zápasu (lichý/sudý)
+  '0y-0c': { type: '1X2', scope: 'H1' }, // Výsledek 1. poločasu
+  '0y-0d': { type: 'DC', scope: 'H1' },
+  '0y-0e': { type: 'DNB', scope: 'H1' },
+  '0y-0f': { type: 'AH', scope: 'H1' },
+  '0y-0g': { type: 'OU', scope: 'H1' },
+  '0y-0h': { type: 'OE', scope: 'H1' },
+  '0y-0i': { type: '1X2', scope: 'H2' }, // Výsledek 2. poločasu
+  '0y-0j': { type: 'DNB', scope: 'H2' },
+  '0y-0k': { type: 'OE', scope: 'H2' },
+  // volejbal (remíza neexistuje; OU/AH na body, sety zvlášť)
+  '0m-00': { type: 'ML', scope: 'MATCH' }, // Vítěz zápasu
+  '0m-01': { type: 'AH_SETS', scope: 'MATCH' }, // Handicap setů v zápasu („Tým -1.5“)
+  '0m-02': { type: 'OU_HOME', scope: 'MATCH', team: 'HOME' }, // {1. tým} počet bodů v zápasu
+  '0m-07': { type: 'OU_AWAY', scope: 'MATCH', team: 'AWAY' },
+  '0m-09': { type: 'ML', scope: 'S' }, // Vítěz N. setu
+  '0m-0a': { type: 'AH', scope: 'MATCH' }, // Handicap bodů v zápasu
+  '0m-0b': { type: 'OU', scope: 'MATCH' }, // Počet bodů v zápasu
+  '0m-0c': { type: 'AH', scope: 'S' }, // Handicap bodů v N. setu
+  '0m-0d': { type: 'OU', scope: 'S' }, // Počet bodů v N. setu
+  '0m-0e': { type: 'OE', scope: 'S' }, // Součet bodů v N. setu
+  '0m-0f': { type: 'OU_SETS', scope: 'MATCH' }, // Počet setů v zápasu
+  // baseball: vše „včetně extra inningů“ = MATCH, „Výsledek zápasu“ s remízou = 9 směn (REG);
+  // první směna / po 5. směně / hity vynechány, nadhazovače Fortuna u trhů neuvádí
+  '0q-00': { type: '1X2', scope: 'REG' }, // Výsledek zápasu
+  '0q-0d': { type: 'ML', scope: 'MATCH' }, // Vítěz zápasu včetně extra inningů
+  '0q-0f': { type: 'AH', scope: 'MATCH' }, // Handicap včetně extra inningů (run line)
+  '0q-0g': { type: 'OU', scope: 'MATCH' }, // Počet bodů (běhů) včetně extra inningů
+  '0q-0h': { type: 'OU_HOME', scope: 'MATCH', team: 'HOME' }, // {1. tým}: počet bodů včetně extra inningů
+  '0q-0i': { type: 'OU_AWAY', scope: 'MATCH', team: 'AWAY' },
+  // americký fotbal: „včetně prodloužení“ = MATCH, 3-cestný výsledek = základní doba;
+  // `0g-05` Vítěz zápasu včetně prodloužení vynechán – nevíme, jestli Fortuna při remíze vrací vklad
+  '0g-00': { type: '1X2', scope: 'REG' }, // Výsledek zápasu
+  '0g-07': { type: 'AH', scope: 'MATCH' }, // Handicap včetně prodloužení
+  '0g-08': { type: 'OU', scope: 'MATCH' }, // Počet bodů včetně prodloužení
+  '0g-09': { type: 'OU_HOME', scope: 'MATCH', team: 'HOME' }, // {1. tým} počet bodů v zápasu včetně prodloužení
+  '0g-0a': { type: 'OU_AWAY', scope: 'MATCH', team: 'AWAY' },
+  '0g-0b': { type: 'OE', scope: 'MATCH' }, // Součet bodů včetně prodloužení
+  '0g-0q': { type: '1X2', scope: 'H1' }, // Výsledek 1. poločasu
+  '0g-0w': { type: 'DNB', scope: 'H1' },
+  '0g-0x': { type: 'AH', scope: 'H1' },
+  '0g-0y': { type: 'OU', scope: 'H1' },
+  '0g-0f': { type: '1X2', scope: 'Q' }, // Výsledek N. čtvrtiny
+  '0g-0m': { type: 'DNB', scope: 'Q' },
+  '0g-0n': { type: 'AH', scope: 'Q' },
+  '0g-0g': { type: 'OU', scope: 'Q' },
+  // box (trhy 14-…): „Výsledek zápasu“ vč. remízy; „Vítěz zápasu“ = při remíze vrácení (DNB, viz docs)
+  '14-01': { type: '1X2', scope: 'REG' },
+  '14-00': { type: 'DNB', scope: 'REG' },
+  // MMA / bojové sporty: popis trhu „Vítěz zápasu“: „V případě remízy budou sázky vráceny“
+  '05-00': { type: '1X2', scope: 'REG' }, // Výsledek zápasu (UFC), „jedním z možných typů je remíza“
+  '05-02': { type: 'DNB', scope: 'REG' }, // Vítěz zápasu (UFC)
+  '19-00': { type: 'DNB', scope: 'REG' }, // Vítěz zápasu (KSW, Oktagon, PFL…)
+  // šipky: OU/AH „legů“ = legy (MATCH), „setů“ = AH_SETS/OU_SETS; N. set: vítěz, legy v setu
+  '0l-01': { type: 'ML', scope: 'MATCH' }, // Vítěz zápasu
+  '0l-02': { type: 'AH_SETS', scope: 'MATCH' }, // Handicap setů v zápasu
+  '0l-04': { type: 'OU_SETS', scope: 'MATCH' }, // Počet setů v zápasu
+  '0l-05': { type: 'AH', scope: 'MATCH' }, // Handicap legů v zápasu
+  '0l-06': { type: 'OU', scope: 'MATCH' }, // Počet legů v zápasu
+  '0l-03': { type: 'ML', scope: 'S' }, // Vítěz N. setu
+  '0l-07': { type: 'AH', scope: 'S' }, // Handicap legů v N. setu
+  '0l-08': { type: 'OU', scope: 'S' }, // Počet legů v N. setu
+  // snooker (jednotka = framy)
+  '0h-01': { type: 'ML', scope: 'MATCH' }, // Vítěz zápasu
+  '0h-03': { type: 'AH', scope: 'MATCH' }, // Handicap framů v zápasu
+  '0h-04': { type: 'OU', scope: 'MATCH' }, // Počet framů v zápasu
+  // stolní tenis (OU/AH na body; sety nad 5. se nemapují – S1–S5)
+  '0j-00': { type: 'ML', scope: 'MATCH' }, // Vítěz zápasu
+  '0j-02': { type: 'AH', scope: 'MATCH' }, // Handicap bodů v zápasu
+  '0j-03': { type: 'OU', scope: 'MATCH' }, // Počet bodů v zápasu
+  '0j-0n': { type: 'AH_SETS', scope: 'MATCH' }, // Handicap setů v zápasu
+  '0j-0o': { type: 'OE', scope: 'MATCH' }, // Zápas: součet bodů
+  '0j-0p': { type: 'OU_HOME', scope: 'MATCH', team: 'HOME' }, // {hráč 1}: počet bodů
+  '0j-0q': { type: 'OU_AWAY', scope: 'MATCH', team: 'AWAY' },
+  '0j-0a': { type: 'ML', scope: 'S' }, // Vítěz N. setu
+  '0j-0b': { type: 'OU', scope: 'S' }, // Počet bodů v N. setu
+  '0j-0c': { type: 'AH', scope: 'S' }, // Handicap bodů v N. setu
+  '0j-0d': { type: 'OE', scope: 'S' }, // Součet bodů v N. setu
 };
 
 /** Umíme typ trhu namapovat? (detail zápasu má stovky hráčských trhů – ty se ani necachují) */
@@ -296,7 +414,7 @@ export function periodOf(m: FtnMarket, kind: PeriodKind): number | undefined {
   return n >= 1 && n <= w.max ? n : undefined;
 }
 
-/** Výběry 1/0/2, Ano/Ne, Lichý/Sudý. */
+/** Výběry 1/0/2, Ano/Ne, Lichý/Sudý, dvojtip 10/12/02. */
 function simpleKey(type: MarketType, name: string): SelectionKey | undefined {
   const n = norm(name).toLowerCase();
   switch (type) {
@@ -309,6 +427,9 @@ function simpleKey(type: MarketType, name: string): SelectionKey | undefined {
       return n === 'ano' || n === 'yes' ? 'YES' : n === 'ne' || n === 'no' ? 'NO' : undefined;
     case 'OE':
       return n === 'lichý' || n === 'odd' ? 'ODD' : n === 'sudý' || n === 'even' ? 'EVEN' : undefined;
+    case 'DC':
+      // dvojtip: „10“ = 1X, „12“, „02“ = X2 (ověřeno proti kurzům 1X2)
+      return n === '10' || n === '1x' ? 'HOME_DRAW' : n === '12' ? 'HOME_AWAY' : n === '02' || n === 'x2' ? 'DRAW_AWAY' : undefined;
     default:
       return undefined;
   }
@@ -336,7 +457,11 @@ function parseTotal(m: FtnMarket): { line: number; sels: [SelectionKey, FtnOutco
   return line === undefined ? null : { line, sels };
 }
 
-/** Handicap: „Newcastle (-1)“ / „1 (+0.5)“ / „2 (-2.5)“; linie z pohledu domácích, hosté musí mít opačnou. */
+/**
+ * Handicap: „Newcastle (-1)“ / „1 (+0.5)“ (fotbal, hokej, basket, tenis) nebo bez závorek „1 -1.5“,
+ * „2+0.5“, „Jaworzno -1.5“ (házená, volejbal, baseball, americký fotbal, šipky, snooker, stolní tenis);
+ * linie z pohledu domácích, hosté musí mít opačnou.
+ */
 function parseHandicap(m: FtnMarket, home: string, away: string): { line: number; sels: [SelectionKey, FtnOutcome][] } | null {
   const h = norm(home).toLowerCase();
   const a = norm(away).toLowerCase();
@@ -344,7 +469,9 @@ function parseHandicap(m: FtnMarket, home: string, away: string): { line: number
   let awayLine: number | undefined;
   const sels: [SelectionKey, FtnOutcome][] = [];
   for (const o of m.outcomes) {
-    const r = /^(.*?)\s*\(\s*([+-]?)\s*(\d+(?:[.,]\d+)?)\s*\)$/.exec(norm(o.name));
+    const n = norm(o.name);
+    // bez závorek musí mít linie znaménko (kromě 0), jinak by šlo o jméno končící číslem
+    const r = /^(.*?)\s*\(\s*([+-]?)\s*(\d+(?:[.,]\d+)?)\s*\)$/.exec(n) ?? /^(.*?)\s*([+-])\s*(\d+(?:[.,]\d+)?)$/.exec(n) ?? /^(.+?)\s+()(0)$/.exec(n);
     if (!r) return null;
     const label = r[1].toLowerCase();
     const l = (r[2] === '-' ? -1 : 1) * num(r[3]);
@@ -362,8 +489,8 @@ function parseHandicap(m: FtnMarket, home: string, away: string): { line: number
 export function mapMarket(m: FtnMarket, sport: Sport, home: string, away: string): RawMarket | null {
   const typeId = m.marketTypeId?.replace(/^ufo:mtyp:/, '');
   const def = DEFS[typeId];
-  const sportCode = SPORTS_MAP[sport]?.code;
-  if (!def || !sportCode || !typeId.startsWith(sportCode + '-')) return null;
+  const codes = SPORTS_MAP[sport]?.codes;
+  if (!def || !codes?.includes(typeId.slice(0, 2))) return null;
   if (!m.outcomes?.length) return null;
   // jiná varianta téhož typu (hráčské, kombinované, náhradní trhy) nemá stejná pravidla vyhodnocení
   if (m.variant && m.variant !== 'STANDARD') return null;
@@ -434,11 +561,25 @@ export function mapMarket(m: FtnMarket, sport: Sport, home: string, away: string
 
 /** E-sporty a simulace, které Fortuna řadí pod reálné sporty (kategorie eFotbal/eHokej/eBasketbal). */
 export function isEsport(f: FtnFixture, tournament?: FtnTournament, category?: FtnCategory): boolean {
-  const code = SPORTS_MAP[SPORT_BY_ID.get(f.sportId) ?? 'football']?.code;
+  const codes = SPORTS_MAP[SPORT_BY_ID.get(f.sportId) ?? 'football']?.codes ?? [];
   const catCode = /^ufo:ctgr:([0-9a-z]{2})-/i.exec(f.categoryId ?? '')?.[1];
-  if (catCode && catCode !== code) return true;
+  if (catCode && !codes.includes(catCode)) return true;
   if (/^e(fotbal|hokej|basketbal|tenis)|esport|cyber|virtu/i.test(category?.name ?? '')) return true;
   return /e-?sports?\b|esports battle|cyber|virtu|\(\d+\s*x\s*\d+\s*min/i.test(tournament?.name ?? '');
+}
+
+/**
+ * Formáty, které se mapují jinak než zbytek sportu – vynechat celý zápas: plážový volejbal
+ * (hraje se na 2 vítězné sety), zápasy se zlatým setem.
+ */
+export function isUnsupportedFormat(f: FtnFixture, tournament?: FtnTournament): boolean {
+  if (SPORT_BY_ID.get(f.sportId) !== 'volleyball') return false;
+  return /pláž|beach|zlatý set|golden set/i.test(`${tournament?.name ?? ''} | ${f.name}`);
+}
+
+/** Zápas, který adaptér nevrací: e-sport / simulace / nepodporovaný formát. */
+export function isSkipped(f: FtnFixture, tournament?: FtnTournament, category?: FtnCategory): boolean {
+  return isEsport(f, tournament, category) || isUnsupportedFormat(f, tournament);
 }
 
 export function eventUrl(f: FtnFixture): string | undefined {
@@ -468,7 +609,13 @@ function pair(s: FtnSideScore | undefined): [number, number] | undefined {
 /** Ještě nezačalo: „Začne brzy“, „Začíná …“, „Za 3 m“ (odpočet do začátku), „29.09.26 3:00:00“. */
 const NOT_STARTED = /^(začne brzy|začíná|za\s+\d)|^\d{1,2}\.\s?\d{1,2}\.\s?\d{2,4}/i;
 /** Prodloužení („Prodl. < 5m“) – číslo periody = počet řádných period + 1. */
-const OVERTIME_PERIOD: Partial<Record<Sport, number>> = { football: 3, hockey: 4, basketball: 5 };
+const OVERTIME_PERIOD: Partial<Record<Sport, number>> = { football: 3, hockey: 4, basketball: 5, handball: 3, american_football: 5 };
+/** Text „1. pol. - 14m“ = uplynulá minuta (běžící hodiny od začátku zápasu). */
+const ELAPSED_MINUTE_SPORTS = new Set<Sport>(['football', 'handball']);
+/** Text „2. tř. < 3m“ = do konce periody zbývá méně než N minut. */
+const COUNTDOWN_SPORTS = new Set<Sport>(['hockey', 'basketball', 'handball', 'american_football']);
+/** Stav bodů v rozehraném setu (miniscoreboard PartialScoreL1) – stolní tenis, volejbal. */
+const SET_POINTS_SPORTS = new Set<Sport>(['table_tennis', 'volleyball']);
 
 /**
  * Při „Přestávka“ feed často pošle miniscoreboard bez overview.info (periody) – převezmeme
@@ -485,7 +632,8 @@ export function mergeMini(prev: FtnMiniScoreboard | undefined, next: FtnMiniScor
  *  fotbal „1. pol. - 14m“ (uplynulá minuta), hokej „2. tř. < 3m“, basket „3. čt. < 4m“ (zbývá méně než N min),
  *  tenis „2. set“, prodloužení „Prodl. < 5m“, přestávky „Přestávka“ (poločas, mezi třetinami/čtvrtinami),
  *  „Přerušeno“/„Zápas přerušen“, konec „Konec“ / „Zápas skončil“, bez detailu „Probíhá“,
- *  před začátkem „Začne brzy“ / „Začíná …“ / „Za 3 m“.
+ *  před začátkem „Začne brzy“ / „Začíná …“ / „Za 3 m“. Stolní tenis „4. set“ (TotalScore = sety,
+ *  PartialScoreL1 = body v setu, info = body v setech), baseball „1. směna“.
  */
 export function parseGameState(
   sport: Sport,
@@ -527,13 +675,18 @@ export function parseGameState(
   else if (running) st.breakFlag = false;
   if (isBreak || interrupted || finished) st.clockRunning = false;
 
-  if (sport === 'football') {
+  if (ELAPSED_MINUTE_SPORTS.has(sport)) {
     // „1. pol. - 14m“ = uplynulá minuta; „< 3m“ (zbývá) jen u e-sportů – uplynulý čas z toho nejde
     const m = /(\d{1,3})(?:\s*\+\s*(\d{1,2}))?\s*\.?\s*m(?:in)?\b/i.exec(text);
     if (running && m && !text.includes('<')) st.clockSec = (Number(m[1]) + Number(m[2] ?? 0)) * 60;
-  } else if (sport === 'hockey' || sport === 'basketball') {
+  }
+  if (COUNTDOWN_SPORTS.has(sport)) {
     const m = /<\s*(\d{1,2})\s*m/i.exec(text);
     if (running && m) st.periodRemainingSec = Number(m[1]) * 60;
+  }
+  if (SET_POINTS_SPORTS.has(sport)) {
+    const pts = pair(mini?.columns?.PartialScoreL1);
+    if (pts) st.points = `${pts[0]}:${pts[1]}`;
   } else if (sport === 'tennis') {
     const games = pair(mini?.columns?.PartialScoreL1);
     if (games) st.games = games;
@@ -568,7 +721,7 @@ export function indexPages(pages: FtnMatchesPage[]): {
   return { fixtures: [...fixtures.values()], tournaments, categories };
 }
 
-/** Fixture, které chceme: naše 4 sporty, žádné e-sporty, správný druh (PREMATCH/LIVE), aktivní. */
+/** Fixture, které chceme: naše sporty, žádné e-sporty, správný druh (PREMATCH/LIVE), aktivní. */
 export function selectFixtures(pages: FtnMatchesPage[], scope: FeedScope, sports: Sport[]): FtnFixture[] {
   const { fixtures, tournaments, categories } = indexPages(pages);
   const want = scope === 'live' ? 'LIVE' : 'PREMATCH';
@@ -577,7 +730,7 @@ export function selectFixtures(pages: FtnMatchesPage[], scope: FeedScope, sports
     if (!sport || !sports.includes(sport)) return false;
     if (f.kind !== want) return false;
     if (f.status && f.status !== 'ACTIVE') return false;
-    return !isEsport(f, tournaments.get(f.tournamentId), categories.get(f.categoryId));
+    return !isSkipped(f, tournaments.get(f.tournamentId), categories.get(f.categoryId));
   });
 }
 

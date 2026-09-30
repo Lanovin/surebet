@@ -1,9 +1,10 @@
 // Fortuna – live stav udržovaný z REST snapshotu + websocket zpráv (bez I/O, testovatelné).
 import type { Sport } from '../../core/types.js';
 import {
+  PRIMARY_SPORTS,
   SPORTS_MAP,
-  isEsport,
   isMappedMarketType,
+  isSkipped,
   mergeMini,
   sportOfFixture,
   type FortunaBundle,
@@ -256,12 +257,17 @@ export class FortunaLiveStore {
     return [...this.fixtures.values()].filter((f) => sports.includes(sportOfFixture(f) as Sport)).map((f) => f.id);
   }
 
-  /** Zápasy, u kterých má smysl odebírat plnou sadu trhů: naše sporty, bez e-sportů, s trhy. */
-  detailCandidates(sports: Sport[]): string[] {
+  /**
+   * Zápasy, u kterých má smysl odebírat plnou sadu trhů: naše sporty, bez e-sportů, s trhy. Hlavní
+   * sporty (`primary`) první – limit odběrů je obsadí přednostně (stolní tenis má v noci desítky
+   * zápasů) –, v rámci skupiny podle začátku.
+   */
+  detailCandidates(sports: Sport[], primary: Sport[] = PRIMARY_SPORTS): string[] {
+    const tier = (f: FtnFixture) => (primary.includes(sportOfFixture(f) as Sport) ? 0 : 1);
     return [...this.fixtures.values()]
       .filter((f) => sports.includes(sportOfFixture(f) as Sport) && f.hasMarkets !== false)
-      .filter((f) => !isEsport(f, this.tournaments.get(f.tournamentId), this.categories.get(f.categoryId)))
-      .sort((a, b) => a.startDatetime - b.startDatetime)
+      .filter((f) => !isSkipped(f, this.tournaments.get(f.tournamentId), this.categories.get(f.categoryId)))
+      .sort((a, b) => tier(a) - tier(b) || a.startDatetime - b.startDatetime)
       .map((f) => f.id);
   }
 
@@ -295,5 +301,5 @@ function outcomesSig(m: FtnMarket): string {
 }
 
 /** Sporty, pro které se vyplatí odebírat plný scoreboard (přesné hodiny). */
-export const CLOCK_SPORTS: Sport[] = ['football', 'hockey', 'basketball'];
+export const CLOCK_SPORTS: Sport[] = ['football', 'hockey', 'basketball', 'handball', 'american_football'];
 export const SPORT_IDS = Object.fromEntries(Object.entries(SPORTS_MAP).map(([s, v]) => [s, v.id])) as Record<Sport, string>;
