@@ -1,7 +1,7 @@
 // Mapování trhů Sportradar UOF (id trhu + specifikátory + id výsledku) na kanonické trhy.
 // Altenar (kingsbet) posílá UOF id trhu jako market.typeId a id výsledku jako odd.typeId,
 // betx je posílá v Odds[].UofKey ("uof:3/sr:sport:4/18/13?total=5.5"). Sdílí to oba adaptéry.
-// Pozn.: kandidát na přesun do společného místa (např. src/adapters/common/uof.ts).
+// Používá ho i sdílené parsování Altenar (common/altenar.ts – Kingsbet a MerkurXtip).
 import type { MarketScope, MarketType, RawMarket, RawSelection, SelectionKey, Sport } from '../../core/types.js';
 import { marketKey } from '../../core/markets.js';
 

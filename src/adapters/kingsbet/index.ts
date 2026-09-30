@@ -1,13 +1,21 @@
 // kingsbet.cz – sportsbook běží na platformě Altenar (widget SDK, integration "kingsbet").
+// Parsování i strategie sdílí s MerkurXtip: src/adapters/common/altenar*.ts.
 import type { AdapterFactory } from '../types.js';
-import { AltenarBrowserStrategy, AltenarHttpStrategy, type AltenarOptions } from './strategies.js';
+import type { AltenarSite } from '../common/altenar.js';
+import { AltenarBrowserStrategy, AltenarHttpStrategy } from '../common/altenar-api.js';
 
-/** Prematch: 4 listingy + detail nejbližších 20 událostí (do 24 h). Live: 4 listingy. */
-const OPTIONS: AltenarOptions = { detailLimit: 20, detailHorizonHours: 24 };
+export const KINGSBET: AltenarSite = {
+  bookmaker: 'kingsbet',
+  integration: 'kingsbet',
+  origin: 'https://www.kingsbet.cz',
+  // web i tiket počítají s cenou zaokrouhlenou na 2 místa (2.8572 → 2.86; vklad 100 → výhra 286.00)
+  rounding: 'round',
+  eventUrl: (e) => `https://www.kingsbet.cz/sport?page=event&eventId=${e.id}&sportId=${e.sportId}`,
+};
 
 const factory: AdapterFactory = (ctx) => ({
   bookmaker: 'kingsbet',
-  strategies: [new AltenarHttpStrategy(ctx, OPTIONS), new AltenarBrowserStrategy(ctx, OPTIONS)],
+  strategies: [new AltenarHttpStrategy(ctx, KINGSBET), new AltenarBrowserStrategy(ctx, KINGSBET, 'altenar-browser')],
 });
 
 export default factory;

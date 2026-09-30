@@ -10,17 +10,21 @@ Jak se to zjistilo: `/sport` obsahuje `<altenar-sportsbook>`; web přes websocke
 
 ## Strategie
 
+Parsování i strategie jsou společné s MerkurXtipem – viz **[altenar.md](altenar.md)** (endpointy, mapování
+trhů, pasti v live datech, cache). Tady jen to, co je specifické pro Kingsbet.
+
 | level | název | scope | požadavky / fetch | data | latence |
 |---|---|---|---|---|---|
-| 2 | `altenar-api` | prematch | 4 listingy + ≤ 20 detailů | ~2 MB JSON (~0,5 MB gzip) | ~3,5 s |
-| 2 | `altenar-api` | live | 4 (jeden na sport) | ~30 kB JSON (~12 kB gzip) | 0,2–0,5 s |
-| 5 | `altenar-browser` | obojí | stejné URL přes `fetch()` v Chromiu | stejné | live ~0,1 s, prematch ~1,5 s (+ start prohlížeče) |
+| 2 | `altenar-api` | prematch | 4 listingy + ≤ 50 detailů (nejbližší zápasy do 24 h) | ~3 MB JSON (~0,8 MB gzip) | ~6 s |
+| 2 | `altenar-api` | live | 4 (jeden na sport), polling po 1 s | ~30–250 kB JSON | 0,2–0,5 s |
+| 5 | `altenar-browser` | obojí | stejné URL přes `fetch()` v Chromiu (stránka `robots.txt`) | stejné | live ~0,1 s, prematch ~1,5 s (+ start prohlížeče) |
 
-Obě strategie sdílí `fetchRaw()` + `parseRaw()`; liší se jen transportem. L5 stránka stojí na
-`https://www.kingsbet.cz/robots.txt` (SPA se nenačítá) a volá API s `credentials: 'omit'`.
+**Kurzy:** web i tiket počítají s cenou zaokrouhlenou na 2 místa (API 2.8572 → web 2.86, vklad 100 →
+výhra 286.00; 1.875 → 1.88) → `rounding: 'round'` v `index.ts`.
 
 Naměřeno 28. 9. 2026 ~23:00 (málo live): prematch 847 událostí (fotbal 410, tenis 250, basket 105,
-hokej 82), ~2 200 trhů; live 17 událostí.
+hokej 82), ~2 200 trhů; live 17 událostí. 30. 9. 2026 21:20: live 117 událostí (fotbal 59, tenis 27,
+basket 18, hokej 13).
 
 ## Endpointy
 
@@ -57,17 +61,17 @@ sportId: fotbal 66, tenis 68, basket 67, lední hokej 70 (e-sporty jsou samostat
   "competitors": [{ "id": .., "name": ".." }], "champs": [..], "categories": [..] }
 ```
 
-* `market.sv` = hodnoty UOF specifikátorů spojené `|` v **abecedním pořadí jmen** (`"1|5.5"` = periodnr|total,
-  `"-0.5|1"` = hcp|periodnr, `"1|10.5"` = setnr|total).
+* `market.sv` = hodnoty UOF specifikátorů spojené `|` – **ne vždy v abecedním pořadí** (basket `236`
+  „40.5|1“ = total|čtvrtina). Číslo periody se proto bere z názvu trhu, linie z `odd.sv` (detail).
 * V detailu mají vícelinkové trhy jednu položku a každý kurz nese vlastní `odd.sv` = linie
   (handicap vždy z pohledu domácích: `"1 (+1.5)"` i `"2 (-1.5)"` mají `sv: "+1.5"`).
 * `oddStatus` 0 = otevřeno, jinak zavřeno (v live `7` s `price: 0`).
-* Ceny mají 4 desetinná místa (zlomkové kurzy zaokrouhlené nahoru, např. 5/3 → 1.6667); předáváme je
-  beze změny (web ukazuje 2 desetinná místa; 4-místná hodnota nikdy nenadhodnocuje výplatu).
+* Ceny mají 4 desetinná místa (zlomkové kurzy, např. 5/3 → 1.6667); web i tiket počítají s cenou
+  zaokrouhlenou na 2 místa (1.67) → tu předáváme (ověřeno 30. 9. 2026 na webu i tiketu).
 
 ## Mapování trhů
 
-Sdílená tabulka `src/adapters/kingsbet/uof.ts` (používá ji i betx). Hlavní trhy v listingu:
+Sdílená tabulka `src/adapters/common/uof.ts` (používá ji i betx a MerkurXtip), nad ní kontrola názvu v `common/altenar.ts`. Hlavní trhy v listingu:
 
 | sport | typeId → klíč |
 |---|---|
@@ -81,8 +85,9 @@ Z detailu navíc: 11 DNB, 29 BTTS, 16 AH, 19/20 týmové totaly, 26 OE; poločas
 basket 1 (`1X2|REG`), 227/228/229, čtvrtiny 235/236/302/303/304 (Q1–Q4); tenis 190/191/198, sety 202/203/204.
 Evropský handicap (14, 65, 87), kombinace, hráčské trhy a BetBuilder kopie (`isBB`) se vynechávají.
 
-Detail se stahuje jen pro 20 nejbližších událostí začínajících do 24 h (`OPTIONS` v `index.ts`) – dá
-AH/BTTS/DNB/poločasy/třetiny/sety tam, kde má prematch arb největší smysl, a drží počet požadavků na ~24.
+Detail se stahuje pro 50 nejbližších událostí začínajících do 24 h (`ALTENAR_DEFAULTS` v
+`common/altenar-api.ts`) – dá AH/BTTS/DNB/poločasy/třetiny/sety tam, kde má prematch arb největší smysl,
+a drží počet požadavků na ~54. Čtvrtinové linie (±0.25, 2.75) se nemapují.
 
 ## Live stav a přestávky
 
@@ -103,8 +108,8 @@ AH/BTTS/DNB/poločasy/třetiny/sety tam, kde má prematch arb největší smysl,
 
 ## Rate limity / chování
 
-Žádný 403/429 ani Cloudflare challenge při ~5 req/s. Cloudflare cachuje odpovědi 3 s (`max-age=3`) –
-live data jsou tedy staré max. ~3 s; častější polling než 1 s nemá smysl.
+Žádný 403/429 ani Cloudflare challenge při ~5 req/s. CDN cachuje odpovědi 3 s (`max-age=3`, hlavička
+`Age`) – live data jsou staré 0–3 s, `fetchedAt` = čas požadavku − `Age`. Polling po 1 s (častější nemá smysl).
 
 ## Co nefunguje / zkoušeno
 
@@ -129,8 +134,8 @@ live data jsou tedy staré max. ~3 s; častější polling než 1 s nemá smysl.
    v DevTools najít požadavky na `sb2frontend-altenar2.biahosted.com` (nebo zpráva `open-sportsbook`
    v Oryx websocketu → `extras.integration`, `extras.url`). Host API je v
    `https://sb2wsdk-altenar2.biahosted.com/altenarWSDK.js` (`altenarWSDKOrigins.web`).
-3. Nové/přejmenované trhy: `typeId` jsou UOF id – doplnit do `uof.ts`; ověřit názvy v detailu
-   (`GetEventDetails`) a pořadí specifikátorů v `sv`.
+3. Nové/přejmenované trhy: `typeId` jsou UOF id – doplnit do `common/uof.ts`; ověřit názvy v detailu
+   (`GetEventDetails`) proti kontrole názvu v `common/altenar.ts` (`scopeOf`, `FOREIGN`).
 4. Průzkumné skripty (Playwright zachytávání požadavků, SDK chunky) byly ve scratchpadu; postup:
    headless Chromium, `page.on('request')` s filtrem `biahosted`, navigace na
    `/sport?page=championship&championshipIds=…`, `/sport?page=event&eventId=…`, `/sport?page=live`.

@@ -7,6 +7,9 @@ získá přes Oryx websocket (`wss://web-api-mehr-wss.oryxgaming.com/ws`, zpráv
 
 ## Strategie
 
+Parsování i strategie jsou společné s Kingsbetem – viz **[altenar.md](altenar.md)**. Tady jen specifika
+MerkurXtipu.
+
 | level | název | scope | stav |
 |---|---|---|---|
 | 2 | `altenar-api` | prematch + live | ✅ veřejné widget API, čistý Node fetch, bez cookies/klíče |
@@ -20,7 +23,7 @@ L3 proto neexistuje.
 
 | | požadavky | data raw | latence |
 |---|---|---|---|
-| prematch (4× GetEvents + 30× GetEventDetails nejbližších zápasů do 12 h) | 34 | ~3,7 MB (gzip/br ~0,4 MB) | ~5 s |
+| prematch (4× GetEvents + 50× GetEventDetails nejbližších zápasů do 24 h) | 54 | ~3,7 MB (gzip/br ~0,4 MB) | ~5 s |
 | live (4× GetLiveEvents paralelně) | 4 | ~30 kB | 0,1–0,5 s |
 | browser-fetch live | 4 | ~30 kB | ~1,8 s (+ ~3 s první načtení stránky) |
 
@@ -62,29 +65,15 @@ Normalizovaný JSON: `events[]` (`id`, `name` „A vs. B“, `sportId`, `catId`,
 Detail: `markets[]` s `desktopOddIds` po sloupcích (všechny linie), každý `odd.sv` = linie;
 stejný trh bývá v odpovědi 2× (varianta BetBuilder s podmnožinou linií) → slučujeme podle `id`.
 
-### Mapování trhů (`RULES` v parse.ts)
+### Mapování trhů
 
-`typeId` trhů jsou ID trhů **Sportradar UOF**; navíc kontrolujeme název trhu:
+Společné pro Altenar (`src/adapters/common/altenar.ts`, UOF id z `common/uof.ts` + kontrola názvu) –
+viz [altenar.md](altenar.md). Oproti dřívějšímu vlastnímu parseru se teď mapuje i hokejový handicap
+základní doby (`16` „Handicap v zápasu“ – dřív ho zahodila kontrola na „asijský handicap“).
 
-* **fotbal**: 1 1X2, 11 DNB, 18 OU, 16 asijský handicap AH, 29 BTTS, 19/20 týmové totaly,
-  26 lichý/sudý OE; 1. poločas 60/64/66/68/69/70/75, 2. poločas 83/86/88/90/91/92/95. Vše REG/H1/H2.
-  14 (3-cestný handicap) a kombinace vynechány.
-* **hokej**: 1 1X2|REG, 11 DNB|REG, 18 „Počet gólů“ OU|REG, 29 BTTS|REG, 19/20 týmové totaly REG;
-  406 / 410 / 412 / 414 / 415 „(včetně prodloužení a nájezdů)“ → ML/AH/OU/OU_HOME/OU_AWAY|MATCH;
-  třetiny 443 1X2, 446 OU, 460 AH, 459 DNB, 452 BTTS (číslo třetiny z názvu).
-* **basket**: 219 / 223 / 225 / 227 / 228 „(vč. prodl.)“ → ML/AH/OU/týmové totaly |MATCH,
-  1 1X2|REG, 60/66/68 1. poločas.
-* **tenis**: 186 ML, 187 AH (gemy), 188 AH_SETS, 189 OU (gemy), 190/191 gemy hráčů,
-  202 / 203 / 204 set n: vítěz / handicap gemů / počet gemů.
-* Výběry: 1/2/3 = HOME/DRAW/AWAY, 12/13 = OVER/UNDER, 1714/1715 = AH HOME/AWAY, 74/76 = ANO/NE,
-  70/72 = lichý/sudý. Neznámý typ výběru → celý trh vynechán.
-* **AH linie**: `sv` je vždy linie domácích (i u výběru hostů: „2 (-1.5)“ má `sv` „+1.5“);
-  v listingu linie jen na `market.sv`. Čtvrtinové linie (x.25/x.75) vynechány.
-* Pojistka rozsahu: REG/periodové trhy s „prodl/nájezd/rozhodnut“ v názvu se zahodí,
-  MATCH trhy hokeje/basketu ho mít musí.
-* **Kurzy**: API posílá „přesné“ hodnoty (2.7143, 5.6667), web je ukazuje na 2 místa (a sázka
-  posílá cenu na 6 míst, `oddsRounding: Truncate`). Nevíme jistě, s čím se počítá výplata →
-  **ořezáváme na 2 desetinná místa** (nikdy nenadsadíme kurz).
+* **Kurzy**: API posílá „přesné“ hodnoty (2.1667, 5.6667), web je **ořízne** na 2 místa (2.16), tiket
+  ale vyplatí podle přesné ceny (100 × 2.1667 = 216.67, ověřeno 30. 9. 2026). Předáváme oříznutou
+  hodnotu (`rounding: 'floor'`) – sedí s tím, co uživatel vidí, a výplatu nikdy nenadhodnotí.
 
 ## Live stav a přestávky
 
@@ -97,10 +86,12 @@ Z listingu `GetLiveEvents`:
   `period` = číslo odehrané třetiny), obecně „Přestávka“ (viděno u e-fotbalu), regex
   `^poločas$|přestávk|pauza|konec \d|po \d. …|break`. Text pro přestávku mezi čtvrtinami basketu
   jsme neviděli (e-basket ukazuje jen „n. čtvrtina“ / „Poločas“) – pokud přijde jiný, doplnit
-  `BREAK_RE` v parse.ts. „Zápas ještě nezačal“ = v live feedu, ale před začátkem.
+  `BREAK_RE` v `common/altenar.ts`. „Zápas ještě nezačal“ = v live feedu, ale před začátkem (vynechá se).
 * Hodiny: `timer.playtime` (ms k `timer.timeUtc`), `isPaused`, `isTimerCountDown` → `clockSec`
-  (fotbal vzestupně) nebo `periodRemainingSec` (odpočet). Když `timer` chybí (hokej, basket),
-  bere se `liveTime` „39'“ (kumulativní minuta zápasu) → `clockSec = 38·60`.
+  (fotbal vzestupně) nebo `periodRemainingSec` (odpočet). Když `timer` chybí (hokej),
+  bere se `liveTime` „39'“ (kumulativní minuta zápasu) → `clockSec = 39·60` (na konci třetiny
+  „20'“ = 1200 s, aby fungovala detekce hranice periody).
+* `status: 5` (pozastaveno) → všechny výběry zavřené, `status: 0` („Zápas ještě nezačal“) se vynechá.
 * Tenis: `score` = sety, `currentSetScore` = gemy, `pointScore` = body („15:0“), `server`.
   Přestávku mezi sety feed textem nehlásí (jen `ls` „2. set“) → případně řeší clock fallback.
 
@@ -122,4 +113,4 @@ Z listingu `GetLiveEvents`:
    `framereceived` s `open-sportsbook`) nebo z `https://sb2wsdk-altenar2.biahosted.com/altenarWSDK.js`
    (`altenarWSDKOrigins.web` = základ API).
 2. Změna hostu: `altenarWSDKOrigins` v `altenarWSDK.js` (web/topEvents).
-3. Nové/změněné typy trhů: `fixtures/merkurxtip/detail-*.json` a `RULES` v `parse.ts`.
+3. Nové/změněné typy trhů: `fixtures/merkurxtip/detail-*.json`, `common/uof.ts` a kontrola názvu v `common/altenar.ts`.

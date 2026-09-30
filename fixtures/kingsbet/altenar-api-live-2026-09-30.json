@@ -1,0 +1,2062 @@
+{
+ "recordedAt": "2026-09-30T19:18:30Z",
+ "lists": [
+  {
+   "sport": "football",
+   "url": "https://sb2frontend-altenar2.biahosted.com/api/widget/GetLiveEvents?integration=kingsbet&sportId=66",
+   "body": {
+    "events": [
+     {
+      "liveTime": "45'",
+      "lst": "2026-09-30T18:33:56.775Z",
+      "ls": "1. poločas",
+      "score": [
+       3,
+       1
+      ],
+      "currentSetScore": [],
+      "statistics": [],
+      "timer": {
+       "playtime": 2676284,
+       "timeUtc": "2026-09-30T19:18:33.059Z",
+       "isPaused": false,
+       "timerTemplate": "MM:SS",
+       "lastMinuteTemplate": "MM:SS",
+       "matchPhase": 2,
+       "isTimerCountDown": false,
+       "duration": 2700000
+      },
+      "marketIds": [
+       4578454389,
+       1757054429,
+       1754724124,
+       1754724084
+      ],
+      "isBooked": true,
+      "isParlay": false,
+      "offers": [
+       {
+        "type": 6
+       }
+      ],
+      "code": 6335,
+      "hasStream": false,
+      "extId": "fp32_ar:match:667649",
+      "sc": 970,
+      "mc": 98,
+      "rc": false,
+      "pId": 32,
+      "et": 0,
+      "hasStats": false,
+      "competitorIds": [
+       104070,
+       104059
+      ],
+      "sportId": 66,
+      "catId": 1133,
+      "champId": 17241,
+      "status": 1,
+      "startDate": "2026-09-30T18:30:00Z",
+      "id": 15039152,
+      "name": "Skotsko U21 vs. Ázerbájdžán U21"
+     },
+     {
+      "liveTime": "18'",
+      "lst": "2026-09-30T19:01:04.619Z",
+      "ls": "1. poločas",
+      "score": [
+       0,
+       0
+      ],
+      "currentSetScore": [],
+      "statistics": [],
+      "timer": {
+       "playtime": 1024346,
+       "timeUtc": "2026-09-30T19:18:09.002Z",
+       "isPaused": false,
+       "timerTemplate": "MM:SS",
+       "lastMinuteTemplate": "MM:SS",
+       "matchPhase": 2,
+       "isTimerCountDown": false,
+       "duration": 2700000
+      },
+      "marketIds": [
+       4578449887,
+       1757052709,
+       1755214887
+      ],
+      "isBooked": true,
+      "isParlay": false,
+      "offers": [
+       {
+        "type": 6
+       }
+      ],
+      "code": 7410,
+      "hasStream": false,
+      "extId": "fp32_ar:match:667780",
+      "sc": 734,
+      "mc": 64,
+      "rc": false,
+      "pId": 32,
+      "et": 0,
+      "hasStats": false,
+      "competitorIds": [
+       104086,
+       104087
+      ],
+      "sportId": 66,
+      "catId": 1133,
+      "champId": 17241,
+      "status": 1,
+      "startDate": "2026-09-30T19:00:00Z",
+      "id": 15038866,
+      "name": "Portugalsko U21 vs. Gibraltar U21"
+     },
+     {
+      "liveTime": "17'",
+      "lst": "2026-09-30T19:01:51.891Z",
+      "ls": "1. poločas",
+      "score": [
+       0,
+       0
+      ],
+      "currentSetScore": [],
+      "statistics": [],
+      "timer": {
+       "playtime": 977331,
+       "timeUtc": "2026-09-30T19:18:09.057Z",
+       "isPaused": false,
+       "timerTemplate": "MM:SS",
+       "lastMinuteTemplate": "MM:SS",
+       "matchPhase": 2,
+       "isTimerCountDown": false,
+       "duration": 2700000
+      },
+      "marketIds": [
+       1752539545,
+       1752539568,
+       1752539514,
+       1752539472
+      ],
+      "isBooked": true,
+      "isParlay": false,
+      "offers": [
+       {
+        "type": 6
+       }
+      ],
+      "code": 485,
+      "hasStream": false,
+      "extId": "fp32_ar:match:670376",
+      "sc": 995,
+      "mc": 116,
+      "rc": false,
+      "pId": 32,
+      "et": 0,
+      "hasStats": false,
+      "competitorIds": [
+       51700,
+       52081
+      ],
+      "sportId": 66,
+      "catId": 1133,
+      "champId": 17271,
+      "status": 1,
+      "startDate": "2026-09-30T19:00:00Z",
+      "id": 17818170,
+      "name": "Lyon  – ženy vs. Chelsea – ženy"
+     },
+     {
+      "liveTime": "17'",
+      "lst": "2026-09-30T19:01:19.93Z",
+      "ls": "1. poločas",
+      "score": [
+       0,
+       0
+      ],
+      "currentSetScore": [],
+      "statistics": [],
+      "timer": {
+       "playtime": 1039705,
+       "timeUtc": "2026-09-30T19:18:40.027Z",
+       "isPaused": false,
+       "timerTemplate": "MM:SS",
+       "lastMinuteTemplate": "MM:SS",
+       "matchPhase": 2,
+       "isTimerCountDown": false,
+       "duration": 2700000
+      },
+      "marketIds": [
+       1752642716,
+       1752642739,
+       1752642688,
+       1752539417
+      ],
+      "isBooked": true,
+      "isParlay": false,
+      "offers": [
+       {
+        "type": 6
+       }
+      ],
+      "code": 9266,
+      "hasStream": false,
+      "extId": "fp32_ar:match:670382",
+      "sc": 994,
+      "mc": 116,
+      "rc": false,
+      "pId": 32,
+      "et": 0,
+      "hasStats": false,
+      "competitorIds": [
+       58988,
+       68785
+      ],
+      "sportId": 66,
+      "catId": 1133,
+      "champId": 17271,
+      "status": 1,
+      "startDate": "2026-09-30T19:00:00Z",
+      "id": 17818171,
+      "name": "SL Benfica – ženy vs. Bayern Munich – ženy"
+     },
+     {
+      "liveTime": "62'",
+      "lst": "2026-09-30T18:16:59.083Z",
+      "ls": "2. poločas",
+      "score": [
+       0,
+       1
+      ],
+      "currentSetScore": [],
+      "statistics": [],
+      "timer": {
+       "playtime": 3673495,
+       "timeUtc": "2026-09-30T19:18:12.444Z",
+       "isPaused": false,
+       "timerTemplate": "MM:SS",
+       "lastMinuteTemplate": "MM:SS",
+       "matchPhase": 4,
+       "isTimerCountDown": false,
+       "duration": 2700000
+      },
+      "marketIds": [
+       1754770729,
+       1756998503,
+       1754770720,
+       1754770669
+      ],
+      "isBooked": true,
+      "isParlay": false,
+      "offers": [
+       {
+        "type": 6
+       }
+      ],
+      "code": 659,
+      "hasStream": false,
+      "extId": "fp32_ar:match:667603",
+      "sc": 166,
+      "mc": 21,
+      "rc": false,
+      "pId": 32,
+      "et": 0,
+      "hasStats": false,
+      "competitorIds": [
+       71372,
+       82887
+      ],
+      "sportId": 66,
+      "catId": 1133,
+      "champId": 56543,
+      "status": 1,
+      "startDate": "2026-09-30T18:00:00Z",
+      "id": 17788598,
+      "name": "Rangers – ženy vs. Hammarby – ženy"
+     }
+    ],
+    "markets": [
+     {
+      "oddIds": [
+       4578454389,
+       4578454391,
+       4578454390
+      ],
+      "isAlt": true,
+      "typeId": 1,
+      "sportMarketId": 70472,
+      "id": 4578454389,
+      "name": "5. gól"
+     },
+     {
+      "oddIds": [
+       4578454389,
+       4578454391,
+       4578454390
+      ],
+      "variant": 9,
+      "lines": [],
+      "typeId": 8,
+      "sportMarketId": 70491,
+      "sv": "5",
+      "sn": "5",
+      "id": 1757054429,
+      "name": "5. gól"
+     },
+     {
+      "oddIds": [
+       4570928215,
+       4570928213,
+       4570928214
+      ],
+      "typeId": 10,
+      "sportMarketId": 70495,
+      "id": 1754724124,
+      "name": "Výsledek zápasu – dvojtip"
+     },
+     {
+      "oddIds": [
+       4570928087,
+       4570928088
+      ],
+      "typeId": 18,
+      "sportMarketId": 70520,
+      "sv": "5.5",
+      "sn": "5.5",
+      "id": 1754724084,
+      "name": "Počet gólů"
+     },
+     {
+      "oddIds": [
+       4578449887,
+       4578449889,
+       4578449888
+      ],
+      "isAlt": true,
+      "typeId": 1,
+      "sportMarketId": 0,
+      "id": 4578449887,
+      "name": "1. gól"
+     },
+     {
+      "oddIds": [
+       4578449887,
+       4578449889,
+       4578449888
+      ],
+      "variant": 9,
+      "lines": [],
+      "typeId": 8,
+      "sportMarketId": 70491,
+      "sv": "1",
+      "sn": "1",
+      "id": 1757052709,
+      "name": "1. gól"
+     },
+     {
+      "oddIds": [
+       4572702948,
+       4572702949
+      ],
+      "typeId": 18,
+      "sportMarketId": 70520,
+      "sv": "6.5",
+      "sn": "6.5",
+      "id": 1755214887,
+      "name": "Počet gólů"
+     },
+     {
+      "oddIds": [
+       4564856703,
+       4564856704,
+       4564856705
+      ],
+      "typeId": 1,
+      "sportMarketId": 70472,
+      "id": 1752539545,
+      "name": "Výsledek zápasu"
+     },
+     {
+      "oddIds": [
+       4564856767,
+       4564856769,
+       4564856768
+      ],
+      "variant": 9,
+      "lines": [],
+      "typeId": 8,
+      "sportMarketId": 70491,
+      "sv": "1",
+      "sn": "1",
+      "id": 1752539568,
+      "name": "1. gól"
+     },
+     {
+      "oddIds": [
+       4564856577,
+       4564856575,
+       4564856576
+      ],
+      "typeId": 10,
+      "sportMarketId": 70495,
+      "id": 1752539514,
+      "name": "Výsledek zápasu – dvojtip"
+     },
+     {
+      "oddIds": [
+       4564856445,
+       4564856446
+      ],
+      "typeId": 18,
+      "sportMarketId": 70520,
+      "sv": "2.5",
+      "sn": "2.5",
+      "id": 1752539472,
+      "name": "Počet gólů"
+     },
+     {
+      "oddIds": [
+       4565115273,
+       4565115274,
+       4565115275
+      ],
+      "typeId": 1,
+      "sportMarketId": 70472,
+      "id": 1752642716,
+      "name": "Výsledek zápasu"
+     },
+     {
+      "oddIds": [
+       4565115337,
+       4565115339,
+       4565115338
+      ],
+      "variant": 9,
+      "lines": [],
+      "typeId": 8,
+      "sportMarketId": 70491,
+      "sv": "1",
+      "sn": "1",
+      "id": 1752642739,
+      "name": "1. gól"
+     },
+     {
+      "oddIds": [
+       4565115165,
+       4565115163,
+       4565115164
+      ],
+      "typeId": 10,
+      "sportMarketId": 70495,
+      "id": 1752642688,
+      "name": "Výsledek zápasu – dvojtip"
+     },
+     {
+      "oddIds": [
+       4564856332,
+       4564856333
+      ],
+      "typeId": 18,
+      "sportMarketId": 70520,
+      "sv": "2.5",
+      "sn": "2.5",
+      "id": 1752539417,
+      "name": "Počet gólů"
+     },
+     {
+      "oddIds": [
+       4571074112,
+       4571074113,
+       4571074114
+      ],
+      "typeId": 1,
+      "sportMarketId": 70472,
+      "id": 1754770729,
+      "name": "Výsledek zápasu"
+     },
+     {
+      "oddIds": [
+       4578300367,
+       4578300369,
+       4578300368
+      ],
+      "variant": 9,
+      "lines": [],
+      "typeId": 8,
+      "sportMarketId": 70491,
+      "sv": "2",
+      "sn": "2",
+      "id": 1756998503,
+      "name": "2. gól"
+     },
+     {
+      "oddIds": [
+       4571074065,
+       4571074061,
+       4571074063
+      ],
+      "typeId": 10,
+      "sportMarketId": 70495,
+      "id": 1754770720,
+      "name": "Výsledek zápasu – dvojtip"
+     },
+     {
+      "oddIds": [
+       4571073835,
+       4571073836
+      ],
+      "typeId": 18,
+      "sportMarketId": 70520,
+      "sv": "2.5",
+      "sn": "2.5",
+      "id": 1754770669,
+      "name": "Počet gólů"
+     }
+    ],
+    "odds": [
+     {
+      "typeId": 1,
+      "price": 1.3704,
+      "isMB": false,
+      "oddStatus": 0,
+      "competitorId": 104070,
+      "id": 4578454389,
+      "name": "1"
+     },
+     {
+      "typeId": 7,
+      "price": 5.5,
+      "isMB": false,
+      "oddStatus": 0,
+      "id": 4578454391,
+      "name": "Nikdo"
+     },
+     {
+      "typeId": 3,
+      "price": 4.3334,
+      "isMB": false,
+      "oddStatus": 0,
+      "competitorId": 104059,
+      "id": 4578454390,
+      "name": "2"
+     },
+     {
+      "typeId": 1,
+      "price": 1.3704,
+      "isMB": false,
+      "oddStatus": 0,
+      "competitorId": 104070,
+      "id": 4578454389,
+      "name": "1"
+     },
+     {
+      "typeId": 7,
+      "price": 5.5,
+      "isMB": false,
+      "oddStatus": 0,
+      "id": 4578454391,
+      "name": "Nikdo"
+     },
+     {
+      "typeId": 3,
+      "price": 4.3334,
+      "isMB": false,
+      "oddStatus": 0,
+      "competitorId": 104059,
+      "id": 4578454390,
+      "name": "2"
+     },
+     {
+      "typeId": 9,
+      "price": 1,
+      "isMB": false,
+      "oddStatus": 7,
+      "competitorId": 104070,
+      "isDBB": true,
+      "id": 4570928215,
+      "name": "1X"
+     },
+     {
+      "typeId": 10,
+      "price": 1,
+      "isMB": false,
+      "oddStatus": 7,
+      "isDBB": true,
+      "id": 4570928213,
+      "name": "12"
+     },
+     {
+      "typeId": 11,
+      "price": 12,
+      "isMB": false,
+      "oddStatus": 0,
+      "competitorId": 104059,
+      "isDBB": true,
+      "id": 4570928214,
+      "name": "X2"
+     },
+     {
+      "typeId": 12,
+      "price": 1.575,
+      "isMB": true,
+      "oddStatus": 0,
+      "isDBB": true,
+      "id": 4570928087,
+      "name": "Více než 5.5"
+     },
+     {
+      "typeId": 13,
+      "price": 2.25,
+      "isMB": true,
+      "oddStatus": 0,
+      "isDBB": true,
+      "id": 4570928088,
+      "name": "Méně než 5.5"
+     },
+     {
+      "typeId": 1,
+      "price": 1,
+      "isMB": false,
+      "oddStatus": 7,
+      "competitorId": 104086,
+      "id": 4578449887,
+      "name": "1"
+     },
+     {
+      "typeId": 7,
+      "price": 15,
+      "isMB": false,
+      "oddStatus": 0,
+      "id": 4578449889,
+      "name": "Nikdo"
+     },
+     {
+      "typeId": 3,
+      "price": 9,
+      "isMB": false,
+      "oddStatus": 0,
+      "competitorId": 104087,
+      "id": 4578449888,
+      "name": "2"
+     },
+     {
+      "typeId": 1,
+      "price": 1,
+      "isMB": false,
+      "oddStatus": 7,
+      "competitorId": 104086,
+      "id": 4578449887,
+      "name": "1"
+     },
+     {
+      "typeId": 7,
+      "price": 15,
+      "isMB": false,
+      "oddStatus": 0,
+      "id": 4578449889,
+      "name": "Nikdo"
+     },
+     {
+      "typeId": 3,
+      "price": 9,
+      "isMB": false,
+      "oddStatus": 0,
+      "competitorId": 104087,
+      "id": 4578449888,
+      "name": "2"
+     },
+     {
+      "typeId": 12,
+      "price": 1.8572,
+      "isMB": true,
+      "oddStatus": 0,
+      "isDBB": true,
+      "id": 4572702948,
+      "name": "Více než 6.5"
+     },
+     {
+      "typeId": 13,
+      "price": 1.84,
+      "isMB": true,
+      "oddStatus": 0,
+      "isDBB": true,
+      "id": 4572702949,
+      "name": "Méně než 6.5"
+     },
+     {
+      "typeId": 1,
+      "price": 1.575,
+      "isMB": false,
+      "oddStatus": 0,
+      "competitorId": 51700,
+      "isDBB": true,
+      "id": 4564856703,
+      "name": "1"
+     },
+     {
+      "typeId": 2,
+      "price": 4,
+      "isMB": false,
+      "oddStatus": 0,
+      "isDBB": true,
+      "id": 4564856704,
+      "name": "X"
+     },
+     {
+      "typeId": 3,
+      "price": 5,
+      "isMB": false,
+      "oddStatus": 0,
+      "competitorId": 52081,
+      "isDBB": true,
+      "id": 4564856705,
+      "name": "2"
+     },
+     {
+      "typeId": 1,
+      "price": 1.4546,
+      "isMB": false,
+      "oddStatus": 0,
+      "competitorId": 51700,
+      "id": 4564856767,
+      "name": "1"
+     },
+     {
+      "typeId": 7,
+      "price": 9,
+      "isMB": false,
+      "oddStatus": 0,
+      "id": 4564856769,
+      "name": "Nikdo"
+     },
+     {
+      "typeId": 3,
+      "price": 2.75,
+      "isMB": false,
+      "oddStatus": 0,
+      "competitorId": 52081,
+      "id": 4564856768,
+      "name": "2"
+     },
+     {
+      "typeId": 9,
+      "price": 1.1334,
+      "isMB": false,
+      "oddStatus": 0,
+      "competitorId": 51700,
+      "isDBB": true,
+      "id": 4564856577,
+      "name": "1X"
+     },
+     {
+      "typeId": 10,
+      "price": 1.2,
+      "isMB": false,
+      "oddStatus": 0,
+      "isDBB": true,
+      "id": 4564856575,
+      "name": "12"
+     },
+     {
+      "typeId": 11,
+      "price": 2.25,
+      "isMB": false,
+      "oddStatus": 0,
+      "competitorId": 52081,
+      "isDBB": true,
+      "id": 4564856576,
+      "name": "X2"
+     },
+     {
+      "typeId": 12,
+      "price": 1.72,
+      "isMB": true,
+      "oddStatus": 0,
+      "isDBB": true,
+      "id": 4564856445,
+      "name": "Více než 2.5"
+     },
+     {
+      "typeId": 13,
+      "price": 2,
+      "isMB": true,
+      "oddStatus": 0,
+      "isDBB": true,
+      "id": 4564856446,
+      "name": "Méně než 2.5"
+     },
+     {
+      "typeId": 1,
+      "price": 8,
+      "isMB": false,
+      "oddStatus": 0,
+      "competitorId": 58988,
+      "isDBB": true,
+      "id": 4565115273,
+      "name": "1"
+     },
+     {
+      "typeId": 2,
+      "price": 5,
+      "isMB": false,
+      "oddStatus": 0,
+      "isDBB": true,
+      "id": 4565115274,
+      "name": "X"
+     },
+     {
+      "typeId": 3,
+      "price": 1.3334,
+      "isMB": false,
+      "oddStatus": 0,
+      "competitorId": 68785,
+      "isDBB": true,
+      "id": 4565115275,
+      "name": "2"
+     },
+     {
+      "typeId": 1,
+      "price": 3.35,
+      "isMB": false,
+      "oddStatus": 0,
+      "competitorId": 58988,
+      "id": 4565115337,
+      "name": "1"
+     },
+     {
+      "typeId": 7,
+      "price": 10,
+      "isMB": false,
+      "oddStatus": 0,
+      "id": 4565115339,
+      "name": "Nikdo"
+     },
+     {
+      "typeId": 3,
+      "price": 1.3,
+      "isMB": false,
+      "oddStatus": 0,
+      "competitorId": 68785,
+      "id": 4565115338,
+      "name": "2"
+     },
+     {
+      "typeId": 9,
+      "price": 3.05,
+      "isMB": false,
+      "oddStatus": 0,
+      "competitorId": 58988,
+      "isDBB": true,
+      "id": 4565115165,
+      "name": "1X"
+     },
+     {
+      "typeId": 10,
+      "price": 1.1334,
+      "isMB": false,
+      "oddStatus": 0,
+      "isDBB": true,
+      "id": 4565115163,
+      "name": "12"
+     },
+     {
+      "typeId": 11,
+      "price": 1.0455,
+      "isMB": false,
+      "oddStatus": 0,
+      "competitorId": 68785,
+      "isDBB": true,
+      "id": 4565115164,
+      "name": "X2"
+     },
+     {
+      "typeId": 12,
+      "price": 1.575,
+      "isMB": true,
+      "oddStatus": 0,
+      "isDBB": true,
+      "id": 4564856332,
+      "name": "Více než 2.5"
+     },
+     {
+      "typeId": 13,
+      "price": 2.25,
+      "isMB": true,
+      "oddStatus": 0,
+      "isDBB": true,
+      "id": 4564856333,
+      "name": "Méně než 2.5"
+     },
+     {
+      "typeId": 1,
+      "price": 0,
+      "isMB": false,
+      "oddStatus": 7,
+      "competitorId": 71372,
+      "isDBB": true,
+      "id": 4571074112,
+      "name": "1"
+     },
+     {
+      "typeId": 2,
+      "price": 0,
+      "isMB": false,
+      "oddStatus": 7,
+      "isDBB": true,
+      "id": 4571074113,
+      "name": "X"
+     },
+     {
+      "typeId": 3,
+      "price": 0,
+      "isMB": false,
+      "oddStatus": 7,
+      "competitorId": 82887,
+      "isDBB": true,
+      "id": 4571074114,
+      "name": "2"
+     },
+     {
+      "typeId": 1,
+      "price": 0,
+      "isMB": false,
+      "oddStatus": 7,
+      "competitorId": 71372,
+      "id": 4578300367,
+      "name": "1"
+     },
+     {
+      "typeId": 7,
+      "price": 0,
+      "isMB": false,
+      "oddStatus": 7,
+      "id": 4578300369,
+      "name": "Nikdo"
+     },
+     {
+      "typeId": 3,
+      "price": 0,
+      "isMB": false,
+      "oddStatus": 7,
+      "competitorId": 82887,
+      "id": 4578300368,
+      "name": "2"
+     },
+     {
+      "typeId": 9,
+      "price": 0,
+      "isMB": false,
+      "oddStatus": 7,
+      "competitorId": 71372,
+      "isDBB": true,
+      "id": 4571074065,
+      "name": "1X"
+     },
+     {
+      "typeId": 10,
+      "price": 0,
+      "isMB": false,
+      "oddStatus": 7,
+      "isDBB": true,
+      "id": 4571074061,
+      "name": "12"
+     },
+     {
+      "typeId": 11,
+      "price": 0,
+      "isMB": false,
+      "oddStatus": 7,
+      "competitorId": 82887,
+      "isDBB": true,
+      "id": 4571074063,
+      "name": "X2"
+     },
+     {
+      "typeId": 12,
+      "price": 0,
+      "isMB": true,
+      "oddStatus": 7,
+      "isDBB": true,
+      "id": 4571073835,
+      "name": "Více než 2.5"
+     },
+     {
+      "typeId": 13,
+      "price": 0,
+      "isMB": true,
+      "oddStatus": 7,
+      "isDBB": true,
+      "id": 4571073836,
+      "name": "Méně než 2.5"
+     }
+    ],
+    "competitors": [
+     {
+      "hasConfigJersey": true,
+      "abbreviation": "SCO",
+      "id": 104070,
+      "name": "Skotsko U21"
+     },
+     {
+      "hasConfigJersey": true,
+      "abbreviation": "AZE",
+      "id": 104059,
+      "name": "Ázerbájdžán U21"
+     },
+     {
+      "hasConfigJersey": true,
+      "abbreviation": "POR",
+      "id": 104086,
+      "name": "Portugalsko U21"
+     },
+     {
+      "hasConfigJersey": true,
+      "abbreviation": "GIB",
+      "id": 104087,
+      "name": "Gibraltar U21"
+     },
+     {
+      "hasConfigJersey": true,
+      "abbreviation": "LYO",
+      "id": 51700,
+      "name": "Lyon  – ženy"
+     },
+     {
+      "hasConfigJersey": true,
+      "abbreviation": "CFC",
+      "id": 52081,
+      "name": "Chelsea – ženy"
+     },
+     {
+      "jerseyChamps": [
+       17271
+      ],
+      "abbreviation": "SLB",
+      "id": 58988,
+      "name": "SL Benfica – ženy"
+     },
+     {
+      "hasConfigJersey": true,
+      "abbreviation": "FCB",
+      "id": 68785,
+      "name": "Bayern Munich – ženy"
+     },
+     {
+      "abbreviation": "RAN",
+      "id": 71372,
+      "name": "Rangers – ženy"
+     },
+     {
+      "abbreviation": "HAM",
+      "id": 82887,
+      "name": "Hammarby – ženy"
+     }
+    ],
+    "champs": [
+     {
+      "offers": [
+       {
+        "type": 6
+       }
+      ],
+      "shortName": "U21 ME - Kval.",
+      "hasLiveEvents": false,
+      "id": 17241,
+      "name": "U21 ME - Kvalifikace"
+     },
+     {
+      "offers": [
+       {
+        "type": 6
+       }
+      ],
+      "hasLiveEvents": false,
+      "id": 17271,
+      "name": "Liga mistrů - ženy"
+     },
+     {
+      "offers": [
+       {
+        "type": 6
+       }
+      ],
+      "hasLiveEvents": false,
+      "id": 56543,
+      "name": "Evropský pohár - ženy"
+     }
+    ],
+    "categories": [
+     {
+      "champIds": [
+       17241,
+       17271,
+       56543
+      ],
+      "iso": "",
+      "hasLiveEvents": false,
+      "id": 1133,
+      "name": "Evropa"
+     }
+    ]
+   }
+  },
+  {
+   "sport": "tennis",
+   "url": "https://sb2frontend-altenar2.biahosted.com/api/widget/GetLiveEvents?integration=kingsbet&sportId=68",
+   "body": {
+    "events": [
+     {
+      "liveTime": "2. set",
+      "ls": "2. set",
+      "score": [
+       1,
+       0
+      ],
+      "server": 0,
+      "pointScore": [
+       "0",
+       "0"
+      ],
+      "currentSetScore": [
+       6,
+       3
+      ],
+      "marketIds": [
+       1753840801,
+       1753891874,
+       1753891862
+      ],
+      "isBooked": true,
+      "isParlay": false,
+      "code": 6554,
+      "hasStream": false,
+      "extId": "fp62_ls:match:20335398",
+      "sc": 90,
+      "mc": 14,
+      "rc": false,
+      "pId": 62,
+      "et": 0,
+      "hasStats": false,
+      "competitorIds": [
+       71936,
+       58774
+      ],
+      "sportId": 68,
+      "catId": 542,
+      "champId": 38400,
+      "status": 5,
+      "startDate": "2026-09-30T03:00:00Z",
+      "id": 17864578,
+      "name": "Lehečka, Jiří vs. Bergs, Zizou"
+     },
+     {
+      "liveTime": "2. set",
+      "ls": "2. set",
+      "score": [
+       0,
+       1
+      ],
+      "server": 0,
+      "pointScore": [
+       "0",
+       "0"
+      ],
+      "currentSetScore": [
+       2,
+       1
+      ],
+      "marketIds": [
+       1756182336
+      ],
+      "isBooked": true,
+      "isParlay": false,
+      "code": 9284,
+      "hasStream": false,
+      "extId": "fp32_ar:match:677688",
+      "sc": 87,
+      "mc": 13,
+      "rc": false,
+      "pId": 32,
+      "et": 0,
+      "hasStats": false,
+      "competitorIds": [
+       882910,
+       3708065
+      ],
+      "sportId": 68,
+      "catId": 592,
+      "champId": 63588,
+      "status": 5,
+      "startDate": "2026-09-30T12:37:00Z",
+      "id": 17879790,
+      "name": "Ferrari F / Valle F vs. Purtseladze, Saba/Shvangiradze, Aleksandre"
+     }
+    ],
+    "markets": [
+     {
+      "oddIds": [
+       4568245570,
+       4568245571
+      ],
+      "typeId": 186,
+      "sportMarketId": 70755,
+      "id": 1753840801,
+      "name": "Vítěz"
+     },
+     {
+      "oddIds": [
+       4568388587,
+       4568388588
+      ],
+      "typeId": 187,
+      "sportMarketId": 70760,
+      "sv": "-4.5",
+      "sn": "-4.5",
+      "id": 1753891874,
+      "name": "Handicap – gamy v zápasu"
+     },
+     {
+      "oddIds": [
+       4568388563,
+       4568388564
+      ],
+      "typeId": 189,
+      "sportMarketId": 70762,
+      "sv": "19.5",
+      "sn": "19.5",
+      "id": 1753891862,
+      "name": "Počet gamů v zápasu"
+     },
+     {
+      "oddIds": [
+       4575567635,
+       4575567636
+      ],
+      "typeId": 186,
+      "sportMarketId": 70755,
+      "id": 1756182336,
+      "name": "Vítěz"
+     }
+    ],
+    "odds": [
+     {
+      "typeId": 1,
+      "price": 1.083,
+      "isMB": false,
+      "oddStatus": 0,
+      "competitorId": 71936,
+      "id": 4568245570,
+      "name": "1"
+     },
+     {
+      "typeId": 3,
+      "price": 8,
+      "isMB": false,
+      "oddStatus": 0,
+      "competitorId": 58774,
+      "id": 4568245571,
+      "name": "2"
+     },
+     {
+      "typeId": 1714,
+      "price": 1.445,
+      "isMB": true,
+      "oddStatus": 0,
+      "competitorId": 71936,
+      "id": 4568388587,
+      "name": "1 (-4.5)"
+     },
+     {
+      "typeId": 1715,
+      "price": 2.6,
+      "isMB": true,
+      "oddStatus": 0,
+      "competitorId": 58774,
+      "id": 4568388588,
+      "name": "2 (+4.5)"
+     },
+     {
+      "typeId": 12,
+      "price": 2,
+      "isMB": true,
+      "oddStatus": 0,
+      "id": 4568388563,
+      "name": "Více než 19.5"
+     },
+     {
+      "typeId": 13,
+      "price": 1.714,
+      "isMB": true,
+      "oddStatus": 0,
+      "id": 4568388564,
+      "name": "Méně než 19.5"
+     },
+     {
+      "typeId": 1,
+      "price": 1.72,
+      "isMB": false,
+      "oddStatus": 0,
+      "competitorId": 882910,
+      "id": 4575567635,
+      "name": "1"
+     },
+     {
+      "typeId": 3,
+      "price": 1.975,
+      "isMB": false,
+      "oddStatus": 0,
+      "competitorId": 3708065,
+      "id": 4575567636,
+      "name": "2"
+     }
+    ],
+    "competitors": [
+     {
+      "hasConfigJersey": true,
+      "abbreviation": "LEH",
+      "id": 71936,
+      "name": "Lehečka, Jiří"
+     },
+     {
+      "hasConfigJersey": true,
+      "abbreviation": "BER",
+      "id": 58774,
+      "name": "Bergs, Zizou"
+     },
+     {
+      "abbreviation": "FVA",
+      "id": 882910,
+      "name": "Ferrari F / Valle F"
+     },
+     {
+      "id": 3708065,
+      "name": "Purtseladze, Saba/Shvangiradze, Aleksandre"
+     }
+    ],
+    "champs": [
+     {
+      "shortName": "ATP Tokio",
+      "hasLiveEvents": false,
+      "id": 38400,
+      "name": "ATP Tokio, Japonsko Muži Dvouhra"
+     },
+     {
+      "hasLiveEvents": false,
+      "id": 63588,
+      "name": "ITF M15 Telavi Muži Čtyřhra"
+     }
+    ],
+    "categories": [
+     {
+      "champIds": [
+       38400
+      ],
+      "iso": "",
+      "hasLiveEvents": false,
+      "id": 542,
+      "name": "ATP"
+     },
+     {
+      "champIds": [
+       56712,
+       56713,
+       56904,
+       63588
+      ],
+      "iso": "",
+      "hasLiveEvents": false,
+      "id": 592,
+      "name": "ITF, Muži"
+     }
+    ]
+   }
+  },
+  {
+   "sport": "basketball",
+   "url": "https://sb2frontend-altenar2.biahosted.com/api/widget/GetLiveEvents?integration=kingsbet&sportId=67",
+   "body": {
+    "events": [
+     {
+      "liveTime": "21'",
+      "ls": "3. čtvrtina",
+      "score": [
+       46,
+       52
+      ],
+      "currentSetScore": [],
+      "timer": {
+       "playtime": 600000,
+       "timeUtc": "2026-09-30T19:17:45.052Z",
+       "isPaused": false,
+       "timerTemplate": "MM:SS",
+       "lastMinuteTemplate": "MM:SS",
+       "matchPhase": 15,
+       "isTimerCountDown": true,
+       "duration": 600000
+      },
+      "marketIds": [
+       1749666576,
+       1749666644,
+       1749666581
+      ],
+      "isBooked": true,
+      "isParlay": false,
+      "variant": 2,
+      "offers": [
+       {
+        "type": 6
+       }
+      ],
+      "code": 1973,
+      "hasStream": false,
+      "extId": "fp32_ar:match:672763",
+      "sc": 598,
+      "mc": 41,
+      "rc": false,
+      "pId": 32,
+      "et": 0,
+      "hasStats": false,
+      "competitorIds": [
+       45854,
+       44307
+      ],
+      "sportId": 67,
+      "catId": 1061,
+      "champId": 2995,
+      "status": 1,
+      "startDate": "2026-09-30T18:05:00Z",
+      "id": 17803131,
+      "name": "Maccabi Tel-Aviv vs. Besiktas"
+     }
+    ],
+    "markets": [
+     {
+      "oddIds": [
+       4556614347,
+       4556614348
+      ],
+      "typeId": 219,
+      "sportMarketId": 70792,
+      "id": 1749666576,
+      "name": "Vítěz (vč. prodl.)"
+     },
+     {
+      "oddIds": [
+       4556614484,
+       4556614485
+      ],
+      "typeId": 223,
+      "sportMarketId": 70798,
+      "sv": "-1.5",
+      "sn": "-1.5",
+      "id": 1749666644,
+      "name": "Handicap (vč. prodl.)"
+     },
+     {
+      "oddIds": [
+       4556614358,
+       4556614359
+      ],
+      "typeId": 225,
+      "sportMarketId": 70802,
+      "sv": "180.5",
+      "sn": "180.5",
+      "id": 1749666581,
+      "name": "Počet bodů (vč. prodl.)"
+     }
+    ],
+    "odds": [
+     {
+      "typeId": 1,
+      "price": 1.84,
+      "isMB": false,
+      "oddStatus": 0,
+      "competitorId": 45854,
+      "isDBB": true,
+      "id": 4556614347,
+      "name": "1"
+     },
+     {
+      "typeId": 3,
+      "price": 1.9,
+      "isMB": false,
+      "oddStatus": 0,
+      "competitorId": 44307,
+      "isDBB": true,
+      "id": 4556614348,
+      "name": "2"
+     },
+     {
+      "typeId": 1714,
+      "price": 1.9412,
+      "isMB": true,
+      "oddStatus": 0,
+      "competitorId": 45854,
+      "isDBB": true,
+      "id": 4556614484,
+      "name": "1 (-1.5)"
+     },
+     {
+      "typeId": 1715,
+      "price": 1.8,
+      "isMB": true,
+      "oddStatus": 0,
+      "competitorId": 44307,
+      "isDBB": true,
+      "id": 4556614485,
+      "name": "2 (+1.5)"
+     },
+     {
+      "typeId": 12,
+      "price": 1.84,
+      "isMB": true,
+      "oddStatus": 0,
+      "isDBB": true,
+      "id": 4556614358,
+      "name": "Více než 180.5"
+     },
+     {
+      "typeId": 13,
+      "price": 1.9,
+      "isMB": true,
+      "oddStatus": 0,
+      "isDBB": true,
+      "id": 4556614359,
+      "name": "Méně než 180.5"
+     }
+    ],
+    "competitors": [
+     {
+      "hasConfigJersey": true,
+      "abbreviation": "MTA",
+      "id": 45854,
+      "name": "Maccabi Tel-Aviv"
+     },
+     {
+      "hasConfigJersey": true,
+      "abbreviation": "BJK",
+      "id": 44307,
+      "name": "Besiktas"
+     }
+    ],
+    "champs": [
+     {
+      "offers": [
+       {
+        "type": 6
+       }
+      ],
+      "hasLiveEvents": false,
+      "id": 2995,
+      "name": "Euroliga"
+     }
+    ],
+    "categories": [
+     {
+      "champIds": [
+       2995,
+       7417,
+       2992,
+       3572,
+       33581
+      ],
+      "iso": "",
+      "hasLiveEvents": false,
+      "id": 1061,
+      "name": "Evropa"
+     }
+    ]
+   }
+  },
+  {
+   "sport": "hockey",
+   "url": "https://sb2frontend-altenar2.biahosted.com/api/widget/GetLiveEvents?integration=kingsbet&sportId=70",
+   "body": {
+    "events": [
+     {
+      "liveTime": "3. třetina",
+      "ls": "3. třetina",
+      "score": [
+       4,
+       2
+      ],
+      "currentSetScore": [],
+      "marketIds": [
+       1755751983,
+       1755751982,
+       1755751984,
+       1757018263
+      ],
+      "isBooked": true,
+      "isParlay": false,
+      "code": 9065,
+      "hasStream": false,
+      "extId": "fp62_ls:match:20282654",
+      "sc": 0,
+      "mc": 0,
+      "rc": false,
+      "pId": 62,
+      "et": 0,
+      "hasStats": false,
+      "competitorIds": [
+       2517131,
+       2517134
+      ],
+      "sportId": 70,
+      "catId": 634,
+      "champId": 57108,
+      "status": 1,
+      "startDate": "2026-09-30T17:30:00Z",
+      "id": 17803778,
+      "name": "UK Praha vs. Vse Falcons Prague"
+     },
+     {
+      "liveTime": "20'",
+      "ls": "První přestávka",
+      "score": [
+       0,
+       1
+      ],
+      "currentSetScore": [],
+      "marketIds": [
+       1756209416,
+       1757050337,
+       1757049922,
+       1757027518,
+       1756209405,
+       1756209404,
+       1756209400
+      ],
+      "isBooked": true,
+      "isParlay": false,
+      "code": 4644,
+      "hasStream": false,
+      "extId": "fp16_bg:match:14143556",
+      "sc": 118,
+      "mc": 29,
+      "rc": false,
+      "pId": 16,
+      "et": 0,
+      "hasStats": false,
+      "competitorIds": [
+       50710,
+       51067
+      ],
+      "sportId": 70,
+      "catId": 644,
+      "champId": 3244,
+      "status": 1,
+      "startDate": "2026-09-30T18:30:00Z",
+      "id": 17803776,
+      "name": "Glasgow vs. Manchester"
+     }
+    ],
+    "markets": [
+     {
+      "oddIds": [
+       4574080475,
+       4574080474,
+       4574080476
+      ],
+      "typeId": 1,
+      "sportMarketId": 70477,
+      "id": 1755751983,
+      "name": "Výsledek zápasu"
+     },
+     {
+      "oddIds": [
+       4574080473,
+       4574080472
+      ],
+      "typeId": 406,
+      "sportMarketId": 70901,
+      "id": 1755751982,
+      "name": "Vítěz (včetně prodloužení a nájezdů)"
+     },
+     {
+      "oddIds": [
+       4574080477,
+       4574080478
+      ],
+      "typeId": 410,
+      "sportMarketId": 70906,
+      "sv": "-2.5",
+      "sn": "-2.5",
+      "id": 1755751984,
+      "name": "Handicap (včetně prodloužení a nájezdů)"
+     },
+     {
+      "oddIds": [
+       4578349523,
+       4578349522
+      ],
+      "typeId": 412,
+      "sportMarketId": 70908,
+      "sv": "8.5",
+      "sn": "8.5",
+      "id": 1757018263,
+      "name": "Počet gólů (včetně prodloužení a nájezdů)"
+     },
+     {
+      "oddIds": [
+       4575649662,
+       4575649663,
+       4575649664
+      ],
+      "typeId": 1,
+      "sportMarketId": 70477,
+      "id": 1756209416,
+      "name": "Výsledek zápasu"
+     },
+     {
+      "oddIds": [
+       4578444313,
+       4578444315,
+       4578444314
+      ],
+      "variant": 9,
+      "lines": [],
+      "typeId": 8,
+      "sportMarketId": 70492,
+      "sv": "2",
+      "sn": "2 Goal",
+      "id": 1757050337,
+      "name": "2. gól"
+     },
+     {
+      "oddIds": [
+       4578443347,
+       4578443348
+      ],
+      "typeId": 16,
+      "sportMarketId": 70518,
+      "sv": "+0.5",
+      "sn": "+0.5",
+      "id": 1757049922,
+      "name": "Handicap v zápasu"
+     },
+     {
+      "oddIds": [
+       4578371889,
+       4578371890
+      ],
+      "typeId": 18,
+      "sportMarketId": 70523,
+      "sv": "4.5",
+      "sn": "4.5",
+      "id": 1757027518,
+      "name": "Počet gólů"
+     },
+     {
+      "oddIds": [
+       4575649637,
+       4575649638
+      ],
+      "typeId": 406,
+      "sportMarketId": 70901,
+      "id": 1756209405,
+      "name": "Vítěz (včetně prodloužení a nájezdů)"
+     },
+     {
+      "oddIds": [
+       4575649635,
+       4575649636
+      ],
+      "typeId": 410,
+      "sportMarketId": 70906,
+      "sv": "-0.5",
+      "sn": "-0.5",
+      "id": 1756209404,
+      "name": "Handicap (včetně prodloužení a nájezdů)"
+     },
+     {
+      "oddIds": [
+       4575649626,
+       4575649627
+      ],
+      "typeId": 412,
+      "sportMarketId": 70908,
+      "sv": "5.5",
+      "sn": "5.5",
+      "id": 1756209400,
+      "name": "Počet gólů (včetně prodloužení a nájezdů)"
+     }
+    ],
+    "odds": [
+     {
+      "typeId": 1,
+      "price": 1.046,
+      "isMB": false,
+      "oddStatus": 0,
+      "competitorId": 2517131,
+      "id": 4574080475,
+      "name": "1"
+     },
+     {
+      "typeId": 2,
+      "price": 9,
+      "isMB": false,
+      "oddStatus": 0,
+      "id": 4574080474,
+      "name": "X"
+     },
+     {
+      "typeId": 3,
+      "price": 21,
+      "isMB": false,
+      "oddStatus": 0,
+      "competitorId": 2517134,
+      "id": 4574080476,
+      "name": "2"
+     },
+     {
+      "typeId": 1,
+      "price": 1.012,
+      "isMB": false,
+      "oddStatus": 0,
+      "competitorId": 2517131,
+      "id": 4574080473,
+      "name": "1"
+     },
+     {
+      "typeId": 3,
+      "price": 11,
+      "isMB": false,
+      "oddStatus": 0,
+      "competitorId": 2517134,
+      "id": 4574080472,
+      "name": "2"
+     },
+     {
+      "typeId": 1714,
+      "price": 1.455,
+      "isMB": true,
+      "oddStatus": 0,
+      "competitorId": 2517131,
+      "id": 4574080477,
+      "name": "1 (-2.5)"
+     },
+     {
+      "typeId": 1715,
+      "price": 2.6,
+      "isMB": true,
+      "oddStatus": 0,
+      "competitorId": 2517134,
+      "id": 4574080478,
+      "name": "2 (+2.5)"
+     },
+     {
+      "typeId": 12,
+      "price": 1.869,
+      "isMB": true,
+      "oddStatus": 0,
+      "id": 4578349523,
+      "name": "Více než 8.5"
+     },
+     {
+      "typeId": 13,
+      "price": 1.869,
+      "isMB": true,
+      "oddStatus": 0,
+      "id": 4578349522,
+      "name": "Méně než 8.5"
+     },
+     {
+      "typeId": 1,
+      "price": 3.5,
+      "isMB": false,
+      "oddStatus": 0,
+      "competitorId": 50710,
+      "id": 4575649662,
+      "name": "1"
+     },
+     {
+      "typeId": 2,
+      "price": 3.8,
+      "isMB": false,
+      "oddStatus": 0,
+      "id": 4575649663,
+      "name": "X"
+     },
+     {
+      "typeId": 3,
+      "price": 1.7778,
+      "isMB": false,
+      "oddStatus": 0,
+      "competitorId": 51067,
+      "id": 4575649664,
+      "name": "2"
+     },
+     {
+      "typeId": 1,
+      "price": 1.75,
+      "isMB": false,
+      "oddStatus": 0,
+      "competitorId": 50710,
+      "id": 4578444313,
+      "name": "1"
+     },
+     {
+      "typeId": 7,
+      "price": 20,
+      "isMB": false,
+      "oddStatus": 0,
+      "id": 4578444315,
+      "name": "Žádný"
+     },
+     {
+      "typeId": 3,
+      "price": 1.9524,
+      "isMB": false,
+      "oddStatus": 0,
+      "competitorId": 51067,
+      "id": 4578444314,
+      "name": "2"
+     },
+     {
+      "typeId": 1714,
+      "price": 1.9524,
+      "isMB": true,
+      "oddStatus": 0,
+      "competitorId": 50710,
+      "id": 4578443347,
+      "name": "1 (+0.5)"
+     },
+     {
+      "typeId": 1715,
+      "price": 1.7407,
+      "isMB": true,
+      "oddStatus": 0,
+      "competitorId": 51067,
+      "id": 4578443348,
+      "name": "2 (-0.5)"
+     },
+     {
+      "typeId": 12,
+      "price": 1.625,
+      "isMB": true,
+      "oddStatus": 0,
+      "id": 4578371889,
+      "name": "Více než 4.5"
+     },
+     {
+      "typeId": 13,
+      "price": 2.2,
+      "isMB": true,
+      "oddStatus": 0,
+      "id": 4578371890,
+      "name": "Méně než 4.5"
+     },
+     {
+      "typeId": 1,
+      "price": 2.5,
+      "isMB": false,
+      "oddStatus": 0,
+      "competitorId": 50710,
+      "id": 4575649637,
+      "name": "1"
+     },
+     {
+      "typeId": 3,
+      "price": 1.5,
+      "isMB": false,
+      "oddStatus": 0,
+      "competitorId": 51067,
+      "id": 4575649638,
+      "name": "2"
+     },
+     {
+      "typeId": 1714,
+      "price": 2.5,
+      "isMB": true,
+      "oddStatus": 0,
+      "competitorId": 50710,
+      "id": 4575649635,
+      "name": "1 (-0.5)"
+     },
+     {
+      "typeId": 1715,
+      "price": 1.5,
+      "isMB": true,
+      "oddStatus": 0,
+      "competitorId": 51067,
+      "id": 4575649636,
+      "name": "2 (+0.5)"
+     },
+     {
+      "typeId": 12,
+      "price": 2.5,
+      "isMB": true,
+      "oddStatus": 0,
+      "id": 4575649626,
+      "name": "Více než 5.5"
+     },
+     {
+      "typeId": 13,
+      "price": 1.5,
+      "isMB": true,
+      "oddStatus": 0,
+      "id": 4575649627,
+      "name": "Méně než 5.5"
+     }
+    ],
+    "competitors": [
+     {
+      "id": 2517131,
+      "name": "UK Praha"
+     },
+     {
+      "id": 2517134,
+      "name": "Vse Falcons Prague"
+     },
+     {
+      "abbreviation": "GLA",
+      "id": 50710,
+      "name": "Glasgow"
+     },
+     {
+      "abbreviation": "MST",
+      "id": 51067,
+      "name": "Manchester"
+     }
+    ],
+    "champs": [
+     {
+      "hasLiveEvents": false,
+      "id": 57108,
+      "name": "Univerzitní liga"
+     },
+     {
+      "hasLiveEvents": false,
+      "id": 3244,
+      "name": "Elite League"
+     }
+    ],
+    "categories": [
+     {
+      "champIds": [
+       57108
+      ],
+      "iso": "CZE",
+      "hasLiveEvents": false,
+      "id": 634,
+      "name": "Česko"
+     },
+     {
+      "champIds": [
+       3244
+      ],
+      "iso": "ENG",
+      "hasLiveEvents": false,
+      "id": 644,
+      "name": "Anglie"
+     }
+    ]
+   }
+  }
+ ],
+ "details": [],
+ "requests": 4,
+ "bytes": 0
+}
