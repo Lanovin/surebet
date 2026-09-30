@@ -1,0 +1,1318 @@
+{
+ "recordedAt": "2026-09-30T19:56:12.410Z",
+ "note": "SignalR liveUpdated položky (RegisterMatches + RegisterSportBetType) a statická data z listingu, 30. 9. 2026 ~21:50",
+ "statics": [
+  {
+   "Id": 58208457,
+   "TeamHome": "Portugal",
+   "TeamAway": "Gibraltar",
+   "MatchStartTime": "2026-09-30T19:00:00Z",
+   "SportId": 388,
+   "CategoryName": "International Youth",
+   "LeagueName": "U21 UEFA European Championship, Qualification",
+   "EventType": 1,
+   "IsBlocked": false,
+   "IsLive": true,
+   "IsLiveMatchAvailable": true,
+   "LiveMatchState": 1,
+   "LiveMatchTime": "45",
+   "LiveMatchTimeState": "Paused",
+   "LiveMatchTimeOrigName": "LB_SOCCER_PAUSED",
+   "LiveMatchScore": "2 : 0",
+   "LiveSetScore": "2 : 0",
+   "LiveStatusString": "paused",
+   "LiveUpdateTimestamp": "2026-09-30T19:55:51.884Z",
+   "LiveMatchStartTime": "2026-09-30T19:00:00Z",
+   "LiveIsBlocked": false,
+   "LiveIsDisabled": false,
+   "LiveBettingEnabled": true,
+   "BasicOffer": {
+    "Id": 469098567,
+    "Description": "1x2",
+    "BetTypeKey": "2_-1",
+    "Sbv": null,
+    "Active": true,
+    "IsEnabled": true,
+    "Odds": [
+     {
+      "Name": "1",
+      "OrigName": "1",
+      "Odd": 0,
+      "Active": false,
+      "UofKey": "uof:1/sr:sport:1/1/1"
+     },
+     {
+      "Name": "x",
+      "OrigName": "x",
+      "Odd": 8.5,
+      "Active": true,
+      "UofKey": "uof:1/sr:sport:1/1/2"
+     },
+     {
+      "Name": "2",
+      "OrigName": "2",
+      "Odd": 50,
+      "Active": true,
+      "UofKey": "uof:1/sr:sport:1/1/3"
+     }
+    ]
+   },
+   "Offers": []
+  },
+  {
+   "Id": 72123356,
+   "TeamHome": "HC Lausanne",
+   "TeamAway": "Geneva Servette",
+   "MatchStartTime": "2026-09-30T17:45:00Z",
+   "SportId": 398,
+   "CategoryName": "Switzerland",
+   "LeagueName": "National League",
+   "EventType": 1,
+   "IsBlocked": false,
+   "IsLive": true,
+   "IsLiveMatchAvailable": true,
+   "LiveMatchState": 1,
+   "LiveMatchTime": "54",
+   "LiveMatchTimeState": "3rd period",
+   "LiveMatchTimeOrigName": "LB_ICE_HOCKEY_3P",
+   "LiveMatchScore": "2 : 4",
+   "LiveSetScore": "2 : 2 - 0 : 2 - 0 : 0",
+   "LiveStatusString": "3p",
+   "LiveUpdateTimestamp": "2026-09-30T19:55:53.944Z",
+   "LiveMatchStartTime": "2026-09-30T17:45:00Z",
+   "LiveIsBlocked": false,
+   "LiveIsDisabled": false,
+   "LiveBettingEnabled": true,
+   "BasicOffer": {
+    "Id": 469068558,
+    "Description": "1x2",
+    "BetTypeKey": "2_-1",
+    "Sbv": null,
+    "Active": true,
+    "IsEnabled": true,
+    "Odds": [
+     {
+      "Name": "1",
+      "OrigName": "1",
+      "Odd": 50,
+      "Active": true,
+      "UofKey": "uof:1/sr:sport:4/1/1"
+     },
+     {
+      "Name": "x",
+      "OrigName": "x",
+      "Odd": 9.75,
+      "Active": true,
+      "UofKey": "uof:1/sr:sport:4/1/2"
+     },
+     {
+      "Name": "2",
+      "OrigName": "2",
+      "Odd": 1.01,
+      "Active": true,
+      "UofKey": "uof:1/sr:sport:4/1/3"
+     }
+    ]
+   },
+   "Offers": []
+  },
+  {
+   "Id": 72902006,
+   "TeamHome": "CB Miraflores",
+   "TeamAway": "Olimpija Ljubljana",
+   "MatchStartTime": "2026-09-30T18:30:00Z",
+   "SportId": 391,
+   "CategoryName": "International",
+   "LeagueName": "Eurocup",
+   "EventType": 1,
+   "IsBlocked": false,
+   "IsLive": true,
+   "IsLiveMatchAvailable": true,
+   "LiveMatchState": 1,
+   "LiveMatchTime": "19",
+   "LiveMatchTimeState": "LB_BASKETBALL_PAUSED",
+   "LiveMatchTimeOrigName": "LB_BASKETBALL_PAUSED",
+   "LiveMatchScore": "43 : 42",
+   "LiveSetScore": "25 : 21 - 18 : 21",
+   "LiveStatusString": "paused",
+   "LiveUpdateTimestamp": "2026-09-30T19:55:51.869Z",
+   "LiveMatchStartTime": "2026-09-30T18:30:00Z",
+   "LiveIsBlocked": false,
+   "LiveIsDisabled": false,
+   "LiveBettingEnabled": true,
+   "BasicOffer": {
+    "Id": 469087245,
+    "Description": "1x2",
+    "BetTypeKey": "2_-1",
+    "Sbv": null,
+    "Active": true,
+    "IsEnabled": true,
+    "Odds": [
+     {
+      "Name": "1",
+      "OrigName": "1",
+      "Odd": 1.52,
+      "Active": true,
+      "UofKey": "uof:1/sr:sport:2/1/1"
+     },
+     {
+      "Name": "x",
+      "OrigName": "x",
+      "Odd": 10.5,
+      "Active": true,
+      "UofKey": "uof:1/sr:sport:2/1/2"
+     },
+     {
+      "Name": "2",
+      "OrigName": "2",
+      "Odd": 2.9,
+      "Active": true,
+      "UofKey": "uof:1/sr:sport:2/1/3"
+     }
+    ]
+   },
+   "Offers": []
+  },
+  {
+   "Id": 73607406,
+   "TeamHome": "Crystal Palace",
+   "TeamAway": "Charlton Athletic",
+   "MatchStartTime": "2026-09-30T18:00:00Z",
+   "SportId": 388,
+   "CategoryName": "England Amateur",
+   "LeagueName": "FA Womens League Cup",
+   "EventType": 1,
+   "IsBlocked": false,
+   "IsLive": true,
+   "IsLiveMatchAvailable": true,
+   "LiveMatchState": 1,
+   "LiveMatchTime": "89",
+   "LiveMatchTimeState": "2nd halftime",
+   "LiveMatchTimeOrigName": "LB_SOCCER_2P",
+   "LiveMatchScore": "2 : 0",
+   "LiveSetScore": "1 : 0 - 1 : 0",
+   "LiveStatusString": "2p",
+   "LiveUpdateTimestamp": "2026-09-30T19:51:39.658Z",
+   "LiveMatchStartTime": "2026-09-30T18:00:00Z",
+   "LiveIsBlocked": false,
+   "LiveIsDisabled": false,
+   "LiveBettingEnabled": true,
+   "BasicOffer": {
+    "Id": 469069157,
+    "Description": "1x2",
+    "BetTypeKey": "2_-1",
+    "Sbv": null,
+    "Active": true,
+    "IsEnabled": true,
+    "Odds": [
+     {
+      "Name": "1",
+      "OrigName": "1",
+      "Odd": 0,
+      "Active": false,
+      "UofKey": "uof:1/sr:sport:1/1/1"
+     },
+     {
+      "Name": "x",
+      "OrigName": "x",
+      "Odd": 8,
+      "Active": true,
+      "UofKey": "uof:1/sr:sport:1/1/2"
+     },
+     {
+      "Name": "2",
+      "OrigName": "2",
+      "Odd": 50,
+      "Active": true,
+      "UofKey": "uof:1/sr:sport:1/1/3"
+     }
+    ]
+   },
+   "Offers": []
+  },
+  {
+   "Id": 74507942,
+   "TeamHome": "Defensor Sporting",
+   "TeamAway": "Plaza Colonia",
+   "MatchStartTime": "2026-09-30T19:00:00Z",
+   "SportId": 388,
+   "CategoryName": "Uruguay",
+   "LeagueName": "Copa Uruguay",
+   "EventType": 1,
+   "IsBlocked": false,
+   "IsLive": true,
+   "IsLiveMatchAvailable": true,
+   "LiveMatchState": 1,
+   "LiveMatchTime": "45",
+   "LiveMatchTimeState": "Paused",
+   "LiveMatchTimeOrigName": "LB_SOCCER_PAUSED",
+   "LiveMatchScore": "0 : 1",
+   "LiveSetScore": "0 : 1",
+   "LiveStatusString": "paused",
+   "LiveUpdateTimestamp": "2026-09-30T19:55:51.885Z",
+   "LiveMatchStartTime": "2026-09-30T19:00:00Z",
+   "LiveIsBlocked": false,
+   "LiveIsDisabled": false,
+   "LiveBettingEnabled": true,
+   "BasicOffer": {
+    "Id": 469098631,
+    "Description": "1x2",
+    "BetTypeKey": "2_-1",
+    "Sbv": null,
+    "Active": true,
+    "IsEnabled": true,
+    "Odds": [
+     {
+      "Name": "1",
+      "OrigName": "1",
+      "Odd": 5.4,
+      "Active": true,
+      "UofKey": "uof:1/sr:sport:1/1/1"
+     },
+     {
+      "Name": "x",
+      "OrigName": "x",
+      "Odd": 2.9,
+      "Active": true,
+      "UofKey": "uof:1/sr:sport:1/1/2"
+     },
+     {
+      "Name": "2",
+      "OrigName": "2",
+      "Odd": 1.7,
+      "Active": true,
+      "UofKey": "uof:1/sr:sport:1/1/3"
+     }
+    ]
+   },
+   "Offers": []
+  },
+  {
+   "Id": 75048490,
+   "TeamHome": "Zhytelna, Yulia",
+   "TeamAway": "Christodoulou, Sophia",
+   "MatchStartTime": "2026-09-30T18:00:00Z",
+   "SportId": 389,
+   "CategoryName": "UTR Women",
+   "LeagueName": "UTR PTT Newport Beach Women 23",
+   "EventType": 1,
+   "IsBlocked": false,
+   "IsLive": true,
+   "IsLiveMatchAvailable": true,
+   "LiveMatchState": 1,
+   "LiveMatchTimeState": "2nd set",
+   "LiveMatchTimeOrigName": "LB_TENNIS_2SET",
+   "LiveMatchScore": "1 : 0",
+   "LiveSetScore": "6 : 3 - 5 : 6",
+   "LiveGameScore": "30 : 30",
+   "LiveStatusString": "2set",
+   "LiveUpdateTimestamp": "2026-09-30T19:55:51.868Z",
+   "LiveMatchStartTime": "2026-09-30T18:00:00Z",
+   "LiveIsBlocked": false,
+   "LiveIsDisabled": false,
+   "LiveBettingEnabled": true,
+   "BasicOffer": {
+    "Id": 469074074,
+    "Description": "Which player will win the match?",
+    "BetTypeKey": "7_10",
+    "Sbv": null,
+    "Active": true,
+    "IsEnabled": true,
+    "Odds": [
+     {
+      "Name": "1",
+      "OrigName": "1",
+      "Odd": 1.6,
+      "Active": true,
+      "UofKey": "uof:1/sr:sport:5/186/4"
+     },
+     {
+      "Name": "2",
+      "OrigName": "2",
+      "Odd": 2.1,
+      "Active": true,
+      "UofKey": "uof:1/sr:sport:5/186/5"
+     }
+    ]
+   },
+   "Offers": []
+  },
+  {
+   "Id": 75111974,
+   "TeamHome": "CA River Plate (ARG)",
+   "TeamAway": "Boca Juniors",
+   "MatchStartTime": "2026-09-30T18:00:00Z",
+   "SportId": 388,
+   "CategoryName": "Argentina",
+   "LeagueName": "Primera Division, Women",
+   "EventType": 1,
+   "IsBlocked": false,
+   "IsLive": true,
+   "IsLiveMatchAvailable": true,
+   "LiveMatchState": 1,
+   "LiveMatchTime": "89",
+   "LiveMatchTimeState": "2nd halftime",
+   "LiveMatchTimeOrigName": "LB_SOCCER_2P",
+   "LiveMatchScore": "1 : 1",
+   "LiveSetScore": "0 : 1 - 1 : 0",
+   "LiveStatusString": "2p",
+   "LiveUpdateTimestamp": "2026-09-30T19:51:19.18Z",
+   "LiveMatchStartTime": "2026-09-30T18:00:00Z",
+   "LiveIsBlocked": false,
+   "LiveIsDisabled": false,
+   "LiveBettingEnabled": true,
+   "BasicOffer": {
+    "Id": 469074835,
+    "Description": "1x2",
+    "BetTypeKey": "2_-1",
+    "Sbv": null,
+    "Active": true,
+    "IsEnabled": true,
+    "Odds": [
+     {
+      "Name": "1",
+      "OrigName": "1",
+      "Odd": 9,
+      "Active": true,
+      "UofKey": "uof:1/sr:sport:1/1/1"
+     },
+     {
+      "Name": "x",
+      "OrigName": "x",
+      "Odd": 1.12,
+      "Active": true,
+      "UofKey": "uof:1/sr:sport:1/1/2"
+     },
+     {
+      "Name": "2",
+      "OrigName": "2",
+      "Odd": 7.75,
+      "Active": true,
+      "UofKey": "uof:1/sr:sport:1/1/3"
+     }
+    ]
+   },
+   "Offers": []
+  }
+ ],
+ "items": [
+  {
+   "t": 1790798172409,
+   "sid": 388,
+   "bt": "5_-1",
+   "x": {
+    "Id": 58208457,
+    "sid": 388,
+    "cid": 392,
+    "lid": 164837,
+    "CommonLeagueId": null,
+    "lms": 1,
+    "lmt": "45",
+    "et": null,
+    "lmts": "Přestávka",
+    "lmto": "LB_SOCCER_PAUSED",
+    "lmsc": "2 : 0",
+    "lssc": "2 : 0",
+    "ls": "0",
+    "lgsc": null,
+    "lmi": "",
+    "lmet": null,
+    "lmhts": "2 : 0",
+    "lhyc": 1,
+    "layc": 0,
+    "lhrc": 0,
+    "larc": 0,
+    "lacr": 1,
+    "lhcr": 7,
+    "lhyrc": 0,
+    "layrc": 0,
+    "hel": true,
+    "ofc": 16,
+    "odc": 43,
+    "lma": true,
+    "b": false,
+    "bo": {
+     "Id": 469098567,
+     "d": "Základní nabídka",
+     "od": "Základní nabídka",
+     "b": true,
+     "sbv": null,
+     "ord": 1,
+     "odc": 0,
+     "hs": false,
+     "bt": "2_-1",
+     "a": true,
+     "e": true,
+     "t": 0,
+     "odds": [
+      {
+       "Id": 469098567,
+       "n": "1",
+       "on": "1",
+       "o": 0,
+       "a": false
+      },
+      {
+       "Id": 469098567,
+       "n": "X",
+       "on": "x",
+       "o": 8.5,
+       "a": true
+      },
+      {
+       "Id": 469098567,
+       "n": "2",
+       "on": "2",
+       "o": 50,
+       "a": true
+      }
+     ],
+     "btcs": [
+      12
+     ],
+     "bti": null,
+     "albtc": []
+    },
+    "ofs": [],
+    "cofs": [
+     {
+      "Id": 469098674,
+      "d": "Počet gólů [5.5]",
+      "od": "Počet gólů",
+      "b": false,
+      "sbv": "5.5",
+      "ord": 5,
+      "odc": 0,
+      "hs": true,
+      "bt": "5_-1",
+      "a": true,
+      "e": true,
+      "t": 0,
+      "odds": [
+       {
+        "Id": 469098674,
+        "n": "méně",
+        "on": "u",
+        "o": 1.9,
+        "a": true
+       },
+       {
+        "Id": 469098674,
+        "n": "více",
+        "on": "o",
+        "o": 1.75,
+        "a": true
+       }
+      ],
+      "btcs": [
+       12,
+       13
+      ],
+      "bti": null,
+      "albtc": []
+     }
+    ]
+   }
+  },
+  {
+   "t": 1790798172409,
+   "sid": 398,
+   "bt": "5_-1",
+   "x": {
+    "Id": 72123356,
+    "sid": 398,
+    "cid": 54,
+    "lid": 96,
+    "CommonLeagueId": null,
+    "lms": 1,
+    "lmt": "54",
+    "et": null,
+    "lmts": "3. třetina",
+    "lmto": "LB_ICE_HOCKEY_3P",
+    "lmsc": "2 : 4",
+    "lssc": "2 : 2 - 0 : 2 - 0 : 0",
+    "ls": "0",
+    "lgsc": null,
+    "lmi": "",
+    "lmet": null,
+    "lmhts": "2 : 2",
+    "lhyc": 0,
+    "layc": 0,
+    "lhrc": 0,
+    "larc": 0,
+    "lacr": 0,
+    "lhcr": 0,
+    "lhyrc": 0,
+    "layrc": 0,
+    "hel": true,
+    "ofc": 33,
+    "odc": 84,
+    "lma": true,
+    "b": false,
+    "bo": {
+     "Id": 469068558,
+     "d": "Základní nabídka",
+     "od": "Základní nabídka",
+     "b": true,
+     "sbv": null,
+     "ord": 1,
+     "odc": 0,
+     "hs": false,
+     "bt": "2_-1",
+     "a": true,
+     "e": true,
+     "t": 0,
+     "odds": [
+      {
+       "Id": 469068558,
+       "n": "1",
+       "on": "1",
+       "o": 50,
+       "a": true
+      },
+      {
+       "Id": 469068558,
+       "n": "X",
+       "on": "x",
+       "o": 10,
+       "a": true
+      },
+      {
+       "Id": 469068558,
+       "n": "2",
+       "on": "2",
+       "o": 1.01,
+       "a": true
+      }
+     ],
+     "btcs": [
+      23
+     ],
+     "bti": null,
+     "albtc": []
+    },
+    "ofs": [],
+    "cofs": [
+     {
+      "Id": 469068591,
+      "d": "Počet gólů [6.5]",
+      "od": "Počet gólů",
+      "b": false,
+      "sbv": "6.5",
+      "ord": 8,
+      "odc": 0,
+      "hs": true,
+      "bt": "5_-1",
+      "a": true,
+      "e": true,
+      "t": 0,
+      "odds": [
+       {
+        "Id": 469068591,
+        "n": "více",
+        "on": "o",
+        "o": 1.32,
+        "a": true
+       },
+       {
+        "Id": 469068591,
+        "n": "méně",
+        "on": "u",
+        "o": 2.85,
+        "a": true
+       }
+      ],
+      "btcs": [
+       23,
+       24
+      ],
+      "bti": null,
+      "albtc": []
+     }
+    ]
+   }
+  },
+  {
+   "t": 1790798172408,
+   "sid": 391,
+   "bt": "7_37",
+   "x": {
+    "Id": 72902006,
+    "sid": 391,
+    "cid": 103,
+    "lid": 2560,
+    "CommonLeagueId": null,
+    "lms": 1,
+    "lmt": "19",
+    "et": null,
+    "lmts": "přestávka",
+    "lmto": "LB_BASKETBALL_PAUSED",
+    "lmsc": "43 : 42",
+    "lssc": "25 : 21 - 18 : 21",
+    "ls": "0",
+    "lgsc": null,
+    "lmi": "",
+    "lmet": null,
+    "lmhts": null,
+    "lhyc": 0,
+    "layc": 0,
+    "lhrc": 0,
+    "larc": 0,
+    "lacr": 0,
+    "lhcr": 0,
+    "lhyrc": 0,
+    "layrc": 0,
+    "hel": true,
+    "ofc": 45,
+    "odc": 99,
+    "lma": true,
+    "b": false,
+    "bo": {
+     "Id": 469087245,
+     "d": "Základní nabídka",
+     "od": "Základní nabídka",
+     "b": true,
+     "sbv": null,
+     "ord": 1,
+     "odc": 0,
+     "hs": false,
+     "bt": "2_-1",
+     "a": true,
+     "e": true,
+     "t": 0,
+     "odds": [
+      {
+       "Id": 469087245,
+       "n": "1",
+       "on": "1",
+       "o": 1.52,
+       "a": true
+      },
+      {
+       "Id": 469087245,
+       "n": "X",
+       "on": "x",
+       "o": 10.5,
+       "a": true
+      },
+      {
+       "Id": 469087245,
+       "n": "2",
+       "on": "2",
+       "o": 2.9,
+       "a": true
+      }
+     ],
+     "btcs": [
+      18
+     ],
+     "bti": null,
+     "albtc": []
+    },
+    "ofs": [],
+    "cofs": [
+     {
+      "Id": 469086997,
+      "d": "Vítěz zápasu (včetně prodloužení)",
+      "od": "Vítěz zápasu (včetně prodloužení)",
+      "b": false,
+      "sbv": null,
+      "ord": 2,
+      "odc": 0,
+      "hs": false,
+      "bt": "7_37",
+      "a": true,
+      "e": true,
+      "t": 0,
+      "odds": [
+       {
+        "Id": 469086997,
+        "n": "1",
+        "on": "1",
+        "o": 1.42,
+        "a": true
+       },
+       {
+        "Id": 469086997,
+        "n": "2",
+        "on": "2",
+        "o": 2.6,
+        "a": true
+       }
+      ],
+      "btcs": [
+       18
+      ],
+      "bti": null,
+      "albtc": []
+     }
+    ]
+   }
+  },
+  {
+   "t": 1790797910101,
+   "sid": 388,
+   "bt": "5_-1",
+   "x": {
+    "Id": 73607406,
+    "sid": 388,
+    "cid": 252,
+    "lid": 195450,
+    "CommonLeagueId": null,
+    "lms": 1,
+    "lmt": "90",
+    "et": null,
+    "lmts": "2. poločas",
+    "lmto": "LB_SOCCER_2P",
+    "lmsc": "2 : 0",
+    "lssc": "1 : 0 - 1 : 0",
+    "ls": "0",
+    "lgsc": null,
+    "lmi": "",
+    "lmet": null,
+    "lmhts": "1 : 0",
+    "lhyc": 1,
+    "layc": 0,
+    "lhrc": 0,
+    "larc": 0,
+    "lacr": 5,
+    "lhcr": 9,
+    "lhyrc": 0,
+    "layrc": 0,
+    "hel": false,
+    "ofc": 0,
+    "odc": 0,
+    "lma": true,
+    "b": false,
+    "bo": {
+     "Id": 469069157,
+     "d": "Základní nabídka",
+     "od": "Základní nabídka",
+     "b": true,
+     "sbv": null,
+     "ord": 1,
+     "odc": 0,
+     "hs": false,
+     "bt": "2_-1",
+     "a": false,
+     "e": false,
+     "t": 0,
+     "odds": [
+      {
+       "Id": 469069157,
+       "n": "1",
+       "on": "1",
+       "o": 0,
+       "a": false
+      },
+      {
+       "Id": 469069157,
+       "n": "X",
+       "on": "x",
+       "o": 8,
+       "a": false
+      },
+      {
+       "Id": 469069157,
+       "n": "2",
+       "on": "2",
+       "o": 50,
+       "a": false
+      }
+     ],
+     "btcs": [
+      12
+     ],
+     "bti": null,
+     "albtc": []
+    },
+    "ofs": [],
+    "cofs": [
+     {
+      "Id": 469069182,
+      "d": "Počet gólů [2.5]",
+      "od": "Počet gólů",
+      "b": false,
+      "sbv": "2.5",
+      "ord": 5,
+      "odc": 0,
+      "hs": true,
+      "bt": "5_-1",
+      "a": false,
+      "e": false,
+      "t": 0,
+      "odds": [
+       {
+        "Id": 469069182,
+        "n": "méně",
+        "on": "u",
+        "o": 1.18,
+        "a": false
+       },
+       {
+        "Id": 469069182,
+        "n": "více",
+        "on": "o",
+        "o": 3.5,
+        "a": false
+       }
+      ],
+      "btcs": [
+       12,
+       13
+      ],
+      "bti": null,
+      "albtc": []
+     }
+    ]
+   }
+  },
+  {
+   "t": 1790798172409,
+   "sid": 388,
+   "bt": "5_-1",
+   "x": {
+    "Id": 74507942,
+    "sid": 388,
+    "cid": 57,
+    "lid": 195990,
+    "CommonLeagueId": null,
+    "lms": 1,
+    "lmt": "45",
+    "et": null,
+    "lmts": "Přestávka",
+    "lmto": "LB_SOCCER_PAUSED",
+    "lmsc": "0 : 1",
+    "lssc": "0 : 1",
+    "ls": "0",
+    "lgsc": null,
+    "lmi": "",
+    "lmet": null,
+    "lmhts": "0 : 1",
+    "lhyc": 0,
+    "layc": 1,
+    "lhrc": 0,
+    "larc": 0,
+    "lacr": 1,
+    "lhcr": 3,
+    "lhyrc": 0,
+    "layrc": 0,
+    "hel": true,
+    "ofc": 22,
+    "odc": 73,
+    "lma": true,
+    "b": false,
+    "bo": {
+     "Id": 469098631,
+     "d": "Základní nabídka",
+     "od": "Základní nabídka",
+     "b": true,
+     "sbv": null,
+     "ord": 1,
+     "odc": 0,
+     "hs": false,
+     "bt": "2_-1",
+     "a": true,
+     "e": true,
+     "t": 0,
+     "odds": [
+      {
+       "Id": 469098631,
+       "n": "1",
+       "on": "1",
+       "o": 5.4,
+       "a": true
+      },
+      {
+       "Id": 469098631,
+       "n": "X",
+       "on": "x",
+       "o": 2.9,
+       "a": true
+      },
+      {
+       "Id": 469098631,
+       "n": "2",
+       "on": "2",
+       "o": 1.7,
+       "a": true
+      }
+     ],
+     "btcs": [
+      12
+     ],
+     "bti": null,
+     "albtc": []
+    },
+    "ofs": [],
+    "cofs": [
+     {
+      "Id": 469098898,
+      "d": "Počet gólů [2.5]",
+      "od": "Počet gólů",
+      "b": false,
+      "sbv": "2.5",
+      "ord": 5,
+      "odc": 0,
+      "hs": true,
+      "bt": "5_-1",
+      "a": true,
+      "e": true,
+      "t": 0,
+      "odds": [
+       {
+        "Id": 469098898,
+        "n": "méně",
+        "on": "u",
+        "o": 1.45,
+        "a": true
+       },
+       {
+        "Id": 469098898,
+        "n": "více",
+        "on": "o",
+        "o": 2.45,
+        "a": true
+       }
+      ],
+      "btcs": [
+       12,
+       13
+      ],
+      "bti": null,
+      "albtc": []
+     }
+    ]
+   }
+  },
+  {
+   "t": 1790798172410,
+   "sid": 389,
+   "bt": "7_922",
+   "x": {
+    "Id": 75048490,
+    "sid": 389,
+    "cid": 2517,
+    "lid": 197904,
+    "CommonLeagueId": null,
+    "lms": 1,
+    "lmt": null,
+    "et": null,
+    "lmts": "2.set",
+    "lmto": "LB_TENNIS_2SET",
+    "lmsc": "1 : 0",
+    "lssc": "6 : 3 - 5 : 6",
+    "ls": "1",
+    "lgsc": "30 : 30",
+    "lmi": "",
+    "lmet": null,
+    "lmhts": null,
+    "lhyc": 0,
+    "layc": 0,
+    "lhrc": 0,
+    "larc": 0,
+    "lacr": 0,
+    "lhcr": 0,
+    "lhyrc": 0,
+    "layrc": 0,
+    "hel": true,
+    "ofc": 28,
+    "odc": 60,
+    "lma": true,
+    "b": false,
+    "bo": {
+     "Id": 469074074,
+     "d": "Vítěz zápasu",
+     "od": "Vítěz zápasu",
+     "b": true,
+     "sbv": null,
+     "ord": 1,
+     "odc": 0,
+     "hs": false,
+     "bt": "7_10",
+     "a": true,
+     "e": true,
+     "t": 0,
+     "odds": [
+      {
+       "Id": 469074074,
+       "n": "1",
+       "on": "1",
+       "o": 1.65,
+       "a": true
+      },
+      {
+       "Id": 469074074,
+       "n": "2",
+       "on": "2",
+       "o": 2.05,
+       "a": true
+      }
+     ],
+     "btcs": [],
+     "bti": "1 = domácí, 2 = hosté",
+     "albtc": []
+    },
+    "ofs": [],
+    "cofs": [
+     {
+      "Id": 469082490,
+      "d": "Handicap gemy [-2.5]",
+      "od": "Handicap gemy",
+      "b": false,
+      "sbv": "-2.5",
+      "ord": 6,
+      "odc": 0,
+      "hs": true,
+      "bt": "7_922",
+      "a": true,
+      "e": true,
+      "t": 0,
+      "odds": [
+       {
+        "Id": 469082490,
+        "n": "1  (-2,5)",
+        "on": "1",
+        "o": 1.7,
+        "a": true
+       },
+       {
+        "Id": 469082490,
+        "n": "2  (2,5)",
+        "on": "2",
+        "o": 1.95,
+        "a": true
+       }
+      ],
+      "btcs": [],
+      "bti": null,
+      "albtc": []
+     }
+    ]
+   }
+  },
+  {
+   "t": 1790797895238,
+   "sid": 388,
+   "bt": "5_-1",
+   "x": {
+    "Id": 75111974,
+    "sid": 388,
+    "cid": 48,
+    "lid": 146257,
+    "CommonLeagueId": null,
+    "lms": 1,
+    "lmt": "90",
+    "et": null,
+    "lmts": "2. poločas",
+    "lmto": "LB_SOCCER_2P",
+    "lmsc": "1 : 1",
+    "lssc": "0 : 1 - 1 : 0",
+    "ls": "0",
+    "lgsc": null,
+    "lmi": "",
+    "lmet": null,
+    "lmhts": "0 : 1",
+    "lhyc": 1,
+    "layc": 2,
+    "lhrc": 0,
+    "larc": 0,
+    "lacr": 3,
+    "lhcr": 3,
+    "lhyrc": 0,
+    "layrc": 0,
+    "hel": false,
+    "ofc": 0,
+    "odc": 0,
+    "lma": true,
+    "b": false,
+    "bo": {
+     "Id": 469074835,
+     "d": "Základní nabídka",
+     "od": "Základní nabídka",
+     "b": true,
+     "sbv": null,
+     "ord": 1,
+     "odc": 0,
+     "hs": false,
+     "bt": "2_-1",
+     "a": false,
+     "e": false,
+     "t": 0,
+     "odds": [
+      {
+       "Id": 469074835,
+       "n": "1",
+       "on": "1",
+       "o": 9.5,
+       "a": false
+      },
+      {
+       "Id": 469074835,
+       "n": "X",
+       "on": "x",
+       "o": 1.12,
+       "a": false
+      },
+      {
+       "Id": 469074835,
+       "n": "2",
+       "on": "2",
+       "o": 8,
+       "a": false
+      }
+     ],
+     "btcs": [
+      12
+     ],
+     "bti": null,
+     "albtc": []
+    },
+    "ofs": [],
+    "cofs": [
+     {
+      "Id": 469074907,
+      "d": "Počet gólů [2.5]",
+      "od": "Počet gólů",
+      "b": false,
+      "sbv": "2.5",
+      "ord": 5,
+      "odc": 0,
+      "hs": true,
+      "bt": "5_-1",
+      "a": false,
+      "e": false,
+      "t": 0,
+      "odds": [
+       {
+        "Id": 469074907,
+        "n": "méně",
+        "on": "u",
+        "o": 1.12,
+        "a": false
+       },
+       {
+        "Id": 469074907,
+        "n": "více",
+        "on": "o",
+        "o": 4.3,
+        "a": false
+       }
+      ],
+      "btcs": [
+       12,
+       13
+      ],
+      "bti": null,
+      "albtc": []
+     }
+    ]
+   }
+  },
+  {
+   "t": 1790798171409,
+   "sid": 398,
+   "bt": "7_106",
+   "synthetic": "cofs z listing průchodu BetTypeKey=7_106 převedené do push tvaru",
+   "x": {
+    "Id": 72123356,
+    "sid": 398,
+    "cid": 54,
+    "lid": 96,
+    "CommonLeagueId": null,
+    "lms": 1,
+    "lmt": "54",
+    "et": null,
+    "lmts": "3. třetina",
+    "lmto": "LB_ICE_HOCKEY_3P",
+    "lmsc": "2 : 4",
+    "lssc": "2 : 2 - 0 : 2 - 0 : 0",
+    "ls": "0",
+    "lgsc": null,
+    "lmi": "",
+    "lmet": null,
+    "lmhts": "2 : 2",
+    "lhyc": 0,
+    "layc": 0,
+    "lhrc": 0,
+    "larc": 0,
+    "lacr": 0,
+    "lhcr": 0,
+    "lhyrc": 0,
+    "layrc": 0,
+    "hel": true,
+    "ofc": 33,
+    "odc": 84,
+    "lma": true,
+    "b": false,
+    "bo": {
+     "Id": 469068558,
+     "d": "Základní nabídka",
+     "od": "Základní nabídka",
+     "b": true,
+     "sbv": null,
+     "ord": 1,
+     "odc": 0,
+     "hs": false,
+     "bt": "2_-1",
+     "a": true,
+     "e": true,
+     "t": 0,
+     "odds": [
+      {
+       "Id": 469068558,
+       "n": "1",
+       "on": "1",
+       "o": 50,
+       "a": true
+      },
+      {
+       "Id": 469068558,
+       "n": "X",
+       "on": "x",
+       "o": 10,
+       "a": true
+      },
+      {
+       "Id": 469068558,
+       "n": "2",
+       "on": "2",
+       "o": 1.01,
+       "a": true
+      }
+     ],
+     "btcs": [
+      23
+     ],
+     "bti": null,
+     "albtc": []
+    },
+    "ofs": [],
+    "cofs": [
+     {
+      "Id": 469068540,
+      "d": "Which team will win the match, including overtime and penalties?",
+      "sbv": null,
+      "bt": "7_106",
+      "a": true,
+      "e": true,
+      "odds": [
+       {
+        "n": "1",
+        "on": "1",
+        "o": 9.75,
+        "a": true
+       },
+       {
+        "n": "2",
+        "on": "2",
+        "o": 1.01,
+        "a": true
+       }
+      ]
+     }
+    ]
+   }
+  }
+ ]
+}

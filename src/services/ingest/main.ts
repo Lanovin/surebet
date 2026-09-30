@@ -42,9 +42,11 @@ async function main(): Promise<void> {
   // detektor zahodí stav z minulého běhu (aktivní arby končí jako system_restart = cenzurováno)
   await redis.publish(CH.control, JSON.stringify({ type: 'ingest_start', at: Date.now(), source: env.DATA_SOURCE }));
 
+  // BetX (IIS) vrací 403 na krátké dávky požadavků z jedné IP → pomalejší klient
+  const HTTP_OPTS: Partial<Record<BookmakerId, { minIntervalMs: number; maxConcurrent: number }>> = { betx: { minIntervalMs: 500, maxConcurrent: 1 } };
   const ctxFor = (bk: BookmakerId): AdapterContext => ({
     bookmaker: bk,
-    http: new HttpClient({ minIntervalMs: 120, maxConcurrent: 4 }),
+    http: new HttpClient(HTTP_OPTS[bk] ?? { minIntervalMs: 120, maxConcurrent: 4 }),
     browser,
     fixtures: new Fixtures(bk),
     log: createLogger(`adapter:${bk}`),

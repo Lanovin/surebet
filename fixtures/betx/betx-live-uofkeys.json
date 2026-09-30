@@ -1,0 +1,1808 @@
+{
+ "recordedAt": "2026-09-30T19:50:00.000Z",
+ "note": "live listing (základ + BetTypeKey průchody), jen nabídky typů z PUSH_BET_TYPES",
+ "matches": [
+  {
+   "Id": 73840448,
+   "TeamHome": "Spojené Arabské Emiráty",
+   "TeamAway": "Qatar",
+   "MatchStartTime": "2026-09-30T17:30:00Z",
+   "SportId": 388,
+   "CategoryName": "Mezinárodní",
+   "LeagueName": "Pohár zemí Perského zálivu",
+   "EventType": 1,
+   "IsBlocked": false,
+   "IsLive": true,
+   "IsLiveMatchAvailable": true,
+   "LiveMatchState": 1,
+   "LiveMatchTime": "90",
+   "LiveMatchTimeState": "2. poločas",
+   "LiveMatchTimeOrigName": "LB_SOCCER_2P",
+   "LiveMatchScore": "1 : 1",
+   "LiveSetScore": "1 : 1 - 0 : 0",
+   "LiveStatusString": "2p",
+   "LiveUpdateTimestamp": "2026-09-30T19:25:01.589Z",
+   "LiveMatchStartTime": "2026-09-30T17:30:00Z",
+   "LiveIsBlocked": false,
+   "LiveIsDisabled": false,
+   "LiveBettingEnabled": true,
+   "BasicOffer": {
+    "Id": 469061739,
+    "Description": "Základní nabídka",
+    "BetTypeKey": "2_-1",
+    "Sbv": null,
+    "Active": true,
+    "IsEnabled": true,
+    "Odds": [
+     {
+      "Name": "1",
+      "OrigName": "1",
+      "Odd": 9.25,
+      "Active": true,
+      "UofKey": "uof:1/sr:sport:1/1/1"
+     },
+     {
+      "Name": "X",
+      "OrigName": "x",
+      "Odd": 1.03,
+      "Active": true,
+      "UofKey": "uof:1/sr:sport:1/1/2"
+     },
+     {
+      "Name": "2",
+      "OrigName": "2",
+      "Odd": 45,
+      "Active": true,
+      "UofKey": "uof:1/sr:sport:1/1/3"
+     }
+    ]
+   },
+   "Offers": []
+  },
+  {
+   "Id": 73840450,
+   "TeamHome": "Bahrain",
+   "TeamAway": "Yemen",
+   "MatchStartTime": "2026-09-30T17:30:00Z",
+   "SportId": 388,
+   "CategoryName": "Mezinárodní",
+   "LeagueName": "Pohár zemí Perského zálivu",
+   "EventType": 1,
+   "IsBlocked": false,
+   "IsLive": true,
+   "IsLiveMatchAvailable": true,
+   "LiveMatchState": 1,
+   "LiveMatchTime": "90",
+   "LiveMatchTimeState": "2. poločas",
+   "LiveMatchTimeOrigName": "LB_SOCCER_2P",
+   "LiveMatchScore": "2 : 4",
+   "LiveSetScore": "1 : 4 - 1 : 0",
+   "LiveStatusString": "2p",
+   "LiveUpdateTimestamp": "2026-09-30T19:25:01.59Z",
+   "LiveMatchStartTime": "2026-09-30T17:30:00Z",
+   "LiveIsBlocked": false,
+   "LiveIsDisabled": false,
+   "LiveBettingEnabled": true,
+   "BasicOffer": {
+    "Id": 469061741,
+    "Description": "Základní nabídka",
+    "BetTypeKey": "2_-1",
+    "Sbv": null,
+    "Active": true,
+    "IsEnabled": true,
+    "Odds": [
+     {
+      "Name": "1",
+      "OrigName": "1",
+      "Odd": 50,
+      "Active": true,
+      "UofKey": "uof:1/sr:sport:1/1/1"
+     },
+     {
+      "Name": "X",
+      "OrigName": "x",
+      "Odd": 10.5,
+      "Active": true,
+      "UofKey": "uof:1/sr:sport:1/1/2"
+     },
+     {
+      "Name": "2",
+      "OrigName": "2",
+      "Odd": 0,
+      "Active": false,
+      "UofKey": "uof:1/sr:sport:1/1/3"
+     }
+    ]
+   },
+   "Offers": []
+  },
+  {
+   "Id": 75052468,
+   "TeamHome": "Spain",
+   "TeamAway": "Mexico",
+   "MatchStartTime": "2026-09-30T18:30:00Z",
+   "SportId": 388,
+   "CategoryName": "Mezinárodní mládežnické",
+   "LeagueName": "Přátelské zápasy do 20 let",
+   "EventType": 1,
+   "IsBlocked": false,
+   "IsLive": true,
+   "IsLiveMatchAvailable": true,
+   "LiveMatchState": 1,
+   "LiveMatchTime": "44",
+   "LiveMatchTimeState": "Přestávka",
+   "LiveMatchTimeOrigName": "LB_SOCCER_PAUSED",
+   "LiveMatchScore": "1 : 0",
+   "LiveSetScore": "1 : 0",
+   "LiveStatusString": "paused",
+   "LiveUpdateTimestamp": "2026-09-30T19:25:01.589Z",
+   "LiveMatchStartTime": "2026-09-30T18:30:00Z",
+   "LiveIsBlocked": false,
+   "LiveIsDisabled": false,
+   "LiveBettingEnabled": true,
+   "BasicOffer": {
+    "Id": 469088046,
+    "Description": "Základní nabídka",
+    "BetTypeKey": "2_-1",
+    "Sbv": null,
+    "Active": true,
+    "IsEnabled": true,
+    "Odds": [
+     {
+      "Name": "1",
+      "OrigName": "1",
+      "Odd": 1.08,
+      "Active": true,
+      "UofKey": "uof:1/sr:sport:1/1/1"
+     },
+     {
+      "Name": "X",
+      "OrigName": "x",
+      "Odd": 6.5,
+      "Active": true,
+      "UofKey": "uof:1/sr:sport:1/1/2"
+     },
+     {
+      "Name": "2",
+      "OrigName": "2",
+      "Odd": 28,
+      "Active": true,
+      "UofKey": "uof:1/sr:sport:1/1/3"
+     }
+    ]
+   },
+   "Offers": []
+  },
+  {
+   "Id": 73840450,
+   "TeamHome": "Bahrain",
+   "TeamAway": "Yemen",
+   "MatchStartTime": "2026-09-30T17:30:00Z",
+   "SportId": 388,
+   "CategoryName": "Mezinárodní",
+   "LeagueName": "Pohár zemí Perského zálivu",
+   "EventType": 1,
+   "IsBlocked": false,
+   "IsLive": true,
+   "IsLiveMatchAvailable": true,
+   "LiveMatchState": 1,
+   "LiveMatchTime": "90",
+   "LiveMatchTimeState": "2. poločas",
+   "LiveMatchTimeOrigName": "LB_SOCCER_2P",
+   "LiveMatchScore": "2 : 4",
+   "LiveSetScore": "1 : 4 - 1 : 0",
+   "LiveStatusString": "2p",
+   "LiveUpdateTimestamp": "2026-09-30T19:25:21.802Z",
+   "LiveMatchStartTime": "2026-09-30T17:30:00Z",
+   "LiveIsBlocked": false,
+   "LiveIsDisabled": false,
+   "LiveBettingEnabled": true,
+   "BasicOffer": null,
+   "Offers": [
+    {
+     "Id": 469070725,
+     "Description": "Počet gólů [6.5]",
+     "BetTypeKey": "5_-1",
+     "Sbv": "6.5",
+     "Active": true,
+     "IsEnabled": true,
+     "Odds": [
+      {
+       "Name": "méně",
+       "OrigName": "u",
+       "Odd": 1.18,
+       "Active": true,
+       "UofKey": "uof:1/sr:sport:1/18/13?total=6.5"
+      },
+      {
+       "Name": "více",
+       "OrigName": "o",
+       "Odd": 3.95,
+       "Active": true,
+       "UofKey": "uof:1/sr:sport:1/18/12?total=6.5"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "Id": 75052468,
+   "TeamHome": "Spain",
+   "TeamAway": "Mexico",
+   "MatchStartTime": "2026-09-30T18:30:00Z",
+   "SportId": 388,
+   "CategoryName": "Mezinárodní mládežnické",
+   "LeagueName": "Přátelské zápasy do 20 let",
+   "EventType": 1,
+   "IsBlocked": false,
+   "IsLive": true,
+   "IsLiveMatchAvailable": true,
+   "LiveMatchState": 1,
+   "LiveMatchTime": "44",
+   "LiveMatchTimeState": "Přestávka",
+   "LiveMatchTimeOrigName": "LB_SOCCER_PAUSED",
+   "LiveMatchScore": "1 : 0",
+   "LiveSetScore": "1 : 0",
+   "LiveStatusString": "paused",
+   "LiveUpdateTimestamp": "2026-09-30T19:25:21.805Z",
+   "LiveMatchStartTime": "2026-09-30T18:30:00Z",
+   "LiveIsBlocked": false,
+   "LiveIsDisabled": false,
+   "LiveBettingEnabled": true,
+   "BasicOffer": null,
+   "Offers": [
+    {
+     "Id": 469088072,
+     "Description": "Počet gólů [2.5]",
+     "BetTypeKey": "5_-1",
+     "Sbv": "2.5",
+     "Active": true,
+     "IsEnabled": true,
+     "Odds": [
+      {
+       "Name": "méně",
+       "OrigName": "u",
+       "Odd": 1.9,
+       "Active": true,
+       "UofKey": "uof:1/sr:sport:1/18/13?total=2.5"
+      },
+      {
+       "Name": "více",
+       "OrigName": "o",
+       "Odd": 1.75,
+       "Active": true,
+       "UofKey": "uof:1/sr:sport:1/18/12?total=2.5"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "Id": 58208461,
+   "TeamHome": "Skotsko",
+   "TeamAway": "Azerbajdžán",
+   "MatchStartTime": "2026-09-30T18:30:00Z",
+   "SportId": 388,
+   "CategoryName": "Mezinárodní mládežnické",
+   "LeagueName": "U21 EURO kvalifikace",
+   "EventType": 1,
+   "IsBlocked": false,
+   "IsLive": true,
+   "IsLiveMatchAvailable": true,
+   "LiveMatchState": 1,
+   "LiveMatchTime": "45",
+   "LiveMatchTimeState": "Přestávka",
+   "LiveMatchTimeOrigName": "LB_SOCCER_PAUSED",
+   "LiveMatchScore": "3 : 1",
+   "LiveSetScore": "3 : 1",
+   "LiveStatusString": "paused",
+   "LiveUpdateTimestamp": "2026-09-30T19:25:21.785Z",
+   "LiveMatchStartTime": "2026-09-30T18:30:00Z",
+   "LiveIsBlocked": false,
+   "LiveIsDisabled": false,
+   "LiveBettingEnabled": true,
+   "BasicOffer": null,
+   "Offers": [
+    {
+     "Id": 469087149,
+     "Description": "Počet gólů [5.5]",
+     "BetTypeKey": "5_-1",
+     "Sbv": "5.5",
+     "Active": true,
+     "IsEnabled": true,
+     "Odds": [
+      {
+       "Name": "méně",
+       "OrigName": "u",
+       "Odd": 2.1,
+       "Active": true,
+       "UofKey": "uof:1/sr:sport:1/18/13?total=5.5"
+      },
+      {
+       "Name": "více",
+       "OrigName": "o",
+       "Odd": 1.6,
+       "Active": true,
+       "UofKey": "uof:1/sr:sport:1/18/12?total=5.5"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "Id": 73873206,
+   "TeamHome": "UK Hockey Prague",
+   "TeamAway": "Vse Falcons Prague",
+   "MatchStartTime": "2026-09-30T17:30:00Z",
+   "SportId": 398,
+   "CategoryName": "Česká Republika",
+   "LeagueName": "University League",
+   "EventType": 1,
+   "IsBlocked": false,
+   "IsLive": true,
+   "IsLiveMatchAvailable": true,
+   "LiveMatchState": 1,
+   "LiveMatchTime": "40",
+   "LiveMatchTimeState": "Přestávka",
+   "LiveMatchTimeOrigName": "LB_ICE_HOCKEY_PAUSED",
+   "LiveMatchScore": "4 : 2",
+   "LiveSetScore": "3 : 1 - 1 : 1",
+   "LiveStatusString": "paused",
+   "LiveUpdateTimestamp": "2026-09-30T19:25:01.59Z",
+   "LiveMatchStartTime": "2026-09-30T17:30:00Z",
+   "LiveIsBlocked": false,
+   "LiveIsDisabled": false,
+   "LiveBettingEnabled": true,
+   "BasicOffer": {
+    "Id": 469058342,
+    "Description": "Základní nabídka",
+    "BetTypeKey": "2_-1",
+    "Sbv": null,
+    "Active": true,
+    "IsEnabled": true,
+    "Odds": [
+     {
+      "Name": "1",
+      "OrigName": "1",
+      "Odd": 1.03,
+      "Active": true,
+      "UofKey": "uof:1/sr:sport:4/1/1"
+     },
+     {
+      "Name": "X",
+      "OrigName": "x",
+      "Odd": 10,
+      "Active": true,
+      "UofKey": "uof:1/sr:sport:4/1/2"
+     },
+     {
+      "Name": "2",
+      "OrigName": "2",
+      "Odd": 50,
+      "Active": true,
+      "UofKey": "uof:1/sr:sport:4/1/3"
+     }
+    ]
+   },
+   "Offers": []
+  },
+  {
+   "Id": 72123356,
+   "TeamHome": "HC Lausanne",
+   "TeamAway": "Geneve-Servette HC",
+   "MatchStartTime": "2026-09-30T17:45:00Z",
+   "SportId": 398,
+   "CategoryName": "Švýcarsko",
+   "LeagueName": "NLA",
+   "EventType": 1,
+   "IsBlocked": false,
+   "IsLive": true,
+   "IsLiveMatchAvailable": true,
+   "LiveMatchState": 1,
+   "LiveMatchTime": "39",
+   "LiveMatchTimeState": "Přestávka",
+   "LiveMatchTimeOrigName": "LB_ICE_HOCKEY_PAUSED",
+   "LiveMatchScore": "2 : 4",
+   "LiveSetScore": "2 : 2 - 0 : 2",
+   "LiveStatusString": "paused",
+   "LiveUpdateTimestamp": "2026-09-30T19:25:01.604Z",
+   "LiveMatchStartTime": "2026-09-30T17:45:00Z",
+   "LiveIsBlocked": false,
+   "LiveIsDisabled": false,
+   "LiveBettingEnabled": true,
+   "BasicOffer": {
+    "Id": 469068558,
+    "Description": "Základní nabídka",
+    "BetTypeKey": "2_-1",
+    "Sbv": null,
+    "Active": true,
+    "IsEnabled": true,
+    "Odds": [
+     {
+      "Name": "1",
+      "OrigName": "1",
+      "Odd": 35,
+      "Active": true,
+      "UofKey": "uof:1/sr:sport:4/1/1"
+     },
+     {
+      "Name": "X",
+      "OrigName": "x",
+      "Odd": 7.25,
+      "Active": true,
+      "UofKey": "uof:1/sr:sport:4/1/2"
+     },
+     {
+      "Name": "2",
+      "OrigName": "2",
+      "Odd": 1.08,
+      "Active": true,
+      "UofKey": "uof:1/sr:sport:4/1/3"
+     }
+    ]
+   },
+   "Offers": []
+  },
+  {
+   "Id": 73873206,
+   "TeamHome": "UK Hockey Prague",
+   "TeamAway": "Vse Falcons Prague",
+   "MatchStartTime": "2026-09-30T17:30:00Z",
+   "SportId": 398,
+   "CategoryName": "Česká Republika",
+   "LeagueName": "University League",
+   "EventType": 1,
+   "IsBlocked": false,
+   "IsLive": true,
+   "IsLiveMatchAvailable": true,
+   "LiveMatchState": 1,
+   "LiveMatchTime": "40",
+   "LiveMatchTimeState": "Přestávka",
+   "LiveMatchTimeOrigName": "LB_ICE_HOCKEY_PAUSED",
+   "LiveMatchScore": "4 : 2",
+   "LiveSetScore": "3 : 1 - 1 : 1",
+   "LiveStatusString": "paused",
+   "LiveUpdateTimestamp": "2026-09-30T19:25:21.801Z",
+   "LiveMatchStartTime": "2026-09-30T17:30:00Z",
+   "LiveIsBlocked": false,
+   "LiveIsDisabled": false,
+   "LiveBettingEnabled": true,
+   "BasicOffer": null,
+   "Offers": [
+    {
+     "Id": 469058331,
+     "Description": "Počet gólů [8.5]",
+     "BetTypeKey": "5_-1",
+     "Sbv": "8.5",
+     "Active": true,
+     "IsEnabled": true,
+     "Odds": [
+      {
+       "Name": "více",
+       "OrigName": "o",
+       "Odd": 1.95,
+       "Active": true,
+       "UofKey": "uof:1/sr:sport:4/18/12?total=8.5"
+      },
+      {
+       "Name": "méně",
+       "OrigName": "u",
+       "Odd": 1.7,
+       "Active": true,
+       "UofKey": "uof:1/sr:sport:4/18/13?total=8.5"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "Id": 72123356,
+   "TeamHome": "HC Lausanne",
+   "TeamAway": "Geneve-Servette HC",
+   "MatchStartTime": "2026-09-30T17:45:00Z",
+   "SportId": 398,
+   "CategoryName": "Švýcarsko",
+   "LeagueName": "NLA",
+   "EventType": 1,
+   "IsBlocked": false,
+   "IsLive": true,
+   "IsLiveMatchAvailable": true,
+   "LiveMatchState": 1,
+   "LiveMatchTime": "39",
+   "LiveMatchTimeState": "Přestávka",
+   "LiveMatchTimeOrigName": "LB_ICE_HOCKEY_PAUSED",
+   "LiveMatchScore": "2 : 4",
+   "LiveSetScore": "2 : 2 - 0 : 2",
+   "LiveStatusString": "paused",
+   "LiveUpdateTimestamp": "2026-09-30T19:25:21.785Z",
+   "LiveMatchStartTime": "2026-09-30T17:45:00Z",
+   "LiveIsBlocked": false,
+   "LiveIsDisabled": false,
+   "LiveBettingEnabled": true,
+   "BasicOffer": null,
+   "Offers": [
+    {
+     "Id": 469068543,
+     "Description": "Počet gólů [8.5]",
+     "BetTypeKey": "5_-1",
+     "Sbv": "8.5",
+     "Active": true,
+     "IsEnabled": true,
+     "Odds": [
+      {
+       "Name": "více",
+       "OrigName": "o",
+       "Odd": 2.45,
+       "Active": true,
+       "UofKey": "uof:1/sr:sport:4/18/12?total=8.5"
+      },
+      {
+       "Name": "méně",
+       "OrigName": "u",
+       "Odd": 1.45,
+       "Active": true,
+       "UofKey": "uof:1/sr:sport:4/18/13?total=8.5"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "Id": 72123356,
+   "TeamHome": "HC Lausanne",
+   "TeamAway": "Geneva Servette",
+   "MatchStartTime": "2026-09-30T17:45:00Z",
+   "SportId": 398,
+   "CategoryName": "Switzerland",
+   "LeagueName": "National League",
+   "EventType": 1,
+   "IsBlocked": false,
+   "IsLive": true,
+   "IsLiveMatchAvailable": true,
+   "LiveMatchState": 1,
+   "LiveMatchTime": "49",
+   "LiveMatchTimeState": "3rd period",
+   "LiveMatchTimeOrigName": "LB_ICE_HOCKEY_3P",
+   "LiveMatchScore": "2 : 4",
+   "LiveSetScore": "2 : 2 - 0 : 2 - 0 : 0",
+   "LiveStatusString": "3p",
+   "LiveUpdateTimestamp": "2026-09-30T19:48:16.97Z",
+   "LiveMatchStartTime": "2026-09-30T17:45:00Z",
+   "LiveIsBlocked": false,
+   "LiveIsDisabled": false,
+   "LiveBettingEnabled": true,
+   "BasicOffer": null,
+   "Offers": [
+    {
+     "Id": 469068540,
+     "Description": "Which team will win the match, including overtime and penalties?",
+     "BetTypeKey": "7_106",
+     "Sbv": null,
+     "Active": true,
+     "IsEnabled": true,
+     "Odds": [
+      {
+       "Name": "1",
+       "OrigName": "1",
+       "Odd": 9.75,
+       "Active": true,
+       "UofKey": "uof:1/sr:sport:4/406/4"
+      },
+      {
+       "Name": "2",
+       "OrigName": "2",
+       "Odd": 1.01,
+       "Active": true,
+       "UofKey": "uof:1/sr:sport:4/406/5"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "Id": 72123356,
+   "TeamHome": "HC Lausanne",
+   "TeamAway": "Geneva Servette",
+   "MatchStartTime": "2026-09-30T17:45:00Z",
+   "SportId": 398,
+   "CategoryName": "Switzerland",
+   "LeagueName": "National League",
+   "EventType": 1,
+   "IsBlocked": false,
+   "IsLive": true,
+   "IsLiveMatchAvailable": true,
+   "LiveMatchState": 1,
+   "LiveMatchTime": "49",
+   "LiveMatchTimeState": "3rd period",
+   "LiveMatchTimeOrigName": "LB_ICE_HOCKEY_3P",
+   "LiveMatchScore": "2 : 4",
+   "LiveSetScore": "2 : 2 - 0 : 2 - 0 : 0",
+   "LiveStatusString": "3p",
+   "LiveUpdateTimestamp": "2026-09-30T19:48:16.97Z",
+   "LiveMatchStartTime": "2026-09-30T17:45:00Z",
+   "LiveIsBlocked": false,
+   "LiveIsDisabled": false,
+   "LiveBettingEnabled": true,
+   "BasicOffer": null,
+   "Offers": [
+    {
+     "Id": 469068421,
+     "Description": "Total for whole match, including overtime and penalties [7.5]",
+     "BetTypeKey": "8_1140",
+     "Sbv": "7.5",
+     "Active": true,
+     "IsEnabled": true,
+     "Odds": [
+      {
+       "Name": "u",
+       "OrigName": "under",
+       "Odd": 1.5,
+       "Active": true,
+       "UofKey": "uof:1/sr:sport:4/412/13?total=7.5"
+      },
+      {
+       "Name": "o",
+       "OrigName": "over",
+       "Odd": 2.4,
+       "Active": true,
+       "UofKey": "uof:1/sr:sport:4/412/12?total=7.5"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "Id": 72123356,
+   "TeamHome": "HC Lausanne",
+   "TeamAway": "Geneva Servette",
+   "MatchStartTime": "2026-09-30T17:45:00Z",
+   "SportId": 398,
+   "CategoryName": "Switzerland",
+   "LeagueName": "National League",
+   "EventType": 1,
+   "IsBlocked": false,
+   "IsLive": true,
+   "IsLiveMatchAvailable": true,
+   "LiveMatchState": 1,
+   "LiveMatchTime": "49",
+   "LiveMatchTimeState": "3rd period",
+   "LiveMatchTimeOrigName": "LB_ICE_HOCKEY_3P",
+   "LiveMatchScore": "2 : 4",
+   "LiveSetScore": "2 : 2 - 0 : 2 - 0 : 0",
+   "LiveStatusString": "3p",
+   "LiveUpdateTimestamp": "2026-09-30T19:48:16.97Z",
+   "LiveMatchStartTime": "2026-09-30T17:45:00Z",
+   "LiveIsBlocked": false,
+   "LiveIsDisabled": false,
+   "LiveBettingEnabled": true,
+   "BasicOffer": null,
+   "Offers": [
+    {
+     "Id": 469068563,
+     "Description": "Asian handicap for whole match, including overtime and penalties [2.5]",
+     "BetTypeKey": "7_1142",
+     "Sbv": "2.5",
+     "Active": true,
+     "IsEnabled": true,
+     "Odds": [
+      {
+       "Name": "1 (2.5)",
+       "OrigName": "1",
+       "Odd": 1.6,
+       "Active": true,
+       "UofKey": "uof:1/sr:sport:4/410/1714?hcp=2.5"
+      },
+      {
+       "Name": "2 (-2.5)",
+       "OrigName": "2",
+       "Odd": 2.15,
+       "Active": true,
+       "UofKey": "uof:1/sr:sport:4/410/1715?hcp=2.5"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "Id": 73262974,
+   "TeamHome": "Maccabi Tel-Aviv",
+   "TeamAway": "Beşiktaş JK",
+   "MatchStartTime": "2026-09-30T18:05:00Z",
+   "SportId": 391,
+   "CategoryName": "Mezinárodní",
+   "LeagueName": "Euroliga",
+   "EventType": 1,
+   "IsBlocked": false,
+   "IsLive": true,
+   "IsLiveMatchAvailable": true,
+   "LiveMatchState": 1,
+   "LiveMatchTime": "23",
+   "LiveMatchTimeState": "3.čtvrtina",
+   "LiveMatchTimeOrigName": "LB_BASKETBALL_3Q",
+   "LiveMatchScore": "48 : 59",
+   "LiveSetScore": "19 : 27 - 27 : 25 - 2 : 7",
+   "LiveStatusString": "3q",
+   "LiveUpdateTimestamp": "2026-09-30T19:25:01.564Z",
+   "LiveMatchStartTime": "2026-09-30T18:05:00Z",
+   "LiveIsBlocked": false,
+   "LiveIsDisabled": false,
+   "LiveBettingEnabled": true,
+   "BasicOffer": {
+    "Id": 469077272,
+    "Description": "Základní nabídka",
+    "BetTypeKey": "2_-1",
+    "Sbv": null,
+    "Active": true,
+    "IsEnabled": true,
+    "Odds": [
+     {
+      "Name": "1",
+      "OrigName": "1",
+      "Odd": 3.2,
+      "Active": true,
+      "UofKey": "uof:1/sr:sport:2/1/1"
+     },
+     {
+      "Name": "X",
+      "OrigName": "x",
+      "Odd": 10,
+      "Active": true,
+      "UofKey": "uof:1/sr:sport:2/1/2"
+     },
+     {
+      "Name": "2",
+      "OrigName": "2",
+      "Odd": 1.45,
+      "Active": true,
+      "UofKey": "uof:1/sr:sport:2/1/3"
+     }
+    ]
+   },
+   "Offers": []
+  },
+  {
+   "Id": 73262976,
+   "TeamHome": "Panathinaikos BC",
+   "TeamAway": "ASVEL Lyon-Villeurbanne",
+   "MatchStartTime": "2026-09-30T18:15:00Z",
+   "SportId": 391,
+   "CategoryName": "Mezinárodní",
+   "LeagueName": "Euroliga",
+   "EventType": 1,
+   "IsBlocked": false,
+   "IsLive": true,
+   "IsLiveMatchAvailable": true,
+   "LiveMatchState": 1,
+   "LiveMatchTime": "20",
+   "LiveMatchTimeState": "3.čtvrtina",
+   "LiveMatchTimeOrigName": "LB_BASKETBALL_3Q",
+   "LiveMatchScore": "56 : 34",
+   "LiveSetScore": "25 : 13 - 31 : 21 - 0 : 0",
+   "LiveStatusString": "3q",
+   "LiveUpdateTimestamp": "2026-09-30T19:25:02.365Z",
+   "LiveMatchStartTime": "2026-09-30T18:15:00Z",
+   "LiveIsBlocked": false,
+   "LiveIsDisabled": false,
+   "LiveBettingEnabled": true,
+   "BasicOffer": {
+    "Id": 469080947,
+    "Description": "Základní nabídka",
+    "BetTypeKey": "2_-1",
+    "Sbv": null,
+    "Active": true,
+    "IsEnabled": true,
+    "Odds": [
+     {
+      "Name": "1",
+      "OrigName": "1",
+      "Odd": 0,
+      "Active": false,
+      "UofKey": "uof:1/sr:sport:2/1/1"
+     },
+     {
+      "Name": "X",
+      "OrigName": "x",
+      "Odd": 24,
+      "Active": true,
+      "UofKey": "uof:1/sr:sport:2/1/2"
+     },
+     {
+      "Name": "2",
+      "OrigName": "2",
+      "Odd": 16.5,
+      "Active": true,
+      "UofKey": "uof:1/sr:sport:2/1/3"
+     }
+    ]
+   },
+   "Offers": []
+  },
+  {
+   "Id": 72902418,
+   "TeamHome": "GVC Neapol",
+   "TeamAway": "JL Bourg-en-Bresse",
+   "MatchStartTime": "2026-09-30T18:00:00Z",
+   "SportId": 391,
+   "CategoryName": "Mezinárodní",
+   "LeagueName": "Eurocup",
+   "EventType": 1,
+   "IsBlocked": false,
+   "IsLive": true,
+   "IsLiveMatchAvailable": true,
+   "LiveMatchState": 1,
+   "LiveMatchTime": "24",
+   "LiveMatchTimeState": "3.čtvrtina",
+   "LiveMatchTimeOrigName": "LB_BASKETBALL_3Q",
+   "LiveMatchScore": "53 : 45",
+   "LiveSetScore": "19 : 17 - 28 : 20 - 6 : 8",
+   "LiveStatusString": "3q",
+   "LiveUpdateTimestamp": "2026-09-30T19:25:01.586Z",
+   "LiveMatchStartTime": "2026-09-30T18:00:00Z",
+   "LiveIsBlocked": false,
+   "LiveIsDisabled": false,
+   "LiveBettingEnabled": true,
+   "BasicOffer": {
+    "Id": 469075251,
+    "Description": "Základní nabídka",
+    "BetTypeKey": "2_-1",
+    "Sbv": null,
+    "Active": true,
+    "IsEnabled": true,
+    "Odds": [
+     {
+      "Name": "1",
+      "OrigName": "1",
+      "Odd": 1.1,
+      "Active": true,
+      "UofKey": "uof:1/sr:sport:2/1/1"
+     },
+     {
+      "Name": "X",
+      "OrigName": "x",
+      "Odd": 17,
+      "Active": true,
+      "UofKey": "uof:1/sr:sport:2/1/2"
+     },
+     {
+      "Name": "2",
+      "OrigName": "2",
+      "Odd": 7.5,
+      "Active": true,
+      "UofKey": "uof:1/sr:sport:2/1/3"
+     }
+    ]
+   },
+   "Offers": []
+  },
+  {
+   "Id": 73262974,
+   "TeamHome": "Maccabi Tel-Aviv",
+   "TeamAway": "Besiktas JK",
+   "MatchStartTime": "2026-09-30T18:05:00Z",
+   "SportId": 391,
+   "CategoryName": "International",
+   "LeagueName": "Euroleague",
+   "EventType": 1,
+   "IsBlocked": false,
+   "IsLive": true,
+   "IsLiveMatchAvailable": true,
+   "LiveMatchState": 1,
+   "LiveMatchTime": "30",
+   "LiveMatchTimeState": "4th quarter",
+   "LiveMatchTimeOrigName": "LB_BASKETBALL_4Q",
+   "LiveMatchScore": "65 : 80",
+   "LiveSetScore": "19 : 27 - 27 : 25 - 17 : 26 - 2 : 2",
+   "LiveStatusString": "4q",
+   "LiveUpdateTimestamp": "2026-09-30T19:48:12.429Z",
+   "LiveMatchStartTime": "2026-09-30T18:05:00Z",
+   "LiveIsBlocked": false,
+   "LiveIsDisabled": false,
+   "LiveBettingEnabled": true,
+   "BasicOffer": null,
+   "Offers": [
+    {
+     "Id": 469077128,
+     "Description": "Which team will win the match, including overtime?",
+     "BetTypeKey": "7_37",
+     "Sbv": null,
+     "Active": true,
+     "IsEnabled": true,
+     "Odds": [
+      {
+       "Name": "1",
+       "OrigName": "1",
+       "Odd": 6.75,
+       "Active": true,
+       "UofKey": "uof:1/sr:sport:2/219/4"
+      },
+      {
+       "Name": "2",
+       "OrigName": "2",
+       "Odd": 1.06,
+       "Active": true,
+       "UofKey": "uof:1/sr:sport:2/219/5"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "Id": 73262976,
+   "TeamHome": "Panathinaikos",
+   "TeamAway": "ASVEL Lyon-Villeurbanne",
+   "MatchStartTime": "2026-09-30T18:15:00Z",
+   "SportId": 391,
+   "CategoryName": "International",
+   "LeagueName": "Euroleague",
+   "EventType": 1,
+   "IsBlocked": false,
+   "IsLive": true,
+   "IsLiveMatchAvailable": true,
+   "LiveMatchState": 1,
+   "LiveMatchTime": "31",
+   "LiveMatchTimeState": "4th quarter",
+   "LiveMatchTimeOrigName": "LB_BASKETBALL_4Q",
+   "LiveMatchScore": "80 : 60",
+   "LiveSetScore": "25 : 13 - 31 : 21 - 24 : 22 - 0 : 4",
+   "LiveStatusString": "4q",
+   "LiveUpdateTimestamp": "2026-09-30T19:48:06.821Z",
+   "LiveMatchStartTime": "2026-09-30T18:15:00Z",
+   "LiveIsBlocked": false,
+   "LiveIsDisabled": false,
+   "LiveBettingEnabled": true,
+   "BasicOffer": null,
+   "Offers": [
+    {
+     "Id": 469080437,
+     "Description": "Which team will win the match, including overtime?",
+     "BetTypeKey": "7_37",
+     "Sbv": null,
+     "Active": true,
+     "IsEnabled": true,
+     "Odds": [
+      {
+       "Name": "1",
+       "OrigName": "1",
+       "Odd": 0,
+       "Active": false,
+       "UofKey": "uof:1/sr:sport:2/219/4"
+      },
+      {
+       "Name": "2",
+       "OrigName": "2",
+       "Odd": 11,
+       "Active": true,
+       "UofKey": "uof:1/sr:sport:2/219/5"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "Id": 72902418,
+   "TeamHome": "Generazione Vincente Cuore Napoli",
+   "TeamAway": "Jeunesse Laique de Bourg-en-bresse",
+   "MatchStartTime": "2026-09-30T18:00:00Z",
+   "SportId": 391,
+   "CategoryName": "International",
+   "LeagueName": "Eurocup",
+   "EventType": 1,
+   "IsBlocked": false,
+   "IsLive": true,
+   "IsLiveMatchAvailable": true,
+   "LiveMatchState": 1,
+   "LiveMatchTime": "29",
+   "LiveMatchTimeState": "3rd quarter",
+   "LiveMatchTimeOrigName": "LB_BASKETBALL_3Q",
+   "LiveMatchScore": "65 : 48",
+   "LiveSetScore": "19 : 17 - 28 : 20 - 18 : 11",
+   "LiveStatusString": "3q",
+   "LiveUpdateTimestamp": "2026-09-30T19:48:06.82Z",
+   "LiveMatchStartTime": "2026-09-30T18:00:00Z",
+   "LiveIsBlocked": false,
+   "LiveIsDisabled": false,
+   "LiveBettingEnabled": true,
+   "BasicOffer": null,
+   "Offers": [
+    {
+     "Id": 469074935,
+     "Description": "Which team will win the match, including overtime?",
+     "BetTypeKey": "7_37",
+     "Sbv": null,
+     "Active": true,
+     "IsEnabled": true,
+     "Odds": [
+      {
+       "Name": "1",
+       "OrigName": "1",
+       "Odd": 0,
+       "Active": false,
+       "UofKey": "uof:1/sr:sport:2/219/4"
+      },
+      {
+       "Name": "2",
+       "OrigName": "2",
+       "Odd": 11,
+       "Active": true,
+       "UofKey": "uof:1/sr:sport:2/219/5"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "Id": 73262974,
+   "TeamHome": "Maccabi Tel-Aviv",
+   "TeamAway": "Besiktas JK",
+   "MatchStartTime": "2026-09-30T18:05:00Z",
+   "SportId": 391,
+   "CategoryName": "International",
+   "LeagueName": "Euroleague",
+   "EventType": 1,
+   "IsBlocked": false,
+   "IsLive": true,
+   "IsLiveMatchAvailable": true,
+   "LiveMatchState": 1,
+   "LiveMatchTime": "30",
+   "LiveMatchTimeState": "4th quarter",
+   "LiveMatchTimeOrigName": "LB_BASKETBALL_4Q",
+   "LiveMatchScore": "65 : 80",
+   "LiveSetScore": "19 : 27 - 27 : 25 - 17 : 26 - 2 : 2",
+   "LiveStatusString": "4q",
+   "LiveUpdateTimestamp": "2026-09-30T19:48:12.429Z",
+   "LiveMatchStartTime": "2026-09-30T18:05:00Z",
+   "LiveIsBlocked": false,
+   "LiveIsDisabled": false,
+   "LiveBettingEnabled": true,
+   "BasicOffer": null,
+   "Offers": [
+    {
+     "Id": 469090331,
+     "Description": "Asian handicap for whole match, including overtime [9.5]",
+     "BetTypeKey": "7_38",
+     "Sbv": "9.5",
+     "Active": true,
+     "IsEnabled": true,
+     "Odds": [
+      {
+       "Name": "1 (9.5)",
+       "OrigName": "1",
+       "Odd": 1.75,
+       "Active": true,
+       "UofKey": "uof:1/sr:sport:2/223/1714?hcp=9.5"
+      },
+      {
+       "Name": "2 (-9.5)",
+       "OrigName": "2",
+       "Odd": 1.9,
+       "Active": true,
+       "UofKey": "uof:1/sr:sport:2/223/1715?hcp=9.5"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "Id": 73262976,
+   "TeamHome": "Panathinaikos",
+   "TeamAway": "ASVEL Lyon-Villeurbanne",
+   "MatchStartTime": "2026-09-30T18:15:00Z",
+   "SportId": 391,
+   "CategoryName": "International",
+   "LeagueName": "Euroleague",
+   "EventType": 1,
+   "IsBlocked": false,
+   "IsLive": true,
+   "IsLiveMatchAvailable": true,
+   "LiveMatchState": 1,
+   "LiveMatchTime": "31",
+   "LiveMatchTimeState": "4th quarter",
+   "LiveMatchTimeOrigName": "LB_BASKETBALL_4Q",
+   "LiveMatchScore": "80 : 60",
+   "LiveSetScore": "25 : 13 - 31 : 21 - 24 : 22 - 0 : 4",
+   "LiveStatusString": "4q",
+   "LiveUpdateTimestamp": "2026-09-30T19:48:06.821Z",
+   "LiveMatchStartTime": "2026-09-30T18:15:00Z",
+   "LiveIsBlocked": false,
+   "LiveIsDisabled": false,
+   "LiveBettingEnabled": true,
+   "BasicOffer": null,
+   "Offers": [
+    {
+     "Id": 469080909,
+     "Description": "Asian handicap for whole match, including overtime [-22.5]",
+     "BetTypeKey": "7_38",
+     "Sbv": "-22.5",
+     "Active": true,
+     "IsEnabled": true,
+     "Odds": [
+      {
+       "Name": "1 (-22.5)",
+       "OrigName": "1",
+       "Odd": 1.95,
+       "Active": true,
+       "UofKey": "uof:1/sr:sport:2/223/1714?hcp=-22.5"
+      },
+      {
+       "Name": "2 (22.5)",
+       "OrigName": "2",
+       "Odd": 1.75,
+       "Active": true,
+       "UofKey": "uof:1/sr:sport:2/223/1715?hcp=-22.5"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "Id": 72902418,
+   "TeamHome": "Generazione Vincente Cuore Napoli",
+   "TeamAway": "Jeunesse Laique de Bourg-en-bresse",
+   "MatchStartTime": "2026-09-30T18:00:00Z",
+   "SportId": 391,
+   "CategoryName": "International",
+   "LeagueName": "Eurocup",
+   "EventType": 1,
+   "IsBlocked": false,
+   "IsLive": true,
+   "IsLiveMatchAvailable": true,
+   "LiveMatchState": 1,
+   "LiveMatchTime": "29",
+   "LiveMatchTimeState": "3rd quarter",
+   "LiveMatchTimeOrigName": "LB_BASKETBALL_3Q",
+   "LiveMatchScore": "65 : 48",
+   "LiveSetScore": "19 : 17 - 28 : 20 - 18 : 11",
+   "LiveStatusString": "3q",
+   "LiveUpdateTimestamp": "2026-09-30T19:48:06.82Z",
+   "LiveMatchStartTime": "2026-09-30T18:00:00Z",
+   "LiveIsBlocked": false,
+   "LiveIsDisabled": false,
+   "LiveBettingEnabled": true,
+   "BasicOffer": null,
+   "Offers": [
+    {
+     "Id": 469075475,
+     "Description": "Asian handicap for whole match, including overtime [-16.5]",
+     "BetTypeKey": "7_38",
+     "Sbv": "-16.5",
+     "Active": true,
+     "IsEnabled": true,
+     "Odds": [
+      {
+       "Name": "1 (-16.5)",
+       "OrigName": "1",
+       "Odd": 1.85,
+       "Active": true,
+       "UofKey": "uof:1/sr:sport:2/223/1714?hcp=-16.5"
+      },
+      {
+       "Name": "2 (16.5)",
+       "OrigName": "2",
+       "Odd": 1.8,
+       "Active": true,
+       "UofKey": "uof:1/sr:sport:2/223/1715?hcp=-16.5"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "Id": 73262974,
+   "TeamHome": "Maccabi Tel-Aviv",
+   "TeamAway": "Besiktas JK",
+   "MatchStartTime": "2026-09-30T18:05:00Z",
+   "SportId": 391,
+   "CategoryName": "International",
+   "LeagueName": "Euroleague",
+   "EventType": 1,
+   "IsBlocked": false,
+   "IsLive": true,
+   "IsLiveMatchAvailable": true,
+   "LiveMatchState": 1,
+   "LiveMatchTime": "30",
+   "LiveMatchTimeState": "4th quarter",
+   "LiveMatchTimeOrigName": "LB_BASKETBALL_4Q",
+   "LiveMatchScore": "67 : 80",
+   "LiveSetScore": "19 : 27 - 27 : 25 - 17 : 26 - 4 : 2",
+   "LiveStatusString": "4q",
+   "LiveUpdateTimestamp": "2026-09-30T19:48:15.534Z",
+   "LiveMatchStartTime": "2026-09-30T18:05:00Z",
+   "LiveIsBlocked": false,
+   "LiveIsDisabled": false,
+   "LiveBettingEnabled": true,
+   "BasicOffer": null,
+   "Offers": [
+    {
+     "Id": 469077653,
+     "Description": "Total for whole match, including overtime [187.5]",
+     "BetTypeKey": "8_39",
+     "Sbv": "187.5",
+     "Active": true,
+     "IsEnabled": true,
+     "Odds": [
+      {
+       "Name": "under",
+       "OrigName": "under",
+       "Odd": 1.9,
+       "Active": true,
+       "UofKey": "uof:1/sr:sport:2/225/13?total=187.5"
+      },
+      {
+       "Name": "over",
+       "OrigName": "over",
+       "Odd": 1.75,
+       "Active": true,
+       "UofKey": "uof:1/sr:sport:2/225/12?total=187.5"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "Id": 73262976,
+   "TeamHome": "Panathinaikos",
+   "TeamAway": "ASVEL Lyon-Villeurbanne",
+   "MatchStartTime": "2026-09-30T18:15:00Z",
+   "SportId": 391,
+   "CategoryName": "International",
+   "LeagueName": "Euroleague",
+   "EventType": 1,
+   "IsBlocked": false,
+   "IsLive": true,
+   "IsLiveMatchAvailable": true,
+   "LiveMatchState": 1,
+   "LiveMatchTime": "31",
+   "LiveMatchTimeState": "4th quarter",
+   "LiveMatchTimeOrigName": "LB_BASKETBALL_4Q",
+   "LiveMatchScore": "80 : 60",
+   "LiveSetScore": "25 : 13 - 31 : 21 - 24 : 22 - 0 : 4",
+   "LiveStatusString": "4q",
+   "LiveUpdateTimestamp": "2026-09-30T19:48:06.821Z",
+   "LiveMatchStartTime": "2026-09-30T18:15:00Z",
+   "LiveIsBlocked": false,
+   "LiveIsDisabled": false,
+   "LiveBettingEnabled": true,
+   "BasicOffer": null,
+   "Offers": [
+    {
+     "Id": 469085171,
+     "Description": "Total for whole match, including overtime [177.5]",
+     "BetTypeKey": "8_39",
+     "Sbv": "177.5",
+     "Active": true,
+     "IsEnabled": true,
+     "Odds": [
+      {
+       "Name": "under",
+       "OrigName": "under",
+       "Odd": 1.75,
+       "Active": true,
+       "UofKey": "uof:1/sr:sport:2/225/13?total=177.5"
+      },
+      {
+       "Name": "over",
+       "OrigName": "over",
+       "Odd": 1.9,
+       "Active": true,
+       "UofKey": "uof:1/sr:sport:2/225/12?total=177.5"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "Id": 72902418,
+   "TeamHome": "Generazione Vincente Cuore Napoli",
+   "TeamAway": "Jeunesse Laique de Bourg-en-bresse",
+   "MatchStartTime": "2026-09-30T18:00:00Z",
+   "SportId": 391,
+   "CategoryName": "International",
+   "LeagueName": "Eurocup",
+   "EventType": 1,
+   "IsBlocked": false,
+   "IsLive": true,
+   "IsLiveMatchAvailable": true,
+   "LiveMatchState": 1,
+   "LiveMatchTime": "29",
+   "LiveMatchTimeState": "3rd quarter",
+   "LiveMatchTimeOrigName": "LB_BASKETBALL_3Q",
+   "LiveMatchScore": "65 : 48",
+   "LiveSetScore": "19 : 17 - 28 : 20 - 18 : 11",
+   "LiveStatusString": "3q",
+   "LiveUpdateTimestamp": "2026-09-30T19:48:06.82Z",
+   "LiveMatchStartTime": "2026-09-30T18:00:00Z",
+   "LiveIsBlocked": false,
+   "LiveIsDisabled": false,
+   "LiveBettingEnabled": true,
+   "BasicOffer": null,
+   "Offers": [
+    {
+     "Id": 469084371,
+     "Description": "Total for whole match, including overtime [156.5]",
+     "BetTypeKey": "8_39",
+     "Sbv": "156.5",
+     "Active": true,
+     "IsEnabled": true,
+     "Odds": [
+      {
+       "Name": "under",
+       "OrigName": "under",
+       "Odd": 1.8,
+       "Active": true,
+       "UofKey": "uof:1/sr:sport:2/225/13?total=156.5"
+      },
+      {
+       "Name": "over",
+       "OrigName": "over",
+       "Odd": 1.85,
+       "Active": true,
+       "UofKey": "uof:1/sr:sport:2/225/12?total=156.5"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "Id": 74983720,
+   "TeamHome": "Staeheli, Luca",
+   "TeamAway": "Andrade, Andres",
+   "MatchStartTime": "2026-09-30T18:25:00Z",
+   "SportId": 389,
+   "CategoryName": "Challenger",
+   "LeagueName": "Columbus - tvrdý povrch",
+   "EventType": 1,
+   "IsBlocked": false,
+   "IsLive": true,
+   "IsLiveMatchAvailable": true,
+   "LiveMatchState": 1,
+   "LiveMatchTimeState": "2.set",
+   "LiveMatchTimeOrigName": "LB_TENNIS_2SET",
+   "LiveMatchScore": "0 : 1",
+   "LiveSetScore": "3 : 6 - 2 : 1",
+   "LiveGameScore": "15 : 30",
+   "LiveStatusString": "2set",
+   "LiveUpdateTimestamp": "2026-09-30T19:25:03.634Z",
+   "LiveMatchStartTime": "2026-09-30T18:25:00Z",
+   "LiveIsBlocked": false,
+   "LiveIsDisabled": false,
+   "LiveBettingEnabled": true,
+   "BasicOffer": {
+    "Id": 469085426,
+    "Description": "Vítěz zápasu",
+    "BetTypeKey": "7_10",
+    "Sbv": null,
+    "Active": true,
+    "IsEnabled": true,
+    "Odds": [
+     {
+      "Name": "1",
+      "OrigName": "1",
+      "Odd": 6.75,
+      "Active": true,
+      "UofKey": "uof:1/sr:sport:5/186/4"
+     },
+     {
+      "Name": "2",
+      "OrigName": "2",
+      "Odd": 1.09,
+      "Active": true,
+      "UofKey": "uof:1/sr:sport:5/186/5"
+     }
+    ]
+   },
+   "Offers": []
+  },
+  {
+   "Id": 75089868,
+   "TeamHome": "Blando J / Vasser O",
+   "TeamAway": "Martinez L D / Trotter J K",
+   "MatchStartTime": "2026-09-30T19:10:00Z",
+   "SportId": 389,
+   "CategoryName": "Challenger",
+   "LeagueName": "Columbus 4-hra - tvrdý povrch",
+   "EventType": 1,
+   "IsBlocked": false,
+   "IsLive": true,
+   "IsLiveMatchAvailable": true,
+   "LiveMatchState": 1,
+   "LiveMatchTimeState": "1.set",
+   "LiveMatchTimeOrigName": "LB_TENNIS_1SET",
+   "LiveMatchScore": "0 : 0",
+   "LiveSetScore": "2 : 1",
+   "LiveGameScore": "0 : 0",
+   "LiveStatusString": "1set",
+   "LiveUpdateTimestamp": "2026-09-30T19:25:01.564Z",
+   "LiveMatchStartTime": "2026-09-30T19:10:00Z",
+   "LiveIsBlocked": false,
+   "LiveIsDisabled": false,
+   "LiveBettingEnabled": true,
+   "BasicOffer": {
+    "Id": 469101737,
+    "Description": "Vítěz zápasu",
+    "BetTypeKey": "7_10",
+    "Sbv": null,
+    "Active": true,
+    "IsEnabled": true,
+    "Odds": [
+     {
+      "Name": "1",
+      "OrigName": "1",
+      "Odd": 2.65,
+      "Active": true,
+      "UofKey": "uof:1/sr:sport:5/186/4"
+     },
+     {
+      "Name": "2",
+      "OrigName": "2",
+      "Odd": 1.45,
+      "Active": true,
+      "UofKey": "uof:1/sr:sport:5/186/5"
+     }
+    ]
+   },
+   "Offers": []
+  },
+  {
+   "Id": 75089606,
+   "TeamHome": "Roncadelli F / Villanueva G",
+   "TeamAway": "Alves M / Couto Loureiro J V",
+   "MatchStartTime": "2026-09-30T17:20:00Z",
+   "SportId": 389,
+   "CategoryName": "Challenger",
+   "LeagueName": "Curitiba 4-hra - antuka",
+   "EventType": 1,
+   "IsBlocked": false,
+   "IsLive": true,
+   "IsLiveMatchAvailable": true,
+   "LiveMatchState": 1,
+   "LiveMatchTimeState": "3.set",
+   "LiveMatchTimeOrigName": "LB_TENNIS_3SET",
+   "LiveMatchScore": "1 : 1",
+   "LiveSetScore": "6 : 7 - 6 : 2 - 0 : 0",
+   "LiveGameScore": "5 : 3",
+   "LiveStatusString": "3set",
+   "LiveUpdateTimestamp": "2026-09-30T19:25:03.097Z",
+   "LiveMatchStartTime": "2026-09-30T17:20:00Z",
+   "LiveIsBlocked": false,
+   "LiveIsDisabled": false,
+   "LiveBettingEnabled": true,
+   "BasicOffer": {
+    "Id": 469055721,
+    "Description": "Vítěz zápasu",
+    "BetTypeKey": "7_10",
+    "Sbv": null,
+    "Active": true,
+    "IsEnabled": true,
+    "Odds": [
+     {
+      "Name": "1",
+      "OrigName": "1",
+      "Odd": 1.25,
+      "Active": true,
+      "UofKey": "uof:1/sr:sport:5/186/4"
+     },
+     {
+      "Name": "2",
+      "OrigName": "2",
+      "Odd": 3.7,
+      "Active": true,
+      "UofKey": "uof:1/sr:sport:5/186/5"
+     }
+    ]
+   },
+   "Offers": []
+  },
+  {
+   "Id": 74983720,
+   "TeamHome": "Staeheli, Luca",
+   "TeamAway": "Andrade, Andres",
+   "MatchStartTime": "2026-09-30T18:25:00Z",
+   "SportId": 389,
+   "CategoryName": "Challenger",
+   "LeagueName": "ATP Challenger Columbus, USA Men Singles",
+   "EventType": 1,
+   "IsBlocked": false,
+   "IsLive": true,
+   "IsLiveMatchAvailable": true,
+   "LiveMatchState": 1,
+   "LiveMatchTimeState": "2nd set",
+   "LiveMatchTimeOrigName": "LB_TENNIS_2SET",
+   "LiveMatchScore": "0 : 1",
+   "LiveSetScore": "3 : 6 - 4 : 5",
+   "LiveGameScore": "30 : 30",
+   "LiveStatusString": "2set",
+   "LiveUpdateTimestamp": "2026-09-30T19:48:16.954Z",
+   "LiveMatchStartTime": "2026-09-30T18:25:00Z",
+   "LiveIsBlocked": false,
+   "LiveIsDisabled": false,
+   "LiveBettingEnabled": true,
+   "BasicOffer": null,
+   "Offers": [
+    {
+     "Id": 469085667,
+     "Description": "Match Game Handicap [4.5]",
+     "BetTypeKey": "7_922",
+     "Sbv": "4.5",
+     "Active": true,
+     "IsEnabled": true,
+     "Odds": [
+      {
+       "Name": "1 (4.5)",
+       "OrigName": "1",
+       "Odd": 2.7,
+       "Active": true,
+       "UofKey": "uof:1/sr:sport:5/187/1714?hcp=4.5"
+      },
+      {
+       "Name": "2 (-4.5)",
+       "OrigName": "2",
+       "Odd": 1.45,
+       "Active": true,
+       "UofKey": "uof:1/sr:sport:5/187/1715?hcp=4.5"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "Id": 74983052,
+   "TeamHome": "Poullain, Lucas",
+   "TeamAway": "Bertola, Remy",
+   "MatchStartTime": "2026-09-30T18:35:00Z",
+   "SportId": 389,
+   "CategoryName": "Challenger",
+   "LeagueName": "ATP Challenger Mouilleron-Le-Captif, France Men Singles",
+   "EventType": 1,
+   "IsBlocked": false,
+   "IsLive": true,
+   "IsLiveMatchAvailable": true,
+   "LiveMatchState": 1,
+   "LiveMatchTimeState": "2nd set",
+   "LiveMatchTimeOrigName": "LB_TENNIS_2SET",
+   "LiveMatchScore": "0 : 1",
+   "LiveSetScore": "3 : 6 - 4 : 3",
+   "LiveGameScore": "40 : 40",
+   "LiveStatusString": "2set",
+   "LiveUpdateTimestamp": "2026-09-30T19:48:19.311Z",
+   "LiveMatchStartTime": "2026-09-30T18:35:00Z",
+   "LiveIsBlocked": false,
+   "LiveIsDisabled": false,
+   "LiveBettingEnabled": true,
+   "BasicOffer": null,
+   "Offers": [
+    {
+     "Id": 469090713,
+     "Description": "Match Game Handicap [4.5]",
+     "BetTypeKey": "7_922",
+     "Sbv": "4.5",
+     "Active": true,
+     "IsEnabled": true,
+     "Odds": [
+      {
+       "Name": "1 (4.5)",
+       "OrigName": "1",
+       "Odd": 1.55,
+       "Active": true,
+       "UofKey": "uof:1/sr:sport:5/187/1714?hcp=4.5"
+      },
+      {
+       "Name": "2 (-4.5)",
+       "OrigName": "2",
+       "Odd": 2.4,
+       "Active": true,
+       "UofKey": "uof:1/sr:sport:5/187/1715?hcp=4.5"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "Id": 74983908,
+   "TeamHome": "Buyukakcay, Cagla",
+   "TeamAway": "Stefanini, Lucrezia",
+   "MatchStartTime": "2026-09-30T18:30:00Z",
+   "SportId": 389,
+   "CategoryName": "Challenge Women",
+   "LeagueName": "WTA 125K Adana, Turkiye Women Singles",
+   "EventType": 1,
+   "IsBlocked": false,
+   "IsLive": true,
+   "IsLiveMatchAvailable": true,
+   "LiveMatchState": 1,
+   "LiveMatchTimeState": "1st set",
+   "LiveMatchTimeOrigName": "LB_TENNIS_1SET",
+   "LiveMatchScore": "0 : 0",
+   "LiveSetScore": "6 : 6",
+   "LiveGameScore": "6 : 5",
+   "LiveStatusString": "1set",
+   "LiveUpdateTimestamp": "2026-09-30T19:48:16.954Z",
+   "LiveMatchStartTime": "2026-09-30T18:30:00Z",
+   "LiveIsBlocked": false,
+   "LiveIsDisabled": false,
+   "LiveBettingEnabled": true,
+   "BasicOffer": null,
+   "Offers": [
+    {
+     "Id": 469095883,
+     "Description": "Match Game Handicap [3.5]",
+     "BetTypeKey": "7_922",
+     "Sbv": "3.5",
+     "Active": true,
+     "IsEnabled": true,
+     "Odds": [
+      {
+       "Name": "1 (3.5)",
+       "OrigName": "1",
+       "Odd": 1.95,
+       "Active": true,
+       "UofKey": "uof:1/sr:sport:5/187/1714?hcp=3.5"
+      },
+      {
+       "Name": "2 (-3.5)",
+       "OrigName": "2",
+       "Odd": 1.8,
+       "Active": true,
+       "UofKey": "uof:1/sr:sport:5/187/1715?hcp=3.5"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "Id": 75089868,
+   "TeamHome": "Blando J / Vasser O",
+   "TeamAway": "Martinez L D / Trotter J K",
+   "MatchStartTime": "2026-09-30T19:10:00Z",
+   "SportId": 389,
+   "CategoryName": "Challenger",
+   "LeagueName": "ATP Challenger Columbus, USA Men Doubles",
+   "EventType": 1,
+   "IsBlocked": false,
+   "IsLive": true,
+   "IsLiveMatchAvailable": true,
+   "LiveMatchState": 1,
+   "LiveMatchTimeState": "1st set",
+   "LiveMatchTimeOrigName": "LB_TENNIS_1SET",
+   "LiveMatchScore": "0 : 0",
+   "LiveSetScore": "5 : 5",
+   "LiveGameScore": "0 : 0",
+   "LiveStatusString": "1set",
+   "LiveUpdateTimestamp": "2026-09-30T19:48:19.721Z",
+   "LiveMatchStartTime": "2026-09-30T19:10:00Z",
+   "LiveIsBlocked": false,
+   "LiveIsDisabled": false,
+   "LiveBettingEnabled": true,
+   "BasicOffer": null,
+   "Offers": [
+    {
+     "Id": 469101724,
+     "Description": "Total number of games [22.5]",
+     "BetTypeKey": "8_83",
+     "Sbv": "22.5",
+     "Active": true,
+     "IsEnabled": true,
+     "Odds": [
+      {
+       "Name": "under",
+       "OrigName": "under",
+       "Odd": 1.9,
+       "Active": true,
+       "UofKey": "uof:1/sr:sport:5/189/13?total=22.5"
+      },
+      {
+       "Name": "over",
+       "OrigName": "over",
+       "Odd": 1.8,
+       "Active": true,
+       "UofKey": "uof:1/sr:sport:5/189/12?total=22.5"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "Id": 74983720,
+   "TeamHome": "Staeheli, Luca",
+   "TeamAway": "Andrade, Andres",
+   "MatchStartTime": "2026-09-30T18:25:00Z",
+   "SportId": 389,
+   "CategoryName": "Challenger",
+   "LeagueName": "ATP Challenger Columbus, USA Men Singles",
+   "EventType": 1,
+   "IsBlocked": false,
+   "IsLive": true,
+   "IsLiveMatchAvailable": true,
+   "LiveMatchState": 1,
+   "LiveMatchTimeState": "2nd set",
+   "LiveMatchTimeOrigName": "LB_TENNIS_2SET",
+   "LiveMatchScore": "0 : 1",
+   "LiveSetScore": "3 : 6 - 4 : 5",
+   "LiveGameScore": "30 : 30",
+   "LiveStatusString": "2set",
+   "LiveUpdateTimestamp": "2026-09-30T19:48:16.954Z",
+   "LiveMatchStartTime": "2026-09-30T18:25:00Z",
+   "LiveIsBlocked": false,
+   "LiveIsDisabled": false,
+   "LiveBettingEnabled": true,
+   "BasicOffer": null,
+   "Offers": [
+    {
+     "Id": 469085639,
+     "Description": "Total number of games [23.5]",
+     "BetTypeKey": "8_83",
+     "Sbv": "23.5",
+     "Active": true,
+     "IsEnabled": true,
+     "Odds": [
+      {
+       "Name": "under",
+       "OrigName": "under",
+       "Odd": 1.14,
+       "Active": true,
+       "UofKey": "uof:1/sr:sport:5/189/13?total=23.5"
+      },
+      {
+       "Name": "over",
+       "OrigName": "over",
+       "Odd": 5.3,
+       "Active": true,
+       "UofKey": "uof:1/sr:sport:5/189/12?total=23.5"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "Id": 75144530,
+   "TeamHome": "Heredia S / Tobon M",
+   "TeamAway": "Dickerson R / Rodriguez L J",
+   "MatchStartTime": "2026-09-30T19:40:00Z",
+   "SportId": 389,
+   "CategoryName": "Challenger",
+   "LeagueName": "ATP Challenger Curitiba, Brazil Men Doubles",
+   "EventType": 1,
+   "IsBlocked": false,
+   "IsLive": true,
+   "IsLiveMatchAvailable": true,
+   "LiveMatchState": 1,
+   "LiveMatchTimeState": "1st set",
+   "LiveMatchTimeOrigName": "LB_TENNIS_1SET",
+   "LiveMatchScore": "0 : 0",
+   "LiveSetScore": "0 : 0",
+   "LiveGameScore": "15 : 0",
+   "LiveStatusString": "1set",
+   "LiveUpdateTimestamp": "2026-09-30T19:48:16.955Z",
+   "LiveMatchStartTime": "2026-09-30T19:40:00Z",
+   "LiveIsBlocked": false,
+   "LiveIsDisabled": false,
+   "LiveBettingEnabled": true,
+   "BasicOffer": null,
+   "Offers": [
+    {
+     "Id": 469109410,
+     "Description": "Total number of games [20.5]",
+     "BetTypeKey": "8_83",
+     "Sbv": "20.5",
+     "Active": true,
+     "IsEnabled": true,
+     "Odds": [
+      {
+       "Name": "under",
+       "OrigName": "under",
+       "Odd": 1.75,
+       "Active": true,
+       "UofKey": "uof:1/sr:sport:5/189/13?total=20.5"
+      },
+      {
+       "Name": "over",
+       "OrigName": "over",
+       "Odd": 2,
+       "Active": true,
+       "UofKey": "uof:1/sr:sport:5/189/12?total=20.5"
+      }
+     ]
+    }
+   ]
+  }
+ ]
+}
