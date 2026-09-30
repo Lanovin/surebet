@@ -130,6 +130,9 @@ const nth = (re: RegExp, prefix: 'P' | 'S' | 'Q') => (m: ObMarket): MarketScope 
   return Number(n) >= 1 && Number(n) <= max ? (s as MarketScope) : null;
 };
 
+/** Číslo třetiny kdekoli v názvu ("Oba dají gól 2. třetina"). */
+const periodAnywhere = nth(/(\d)\.\s*třetin/i, 'P');
+
 /** Hokej/basket: rozsah podle textu v názvu trhu, jinak fallback (nebo null = přeskoč). */
 const byName = (fallback: MarketScope | null) => (m: ObMarket): MarketScope | null => {
   const n = m.name.toLowerCase();
@@ -191,6 +194,11 @@ const RULES: Record<Sport, Record<string, Rule>> = {
     HANDICAP_2_WAY_THIRD_PERIOD: { type: 'AH', scope: 'P3' },
     DRAW_NO_BET_NTH_PERIOD: { type: 'DNB', scope: nth(/^\s*(\d)\.\s*třetin/i, 'P') },
     BOTH_TEAMS_TO_SCORE_NTH_PERIOD: { type: 'BTTS', scope: nth(/^\s*(\d)\.\s*třetin/i, 'P') },
+    // live šablony třetin: "2. třetina: vítěz" (3 výběry bez subType), "2. třetina: handicap 0.5",
+    // "Oba dají gól 2. třetina" – vše jen góly dané třetiny
+    PERIOD_WINNER_NTH_PERIOD: { type: '1X2', scope: nth(/^\s*(\d)\.\s*třetin/i, 'P') },
+    PERIOD_HANDICAP_2_WAY_NTH_PERIOD: { type: 'AH', scope: nth(/^\s*(\d)\.\s*třetin/i, 'P') },
+    BOTH_TEAMS_TO_SCORE_CURRENT_PERIOD: { type: 'BTTS', scope: periodAnywhere },
     'PERIOD_GOALS_OVER/UNDER_HOME_TEAM_FIRST_PERIOD': { type: 'OU_HOME', scope: 'P1' },
     'PERIOD_GOALS_OVER/UNDER_HOME_TEAM_SECOND_PERIOD': { type: 'OU_HOME', scope: 'P2' },
     'PERIOD_GOALS_OVER/UNDER_HOME_TEAM_THIRD_PERIOD': { type: 'OU_HOME', scope: 'P3' },
@@ -214,7 +222,12 @@ const RULES: Record<Sport, Record<string, Rule>> = {
     MATCH_RESULT_3RD_QUARTER: { type: '1X2', scope: 'Q3' },
     MATCH_RESULT_4TH_QUARTER: { type: '1X2', scope: 'Q4' },
     'TOTAL_POINTS_OVER/UNDER_1ST_QUARTER': { type: 'OU', scope: 'Q1' },
+    'TOTAL_POINTS_OVER/UNDER_2ND_QUARTER': { type: 'OU', scope: 'Q2' },
+    'TOTAL_POINTS_OVER/UNDER_3RD_QUARTER': { type: 'OU', scope: 'Q3' },
     HANDICAP_2_WAY_1ST_QUARTER: { type: 'AH', scope: 'Q1' },
+    HANDICAP_2_WAY_2ND_QUARTER: { type: 'AH', scope: 'Q2' },
+    HANDICAP_2_WAY_3RD_QUARTER: { type: 'AH', scope: 'Q3' },
+    // 4. čtvrtina OU/AH vynechána: nejisté, zda nezahrnuje prodloužení; 2. poločas (H2) taktéž
   },
   tennis: {
     MATCH_WINNER: { type: 'ML', scope: 'MATCH' },
@@ -297,11 +310,25 @@ function sel(key: SelectionKey, o: ObOutcome): RawSelection | null {
   return { key, odds, open: outcomeOpen(o), rawName: o.name };
 }
 
+/**
+ * Pojistka proti náhradním/odvozeným šablonám se stejným groupCode: názvy, které se nikdy nesmí
+ * namapovat na kanonický trh (zbytek zápasu, další gól, "po X minutách", Mega kurz jen do AKO,
+ * evropský handicap "s remízou", postup, přesný výsledek, race-to). Žádný dnes mapovaný název je
+ * neobsahuje (ověřeno na live i prematch datech 30. 9. 2026).
+ */
+const NAME_BLACKLIST = /zbyt(?:ek|ku|kem)|zbývající|po \d+\s*minut|mega kurz|\bako\b|\d+\.\s*gól|další gól|postup|s remízou|rozstřel|přesný|první dosáhne|kdo dá/i;
+
+/** Má groupCode pro daný sport mapovací pravidlo? (push: zprávy k nemapovaným trhům nevyžadují resync) */
+export function isMappedMarketCode(sport: Sport, code: string | null | undefined): boolean {
+  return !!code && !!RULES[sport][code];
+}
+
 /** Převede jeden surový trh na kanonický (nebo null, když ho neumíme přesně namapovat). */
 export function mapMarket(sport: Sport, m: ObMarket, home: string, away: string): RawMarket | null {
   if (m.displayed === false || !m.groupCode) return null;
   const rule = RULES[sport][m.groupCode];
   if (!rule) return null;
+  if (NAME_BLACKLIST.test(m.name)) return null;
   const scope = typeof rule.scope === 'function' ? rule.scope(m) : rule.scope;
   if (!scope) return null;
   const outs = m.outcomes.filter((o) => o.displayed !== false);
@@ -511,12 +538,19 @@ export function parseState(ev: ObEvent, sport: Sport, now: number): GameState | 
       }
       const lastRegular = sport === 'football' ? 'SECOND_HALF' : sport === 'hockey' ? 'PERIOD_3' : 'QUARTER_4';
       const isShootout = /PENALT|SHOOTOUT/.test(cur.type);
+      const isOt = cur.type.startsWith('OVERTIME');
+      // hokej/basket: konec základní doby (nebo prodloužení) za nerozhodného stavu → následuje
+      // prodloužení/nájezdy = přestávka; s vítězem je to konec zápasu, ne přestávka
+      const tiedEnd = sport !== 'football' && (cur.type === lastRegular || isOt) && !!st.score && st.score[0] === st.score[1];
       let brk = false;
       // a) perioda výslovně FINISHED a další ještě nezačala
-      if (cur.status === 'FINISHED' && cur.type !== lastRegular && !isShootout) brk = true;
+      if (cur.status === 'FINISHED' && !isShootout) {
+        if (sport === 'football') brk = cur.type !== lastRegular;
+        else brk = (cur.type !== lastRegular && !isOt) || tiedEnd;
+      }
       if (!running && offset !== undefined && !isShootout) {
         // b) odpočet doběhl na 0 (konec třetiny/čtvrtiny), další perioda ještě neexistuje
-        if (sport !== 'football' && offset === 0 && cur.type !== lastRegular && !cur.type.startsWith('OVERTIME')) brk = true;
+        if (sport !== 'football' && offset === 0 && ((cur.type !== lastRegular && !isOt) || tiedEnd)) brk = true;
         // c) nová perioda už založená, ale ještě nezačala (hodiny od založení nikdo neposunul:
         //    fotbal 0:00, hokej/basket plná délka periody)
         const lu = ts(c0?.lastUpdate);
@@ -572,12 +606,15 @@ export function parseEvent(ev: ObEvent, o: ParseOptions): RawEvent | null {
   if (!Number.isFinite(startTime)) return null;
   const markets: RawMarket[] = [];
   const seen = new Set<string>();
+  // suspendovaná událost (status/active na úrovni události) = všechny trhy zavřené
+  const eventOpen = ev.active !== false && (ev.status === undefined || ev.status === 'ACTIVE');
   // standardní trhy před asijskými (při kolizi klíče vyhrává standardní)
   const src = (ev.markets ?? []).slice().sort((a, b) => Number((a.groupCode ?? '').includes('ASIAN')) - Number((b.groupCode ?? '').includes('ASIAN')));
   for (const m of src) {
     const rm = mapMarket(sport, m, home, away);
     if (!rm || seen.has(rm.key)) continue;
     seen.add(rm.key);
+    if (!eventOpen) rm.open = false;
     markets.push(rm);
   }
   const league = ev.drilldownNodes?.find((n) => n.levelNumber === 4)?.name ?? '';
@@ -615,7 +652,10 @@ export function parseEvents(events: ObEvent[] | undefined, o: ParseOptions): Raw
 
 /**
  * Sloučí listing (hlavní trhy, všechny události) s detailem (všechny trhy, vybrané události).
- * Detail má přednost – obsahuje stejné trhy (stejná market ID) a ještě další.
+ * Detail je pro své události autoritativní: obsahuje všechny trhy listingu (stejná market ID) a další.
+ * Trh, který v (novějším) detailu chybí, byl mezitím skrytý/zrušený – z listingu se NEPŘEBÍRÁ
+ * (dřív se doplňoval → zastaralé "otevřené" linie; 30. 9. ověřeno: 1 z 362 trhů listingu chyběl
+ * v detailu a šlo o právě posunutou linii).
  */
 export function mergeListingAndDetail(listing: ObEvent[], detail: ObEvent[]): ObEvent[] {
   const byId = new Map(detail.map((e) => [String(e.id), e]));
@@ -626,9 +666,7 @@ export function mergeListingAndDetail(listing: ObEvent[], detail: ObEvent[]): Ob
       out.push(e);
       continue;
     }
-    const ids = new Set((d.markets ?? []).map((m) => m.id));
-    const extra = (e.markets ?? []).filter((m) => !ids.has(m.id));
-    out.push({ ...e, ...d, commentary: d.commentary ?? e.commentary, markets: [...(d.markets ?? []), ...extra] });
+    out.push({ ...e, ...d, commentary: d.commentary ?? e.commentary, markets: d.markets ?? e.markets ?? [] });
     byId.delete(String(e.id));
   }
   for (const d of byId.values()) out.push(d);

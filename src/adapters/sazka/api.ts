@@ -37,8 +37,10 @@ export function listingUrl(sports: Sport[], scope: 'prematch' | 'live', bust = s
 
 /**
  * Detail (všechny trhy) pro více událostí najednou – eventIds oddělené čárkou.
- * `bust`: Akamai před API cachuje odpovědi podle URL ~30–60 s (hlavička X-Created-At ukazuje
- * stáří), request hlavička Cache-Control se ignoruje → pro live přidáváme `_=<ms>`.
+ * `bust`: cache za Akamai (server-timing "cdn-cache; desc=MISS", přesto X-Created-At až ~90 s
+ * staré) drží odpovědi podle URL na více uzlech s různým stářím – dva po sobě jdoucí požadavky
+ * mohou vrátit data 87 s a 17 s stará (nemonotónně). Request hlavička Cache-Control se ignoruje →
+ * `_=<ms>` (live vždy, prematch standardně taky – viz SazkaOptions.prematchCacheBust).
  */
 export function detailUrl(ids: string[], bust = false): string {
   return `${API_BASE}/orchestrations/sazkaEventsDrilldownDetail?eventIds=${ids.join(',')}${bust ? `&_=${Date.now()}` : ''}`;

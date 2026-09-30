@@ -4,9 +4,12 @@ import { validateRawOdds } from '../../core/validate.js';
 import { isValidMarketKey, parseMarketKey } from '../../core/markets.js';
 import type { RawEvent, RawOdds } from '../../core/types.js';
 import type { ObEvent, ObEventsResponse, ObMarket } from './parse.js';
-import { mapMarket, mergeListingAndDetail, parseEvents, parseState, setComplete } from './parse.js';
+import { mapMarket, mergeListingAndDetail, parseEvent, parseEvents, parseState, setComplete } from './parse.js';
 import { detailUrl, listingUrl } from './api.js';
+import type { PushMessage } from './push.js';
 import { applyMessage, decodeMessage, encodeConnect, encodeSubscribe, pushDecimal } from './push.js';
+import { PushState, REPLAY_MS, SazkaCore } from './strategies.js';
+import type { AdapterContext } from '../types.js';
 
 const NOW = Date.parse('2026-09-28T21:15:30Z');
 const load = async (f: string) => ((await loadFixture<ObEventsResponse>('sazka', f)).data?.events ?? []) as ObEvent[];
@@ -308,5 +311,185 @@ describe('sazka helpers', () => {
     expect(mapMarket('football', m('-1.5', '+1.5'), 'A', 'B')?.key).toBe('AH|REG|-1.5');
     expect(mapMarket('football', m('-1.25', '+1.25'), 'A', 'B')).toBeNull();
     expect(mapMarket('football', m('-1.5', '-1.5'), 'A', 'B')).toBeNull();
+  });
+});
+
+// ---------------------------------------------------------------------------------------------
+// Audit live dat 30. 9. 2026 – regresní testy nad reálnými výřezy (fixtures/sazka/live-audit-2026-09-30.json)
+
+interface AuditFixture {
+  reopen: { event: ObEvent; messages: { t: number; s: string }[] };
+  race: { event: ObEvent; messages: { t: number; s: string }[] };
+  listingExtra: { listing: ObEvent; detail: ObEvent };
+  tiedAfterRegulation: ObEvent;
+  hockeyPeriods: ObEvent;
+  basketQuarters: ObEvent;
+}
+
+describe('sazka live audit 2026-09-30', async () => {
+  const fx = await loadFixture<AuditFixture>('sazka', 'live-audit-2026-09-30.json');
+  const at = (iso: string) => Date.parse(iso);
+  const parse1 = (e: ObEvent, now = at('2026-09-30T19:40:00Z')) => parseEvent(e, { scope: 'live', now })!;
+  const msg = (subjectType: string, subjectId: string, body: Record<string, unknown>): PushMessage => ({
+    channelType: 'SEVENT',
+    channelId: String(body.ev_id),
+    messageId: '!!!!!!!!!!',
+    subjectType,
+    subjectId,
+    body,
+  });
+
+  it('push sEVMKT st=A reopens a market that REST delivered suspended (active=false)', () => {
+    const st = new PushState();
+    st.events.set('4169252', structuredClone(fx.reopen.event));
+    expect(mk(parse1(st.events.get('4169252')!), '1X2|REG')!.open).toBe(false);
+    for (const m of fx.reopen.messages) st.onMessage(decodeMessage(m.s)!, m.t);
+    const e = parse1(st.events.get('4169252')!);
+    const m = mk(e, '1X2|REG')!;
+    // dřív: status ACTIVE, ale active=false zůstalo → trh navždy zavřený
+    expect(m.open).toBe(true);
+    expect(m.selections.every((s) => s.open !== false)).toBe(true);
+    expect(price(e, '1X2|REG', 'HOME')).toBe(1.14); // 7/50 @19:27:26.901
+    expect(price(e, '1X2|REG', 'DRAW')).toBe(7); // 6/1 @19:27:06.382
+    expect(price(e, '1X2|REG', 'AWAY')).toBe(13); // 12/1 @19:27:26.922
+  });
+
+  /** Simulace REST refreshe: REST vznikl v `restAt`, do stavu se dostal v `installAt`. */
+  const raceScenario = (restAt: number, installAt: number) => {
+    const st = new PushState();
+    st.events.set('4261983', structuredClone(fx.race.event));
+    const live = fx.race.messages.map((m) => ({ t: m.t, m: decodeMessage(m.s)! }));
+    for (const x of live) if (x.t <= restAt) st.onMessage(x.m, x.t);
+    const rest = structuredClone(st.events.get('4261983')!); // stav, který vrátí REST (vznik restAt)
+    for (const x of live) if (x.t > restAt && x.t <= installAt) st.onMessage(x.m, x.t);
+    return { st, rest };
+  };
+
+  it('delta received while a REST refresh is in flight is not lost (hidden line 12.5, 19:37:14.589)', () => {
+    const { st, rest } = raceScenario(at('2026-09-30T19:37:14.300Z'), at('2026-09-30T19:37:15.200Z'));
+    // původní chování: prosté nahrazení událostí REST daty → skrytá linie zůstane "otevřená"
+    const naive = parse1({ ...rest });
+    expect(mk(naive, 'OU|S1|12.5')?.open).toBe(true);
+    st.install([rest], at('2026-09-30T19:37:14.300Z'));
+    const e = parse1(st.events.get('4261983')!);
+    expect(mk(e, 'OU|S1|12.5')).toBeUndefined(); // sEVMKT st=S disp=N přehrán
+    expect(mk(e, 'OU|MATCH|25.5')).toBeUndefined();
+    expect(price(e, 'ML|S1', 'HOME')).toBe(2.4); // 7/5 @19:37:14.594
+    expect(price(e, 'ML|S1', 'AWAY')).toBe(1.49); // 49/100 @19:37:14.607
+  });
+
+  it('price delta during REST refresh is replayed (ML|S1 19:39:14.602)', () => {
+    const restAt = at('2026-09-30T19:39:14.400Z');
+    const { st, rest } = raceScenario(restAt, at('2026-09-30T19:39:15.200Z'));
+    expect(price(parse1({ ...rest }), 'ML|S1', 'HOME')).toBe(1.83); // REST ještě se starou cenou
+    st.install([rest], restAt);
+    const e = parse1(st.events.get('4261983')!);
+    expect(price(e, 'ML|S1', 'HOME')).toBe(2.35); // 27/20
+    expect(price(e, 'ML|S1', 'AWAY')).toBe(1.5); // 1/2
+    expect(REPLAY_MS).toBeGreaterThanOrEqual(1000);
+  });
+
+  it('fresh detail is authoritative: markets missing in it are dropped, not taken from the older listing', () => {
+    const merged = mergeListingAndDetail([fx.listingExtra.listing], [fx.listingExtra.detail]);
+    const e = parse1(merged[0], at('2026-09-30T19:25:35Z'));
+    expect(mk(e, 'OU|MATCH|145.5')).toBeUndefined(); // jen v listingu (posunutá linie)
+    expect(mk(e, 'OU|MATCH|146.5')).toBeDefined();
+    expect(mk(e, 'ML|MATCH')).toBeDefined();
+    expect(mk(e, 'AH|MATCH|3.5')).toBeDefined();
+  });
+
+  it('hockey: tie after regulation = intermission before OT; OT with a winner is not a break', () => {
+    const ev = structuredClone(fx.tiedAfterRegulation);
+    const now = at('2026-09-30T19:25:34Z');
+    expect(parseState(ev, 'hockey', now)).toMatchObject({ score: [4, 4], period: 3, statusText: 'PERIOD_3:FINISHED', breakFlag: true });
+    const won = structuredClone(ev);
+    won.commentary!.facts!.find((f) => f.type === 'SCORE')!.value = '5';
+    expect(parseState(won, 'hockey', now)!.breakFlag).toBeUndefined();
+    won.commentary!.periods!.push({ type: 'OVERTIME', status: 'FINISHED', startTime: '2026-09-30T19:30:00Z', clock: { offset: 120, state: 'STOPPED' } });
+    expect(parseState(won, 'hockey', now)!.breakFlag).toBeUndefined();
+  });
+
+  it('live period templates: hockey nth period 1X2/AH/BTTS, basketball Q3 OU/AH', () => {
+    const h = parse1(fx.hockeyPeriods);
+    expect(price(h, '1X2|P2', 'HOME')).toBe(2.45);
+    expect(price(h, '1X2|P2', 'DRAW')).toBe(2.5);
+    expect(price(h, '1X2|P2', 'AWAY')).toBe(3.15);
+    expect(price(h, 'AH|P2|0.5', 'HOME')).toBe(1.29);
+    expect(price(h, 'AH|P2|-0.5', 'AWAY')).toBe(1.47);
+    expect(price(h, 'BTTS|P2', 'YES')).toBe(2.9);
+    expect(h.markets.every((m) => !m.open)).toBe(true); // v REST suspendované
+    const b = parse1(fx.basketQuarters, at('2026-09-30T19:45:24Z'));
+    expect(price(b, 'OU|Q3|33.5', 'OVER')).toBe(1.98);
+    expect(price(b, 'AH|Q3|-10.5', 'HOME')).toBe(1.83);
+    expect(price(b, 'AH|Q3|-10.5', 'AWAY')).toBe(1.87);
+  });
+
+  it('suspended event closes all markets (REST status and push sEVENT st=S)', () => {
+    const ev = structuredClone(fx.basketQuarters);
+    const now = at('2026-09-30T19:45:24Z');
+    expect(parse1(ev, now).markets.some((m) => m.open)).toBe(true);
+    const r = applyMessage(new Map([['4257722', ev]]), msg('sEVENT', '4257722', { ev_id: 4257722, status: 'S' }));
+    expect(r).toEqual({ changed: true, resync: '4257722' });
+    expect(parse1(ev, now).markets.every((m) => !m.open)).toBe(true);
+  });
+
+  it('push: hidden/unmapped objects do not trigger resync; silent reopen does', () => {
+    const ev = structuredClone(fx.race.event);
+    const events = new Map([['4261983', ev]]);
+    const ignored = new Set<string>();
+    // skrytý výběr, který REST neposlal
+    expect(applyMessage(events, msg('sSELCN', '1', { ev_id: 4261983, ev_mkt_id: 244721595, status: 'S', displayed: 'N' }), { ignored }).resync).toBeUndefined();
+    // nový trh s nemapovaným kódem → ignorovat i jeho ceny
+    expect(applyMessage(events, msg('sEVMKT', '999', { ev_id: 4261983, mkt_code: 'SET_X_GAME_X_POINT_X_WINNER', status: 'A', displayed: 'Y' }), { ignored }).resync).toBeUndefined();
+    expect(ignored.has('999')).toBe(true);
+    expect(applyMessage(events, msg('sPRICE', '5', { ev_id: 4261983, ev_mkt_id: 999, lp_num: '1', lp_den: '2' }), { ignored }).resync).toBeUndefined();
+    // nový mapovaný trh → REST detail
+    expect(applyMessage(events, msg('sEVMKT', '998', { ev_id: 4261983, mkt_code: 'TOTAL_GAMES_OVER/UNDER', status: 'A', displayed: 'Y' }), { ignored }).resync).toBe('4261983');
+    // suspendovaný mapovaný trh dostává ceny → mohl být znovuotevřen bez st=A → ověřit REST
+    applyMessage(events, msg('sEVMKT', '244721595', { ev_id: 4261983, status: 'S', displayed: 'Y' }));
+    const r = applyMessage(events, msg('sPRICE', '637749513', { ev_id: 4261983, ev_mkt_id: 244721595, lp_num: '9', lp_den: '4' }));
+    expect(r).toEqual({ changed: true, resync: '4261983' });
+    expect(ev.markets!.find((m) => m.id === '244721595')!.outcomes[0].prices![0].decimal).toBe(3.25);
+  });
+
+  it('push decimals follow the REST convention (2 decimals, tiny prices floored)', () => {
+    const pp = (v: string, n: string, d: string) => ({ lp_num: n, lp_den: d, potentialPayout: [{ type: 'MULTIPLIER', winPlaceOverrideRef: 'WIN', value: v }] });
+    expect(pushDecimal(pp('1.83', '83', '100'))).toBe(1.83);
+    expect(pushDecimal(pp('1.008', '1', '125'))).toBe(1); // REST: decimal 1
+    expect(pushDecimal({ lp_num: '9', lp_den: '4' })).toBe(3.25);
+    expect(pushDecimal({ lp_num: '', lp_den: '' })).toBeUndefined();
+  });
+
+  it('prematch requests are cache-busted (Akamai/origin cache up to ~90 s, non-monotonic)', async () => {
+    const urls: string[] = [];
+    const future = new Date(Date.now() + 3600_000).toISOString();
+    const ev = { id: '1', name: 'A - B', startTime: future, sortCode: 'MTCH', liveNow: false, started: false, markets: [] };
+    const transport = async (url: string) => {
+      urls.push(url);
+      return { status: 200, body: { data: { events: [ev] } }, bytes: 10, createdAt: Date.now() };
+    };
+    const noop = () => {};
+    const log = { debug: noop, info: noop, warn: noop, error: noop, child: () => log };
+    const core = new SazkaCore({ log } as unknown as AdapterContext, transport);
+    await core.loadRaw('prematch', ['hockey'], { requests: 0, bytes: 0 });
+    expect(urls).toHaveLength(2);
+    expect(urls[0]).toMatch(/drilldownTagIds=8&eventState=OPEN_EVENT&_=\d+$/);
+    expect(urls[1]).toMatch(/sazkaEventsDrilldownDetail\?eventIds=1&_=\d+$/);
+  });
+
+  it('name blacklist: replacement/derived templates never map onto canonical keys', () => {
+    const m: ObMarket = {
+      id: 'x',
+      name: 'Výsledek zbytku zápasu',
+      groupCode: 'MATCH_RESULT',
+      status: 'ACTIVE',
+      outcomes: [
+        { id: '1', name: 'A', subType: 'H', status: 'ACTIVE', prices: [{ decimal: 2 }] },
+        { id: '2', name: 'Remíza', subType: 'D', status: 'ACTIVE', prices: [{ decimal: 3 }] },
+        { id: '3', name: 'B', subType: 'A', status: 'ACTIVE', prices: [{ decimal: 4 }] },
+      ],
+    };
+    expect(mapMarket('football', m, 'A', 'B')).toBeNull();
+    expect(mapMarket('football', { ...m, name: 'Výsledek zápasu' }, 'A', 'B')?.key).toBe('1X2|REG');
   });
 });
