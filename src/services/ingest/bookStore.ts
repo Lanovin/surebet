@@ -3,6 +3,9 @@ import type { BookmakerId, FeedScope, RawEvent, SelectionKey } from '../../core/
 import { swapMarketKey, swapSelection } from '../../core/markets.js';
 import type { BookEventState, OddsChange } from '../../shared/protocol.js';
 
+/** Jak dlouho po posledních live datech ignorovat stejný zápas z prematch feedu. */
+export const LIVE_PRECEDENCE_MS = 60_000;
+
 export interface LinkedEvent {
   eventId: number;
   swapped: boolean;
@@ -42,9 +45,14 @@ export class BookStore {
     const present = new Set<number>();
     for (const { eventId, swapped, raw } of items) {
       if (present.has(eventId)) continue; // dvě události sázkovky na jednu kanonickou – bereme první
-      present.add(eventId);
-      res.seen.push(eventId);
       const prev = store.get(eventId);
+      // zápas je zároveň v live feedu: prematch (polling po desítkách sekund, CDN cache) nesmí přepsat
+      // živé kurzy ani je potvrdit jako čerstvé (seen) – live má přednost, dokud chodí
+      if (scope === 'prematch' && prev?.scope === 'live' && fetchedAt - prev.seenAt < LIVE_PRECEDENCE_MS) continue;
+      present.add(eventId);
+      // starší data, než už máme (cache s víc uzly vrací kopie mimo pořadí) – ponechat novější stav
+      if (prev && prev.scope === scope && fetchedAt < prev.seenAt) continue;
+      res.seen.push(eventId);
       const next: BookEventState = { sourceEventId: raw.sourceId, swapped, scope, seenAt: fetchedAt, url: raw.url, markets: {} };
       let changed = !prev || prev.scope !== scope;
       for (const m of raw.markets) {

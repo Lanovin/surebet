@@ -36,6 +36,9 @@ const TAG_PATTERNS: [RegExp, string][] = [
   [/\b(youth|mladez|dorost|dorostenci)\b/g, 'youth'],
 ];
 
+/** Tenis: jednopísmenné "z"/"w" jsou iniciály křestního jména, ne značka žen. */
+const TENNIS_WOMEN = /\b(women|woman|zeny|wom|fem|feminino|femenino|dames|frauen|damen|zen|ladies)\b/g;
+
 export interface NormName {
   /** Normalizovaný řetězec bez šumu a značek. */
   core: string;
@@ -77,9 +80,10 @@ export function normalizeName(raw: string, sport: Sport): NormName {
   // "(ž)" "(W)" apod. v závorkách se po fold() stanou samostatným tokenem – řeší TAG_PATTERNS
   const tags = new Set<string>();
   for (const [re, tag] of TAG_PATTERNS) {
-    // u tenisu by koncové "B." (iniciála) vypadalo jako B-tým
+    // u tenisu by koncové "B." (iniciála) vypadalo jako B-tým a "Bergs Z." / "Kwon W." jako ženy
     if (sport === 'tennis' && tag === 'reserve') continue;
-    s = s.replace(re, (...m) => {
+    const pattern = sport === 'tennis' && tag === 'women' ? TENNIS_WOMEN : re;
+    s = s.replace(pattern, (...m) => {
       tags.add(tag.includes('$1') ? tag.replace('$1', m[1]) : tag);
       return ' ';
     });

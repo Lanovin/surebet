@@ -43,6 +43,19 @@ describe('updatePause', () => {
     expect(updatePause(tr, { sport: 'football', state: { ...st, clockSec: 45 * 60 + 5 }, marketOpen: true, now: 900_000 }, cfg)).toBeUndefined();
   });
 
+  it('fallback funguje i s odpočtem periody (basket: periodRemainingSec)', () => {
+    const tr: PauseTracker = {};
+    updatePause(tr, { sport: 'basketball', state: { periodRemainingSec: 12, period: 1, score: [20, 18] }, marketOpen: true, now: 0 }, cfg);
+    const st = { periodRemainingSec: 0, period: 1, score: [22, 18] as [number, number] };
+    updatePause(tr, { sport: 'basketball', state: st, marketOpen: true, now: 12_000 }, cfg);
+    expect(updatePause(tr, { sport: 'basketball', state: st, marketOpen: true, now: 40_000 }, cfg)).toBeUndefined();
+    const p = updatePause(tr, { sport: 'basketball', state: st, marketOpen: true, now: 60_000 }, cfg)!;
+    expect(p.type).toBe('basketball_quarter');
+    expect(p.source).toBe('clock_fallback');
+    // odpočet 2. čtvrtiny běží → konec přestávky
+    expect(updatePause(tr, { sport: 'basketball', state: { ...st, periodRemainingSec: 598, period: 2 }, marketOpen: true, now: 200_000 }, cfg)).toBeUndefined();
+  });
+
   it('does not treat a mid-period stoppage as a break', () => {
     const tr: PauseTracker = {};
     const st = { clockSec: 23 * 60 + 12, score: [0, 0] as [number, number] };

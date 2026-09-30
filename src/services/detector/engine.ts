@@ -43,6 +43,8 @@ export interface ActiveArb {
   eventAtDetection: EventView;
   stakes: { stakes: number[]; total: number; minProfit: number; positive: boolean; bankroll: number };
   lastTickAt: number;
+  /** kdy se naposledy poslalo potvrzení stáří noh do dashboardu (bez změny kurzu) */
+  seenEmitAt?: number;
   endReason?: EndReason;
   endBookmaker?: BookmakerId;
   endedAt?: number;
@@ -61,12 +63,17 @@ export interface EngineDeps {
 /** Max souběžných arbů na jeden trh jedné události (různé kombinace sázkovek). */
 const MAX_PER_MARKET = 3;
 const TICK_MIN_INTERVAL_MS = 200;
+const SEEN_EMIT_MS = 2_000;
 
 export class ArbEngine {
   readonly events = new Map<number, EventView>();
   readonly books = new Map<number, Map<BookmakerId, BookEventState>>();
   readonly active = new Map<string, ActiveArb>();
   private byKey = new Map<string, Set<string>>();
+  /** live kandidáti odložení kontrolou synchronnosti – přehodnotí se, až dorazí novější data nohou */
+  private pendingSync = new Map<number, Set<string>>();
+  /** kandidáti čekající na potvrzovací okno (klíč event|trh) */
+  private pendingConfirm = new Map<string, { combo: string; since: number; eventId: number; market: string }>();
   stats = { evaluations: 0, created: 0, ended: 0 };
 
   constructor(private deps: EngineDeps) {}
@@ -95,6 +102,7 @@ export class ArbEngine {
       this.events.set(ev.id, ev);
       const reason = prev ? transitionReason(prev, ev) : null;
       if (reason) this.endAllForEvent(ev.id, reason, dataAt);
+      if (prev && prev.mode !== ev.mode) for (const [k, p] of this.pendingConfirm) if (p.eventId === ev.id) this.pendingConfirm.delete(k);
       if (!prev || prev.mode !== ev.mode) for (const m of this.marketsOf(ev.id)) touch(ev.id, m);
     }
 
@@ -127,6 +135,11 @@ export class ArbEngine {
         const wasStale = dataAt - st.seenAt > cfgMode(id).maxLegAgeMs;
         st.seenAt = Math.max(st.seenAt, dataAt);
         if (wasStale) for (const m of Object.keys(st.markets)) touch(id, m);
+        const waiting = this.pendingSync.get(id);
+        if (waiting) {
+          this.pendingSync.delete(id);
+          for (const m of waiting) touch(id, m);
+        }
       }
     }
     for (const { eventId, market } of affected.values()) this.evaluate(eventId, market, dataAt, msg.bk ?? undefined);
@@ -152,8 +165,34 @@ export class ArbEngine {
         if (now - seen > maxAge) stale = leg;
       }
       if (stale) this.end(arb, `stale:${stale.bookmaker}`, stale.bookmaker, now);
-      else arb.lastSeen = now;
+      else {
+        arb.lastSeen = now;
+        this.refreshLegsSeen(arb, bookMap, now);
+      }
     }
+    for (const id of this.pendingSync.keys()) if (!this.books.has(id)) this.pendingSync.delete(id);
+    for (const p of [...this.pendingConfirm.values()]) {
+      const mode = this.events.get(p.eventId)?.mode ?? 'PREMATCH';
+      if (now - p.since >= (settings.modes[mode].confirmMs ?? 0)) this.evaluate(p.eventId, p.market, now);
+    }
+  }
+
+  /**
+   * Nohy se potvrzují i bez změny kurzu (každé stažení = seen); dashboard ukazuje „kurz ověřen před …“,
+   * takže čerstvé stáří pošleme nejvýš jednou za SEEN_EMIT_MS.
+   */
+  private refreshLegsSeen(arb: ActiveArb, bookMap: Map<BookmakerId, BookEventState> | undefined, now: number): void {
+    let moved = false;
+    for (const leg of arb.legs) {
+      const seen = bookMap?.get(leg.bookmaker)?.seenAt;
+      if (seen !== undefined && seen > leg.seenAt) {
+        leg.seenAt = seen;
+        moved = true;
+      }
+    }
+    if (!moved || now - (arb.seenEmitAt ?? arb.detectedAt) < SEEN_EMIT_MS) return;
+    arb.seenEmitAt = now;
+    this.deps.emit('update', arb, this.toDTO(arb), Math.min(...arb.legs.map((l) => l.seenAt)));
   }
 
   /** Změna nastavení: nové prahy, poplatky, povolené sázkovky. */
@@ -173,6 +212,8 @@ export class ArbEngine {
     this.events.clear();
     this.books.clear();
     this.byKey.clear();
+    this.pendingSync.clear();
+    this.pendingConfirm.clear();
   }
 
   unlinkEvent(eventId: number): void {
@@ -223,10 +264,35 @@ export class ArbEngine {
     const existing = [...(this.byKey.get(key) ?? [])].map((id) => this.active.get(id)!).filter(Boolean);
     for (const arb of existing) this.recheck(arb, dataAt, changedBk);
 
-    if (!ev || ev.finished || !bookMap) return;
-    if (mode === 'PREMATCH' && ev.startTime <= now) return;
+    // 2) nový kandidát; v live/přestávce se ukáže až po potvrzovacím okně (confirmMs) – arb, který
+    //    zmizí dřív, je jen rozdílná rychlost reakce sázkovek na gól/bod a vsadit se nedá
+    const found = ev && !ev.finished && bookMap && !(mode === 'PREMATCH' && ev.startTime <= now) ? this.candidate(eventId, market, mode, bookMap) : null;
+    const pending = this.pendingConfirm.get(key);
+    if (!found) {
+      this.pendingConfirm.delete(key);
+      return;
+    }
+    const confirmMs = cfg.confirmMs ?? 0;
+    let since = now;
+    if (confirmMs > 0) {
+      if (!pending || pending.combo !== found.combo) {
+        this.pendingConfirm.set(key, { combo: found.combo, since: now, eventId, market });
+        return;
+      }
+      if (now - pending.since < confirmMs) return;
+      since = pending.since;
+    }
+    this.pendingConfirm.delete(key);
+    this.create(ev!, market, found.combo, found.best, found.margin, dataAt, since);
+  }
 
-    // 2) nejlepší kurz na každý výsledek
+  /** Nejlepší kurzy na každý výsledek → kandidát na nový arb (nebo null). */
+  private candidate(eventId: number, market: string, mode: Mode, bookMap: Map<BookmakerId, BookEventState>): { best: LegState[]; margin: number; combo: string } | null {
+    const now = this.deps.now();
+    const key = `${eventId}|${market}`;
+    const settings = this.deps.settings();
+    const cfg = settings.modes[mode];
+    // nejlepší kurz na každý výsledek
     const type = parseMarketKey(market).type;
     const sels = REQUIRED_SELECTIONS[type];
     const alive = [...(this.byKey.get(key) ?? [])].map((id) => this.active.get(id)!).filter(Boolean);
@@ -248,17 +314,26 @@ export class ArbEngine {
         if (better)
           b = { bookmaker: bk, selection: sel, odds: s.odds, effOdds: eff, changedAt: s.changedAt, seenAt: st.seenAt, swapped: st.swapped, sourceEventId: st.sourceEventId, url: st.url };
       }
-      if (!b) return;
+      if (!b) return null;
       best.push(b);
     }
-    if (new Set(best.map((l) => l.bookmaker)).size < 2) return;
+    if (new Set(best.map((l) => l.bookmaker)).size < 2) return null;
     const margin = arbMargin(best.map((l) => l.effOdds)) * 100;
-    if (margin < cfg.minMarginPct) return;
+    if (margin < cfg.minMarginPct) return null;
+    // live: každá noha musí být potvrzená daty novějšími než poslední změna kurzu ostatních noh.
+    // Jinak jde jen o fázi pollingu (jedna sázkovka už na gól/bod zareagovala, druhou jsme ještě
+    // nestáhli) – takový "arb" zmizí s dalším stažením. Přehodnotí se, až dorazí čerstvá data.
+    if (mode !== 'PREMATCH' && !legsInSync(best)) {
+      let s = this.pendingSync.get(eventId);
+      if (!s) this.pendingSync.set(eventId, (s = new Set()));
+      s.add(market);
+      return null;
+    }
     const combo = best.map((l) => `${l.selection}:${l.bookmaker}`).join(',');
-    if (alive.some((a) => a.combo === combo)) return;
-    if (alive.length >= MAX_PER_MARKET) return;
-    if (alive.some((a) => a.margin >= margin - 0.05)) return; // jiná kombinace s podobnou marží už běží
-    this.create(ev, market, combo, best, margin, dataAt);
+    if (alive.some((a) => a.combo === combo)) return null;
+    if (alive.length >= MAX_PER_MARKET) return null;
+    if (alive.some((a) => a.margin >= margin - 0.05)) return null; // jiná kombinace s podobnou marží už běží
+    return { best, margin, combo };
   }
 
   private recheck(arb: ActiveArb, dataAt: number, changedBk?: BookmakerId): void {
@@ -319,7 +394,7 @@ export class ArbEngine {
       : { stakes: legs.map(() => 0), total: 0, minProfit: 0, positive: false, bankroll: s.bankroll };
   }
 
-  private create(ev: EventView, market: string, combo: string, legs: LegState[], margin: number, dataAt: number): void {
+  private create(ev: EventView, market: string, combo: string, legs: LegState[], margin: number, dataAt: number, since?: number): void {
     const now = this.deps.now();
     const type = parseMarketKey(market).type;
     const bookmakers = [...new Set(legs.map((l) => l.bookmaker))].sort();
@@ -342,8 +417,9 @@ export class ArbEngine {
       prevMargin: null,
       maxMargin: margin,
       marginAtDetection: margin,
-      // životnost se měří v čase detekce – razítka dat různých sázkovek nejsou srovnatelná (CDN cache)
-      firstSeen: now,
+      // životnost se měří v čase detekce – razítka dat různých sázkovek nejsou srovnatelná (CDN cache);
+      // v live od prvního okamžiku kandidáta (potvrzovací okno se do životnosti počítá)
+      firstSeen: since ?? now,
       lastSeen: now,
       detectedAt: now,
       prediction,
@@ -440,6 +516,12 @@ export class ArbEngine {
       endedAt: arb.endedAt,
     };
   }
+}
+
+/** Data všech noh jsou novější než poslední změna kurzu kterékoli nohy (changedAt ≤ seenAt vždy platí). */
+export function legsInSync(legs: Pick<LegState, 'changedAt' | 'seenAt'>[]): boolean {
+  const lastChange = Math.max(...legs.map((l) => l.changedAt));
+  return legs.every((l) => l.seenAt >= lastChange);
 }
 
 function round3(x: number): number {

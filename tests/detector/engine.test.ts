@@ -44,6 +44,8 @@ beforeEach(() => {
   now = 1_000_000;
   settings = defaultSettings();
   settings.consensus.minBooks = 5; // v testu jen 2 sázkovky – konsenzus vypnout
+  settings.modes.LIVE.confirmMs = 0; // potvrzovací okno testuje samostatný test
+  settings.modes.PAUSED.confirmMs = 0;
   events = [];
 });
 
@@ -132,6 +134,72 @@ describe('ArbEngine', () => {
     e.applyDiff(diff('fortuna', { 1: state({ HOME: 1.9, AWAY: 1.9 }) }));
     e.applyDiff(diff('betano', { 1: state({ HOME: 5.0, AWAY: 1.9 }) })); // zjevně chybný kurz
     expect(events.filter((x) => x.kind === 'new')).toHaveLength(0);
+  });
+
+  it('live: arb z rozdílné fáze pollingu vznikne až po potvrzení čerstvými daty druhé sázkovky', () => {
+    const e = engine();
+    const live = (odds: Record<string, number>, changedAt: number, seenAt: number): BookEventState => {
+      const st = state(odds, true, seenAt);
+      st.scope = 'live';
+      for (const s of Object.values(st.markets['DNB|REG'].sels)) s!.changedAt = changedAt;
+      return st;
+    };
+    // tipsport stažen v t=0, fortuna v t=+800 ms s novým kurzem (např. po gólu)
+    e.applyDiff({ ...diff('tipsport', { 1: live({ HOME: 2.2, AWAY: 1.7 }, now, now) }, [ev('LIVE')]), scope: 'live' });
+    now += 800;
+    e.applyDiff({ ...diff('fortuna', { 1: live({ HOME: 1.7, AWAY: 2.2 }, now, now) }), scope: 'live' });
+    expect(events.filter((x) => x.kind === 'new')).toHaveLength(0); // data tipsportu jsou starší než změna fortuny
+    // další stažení tipsportu: kurz se nezměnil (jen "seen") → teď je arb potvrzený
+    now += 900;
+    e.applyDiff({ bk: 'tipsport', scope: 'live', fetchedAt: now, publishedAt: now, seen: [1], removed: [], states: {}, changes: [], events: [] });
+    expect(events.filter((x) => x.kind === 'new')).toHaveLength(1);
+  });
+
+  it('live: když druhá sázkovka mezitím kurz srovná, arb nevznikne vůbec', () => {
+    const e = engine();
+    const live = (odds: Record<string, number>): BookEventState => ({ ...state(odds), scope: 'live' });
+    e.applyDiff({ ...diff('tipsport', { 1: live({ HOME: 2.2, AWAY: 1.7 }) }, [ev('LIVE')]), scope: 'live' });
+    now += 800;
+    e.applyDiff({ ...diff('fortuna', { 1: live({ HOME: 1.7, AWAY: 2.2 }) }), scope: 'live' });
+    now += 900;
+    e.applyDiff({ ...diff('tipsport', { 1: live({ HOME: 1.75, AWAY: 2.1 }) }), scope: 'live' });
+    expect(events.filter((x) => x.kind === 'new')).toHaveLength(0);
+  });
+
+  it('live: potvrzovací okno – arb kratší než confirmMs se neukáže, delší ano (životnost od začátku)', () => {
+    settings.modes.LIVE.confirmMs = 1500;
+    const e = engine();
+    const live = (odds: Record<string, number>): BookEventState => ({ ...state(odds), scope: 'live' });
+    e.applyDiff({ ...diff('tipsport', { 1: live({ HOME: 2.2, AWAY: 1.7 }) }, [ev('LIVE')]), scope: 'live' });
+    e.applyDiff({ ...diff('fortuna', { 1: live({ HOME: 1.7, AWAY: 2.2 }) }), scope: 'live' });
+    expect(events).toHaveLength(0);
+    // za 300 ms tipsport srovná kurz → kandidát zmizí, nic se neukáže ani po uplynutí okna
+    now += 300;
+    e.applyDiff({ ...diff('tipsport', { 1: live({ HOME: 1.75, AWAY: 2.1 }) }), scope: 'live' });
+    now += 2000;
+    e.sweep();
+    expect(events).toHaveLength(0);
+    // nový kandidát, který vydrží → vznikne v sweep po 1,5 s, firstSeen = začátek kandidáta
+    e.applyDiff({ bk: 'fortuna', scope: 'live', fetchedAt: now, publishedAt: now, seen: [1], removed: [], states: {}, changes: [], events: [] });
+    e.applyDiff({ ...diff('tipsport', { 1: live({ HOME: 2.2, AWAY: 1.7 }) }), scope: 'live' });
+    const start = now;
+    now += 1000;
+    e.sweep();
+    expect(events).toHaveLength(0);
+    now += 600;
+    e.applyDiff({ bk: 'fortuna', scope: 'live', fetchedAt: now, publishedAt: now, seen: [1], removed: [], states: {}, changes: [], events: [] });
+    e.applyDiff({ bk: 'tipsport', scope: 'live', fetchedAt: now, publishedAt: now, seen: [1], removed: [], states: {}, changes: [], events: [] });
+    e.sweep();
+    const created = events.filter((x) => x.kind === 'new');
+    expect(created).toHaveLength(1);
+    expect(created[0].arb.firstSeen).toBe(start);
+  });
+
+  it('prematch arb nečeká (confirmMs 0)', () => {
+    const e = engine();
+    e.applyDiff(diff('tipsport', { 1: state({ HOME: 2.2, AWAY: 1.7 }) }, [ev()]));
+    e.applyDiff(diff('fortuna', { 1: state({ HOME: 1.7, AWAY: 2.2 }) }));
+    expect(events.filter((x) => x.kind === 'new')).toHaveLength(1);
   });
 
   it('does not duplicate an arb when equal odds flip between bookmakers', () => {

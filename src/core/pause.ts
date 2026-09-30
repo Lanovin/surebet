@@ -8,6 +8,7 @@ export interface PauseConfig {
 }
 
 export interface PauseTracker {
+  /** poslední hodnota hodin (clockSec, u odpočtu −periodRemainingSec) */
   lastClockSec?: number;
   clockChangedAt?: number;
   scoreKey?: string;
@@ -101,9 +102,10 @@ export function updatePause(
     tr.pause = undefined;
     return undefined;
   }
-  // --- sledování pohybu hodin, skóre a period
-  if (state.clockSec !== undefined && state.clockSec !== tr.lastClockSec) {
-    tr.lastClockSec = state.clockSec;
+  // --- sledování pohybu hodin (vzestupných i odpočtu periody), skóre a period
+  const clock = state.clockSec ?? (state.periodRemainingSec !== undefined ? -state.periodRemainingSec : undefined);
+  if (clock !== undefined && clock !== tr.lastClockSec) {
+    tr.lastClockSec = clock;
     tr.clockChangedAt = now;
   }
   const scoreKey = JSON.stringify([state.score, state.games]);

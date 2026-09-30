@@ -41,6 +41,8 @@ export interface Candidate {
 }
 
 const linkKey = (bk: string, sourceId: string) => `${bk}|${sourceId}`;
+/** Mimo toleranci času začátku se páruje jen při téměř jisté shodě obou jmen. */
+const WIDE_MIN_NAME = 0.95;
 const aliasKey = (bk: string, sport: string, raw: string) => `${bk}|${sport}|${raw}`;
 
 export class Matcher {
@@ -225,10 +227,26 @@ export class Matcher {
         this.stats.auto++;
         return this.link(bk, ev, best.event, best.swapped, best.score, 'auto');
       }
-      if (best.score >= cfg.review) {
-        await this.enqueue(bk, ev, best);
-        return { status: 'pending' };
+    }
+
+    // 2b) stejná jména, ale jiný čas začátku (tenis: odhad podle pořadí zápasů vs. „ne dříve než“,
+    //     posun o hodinu u části sázkovek) → jistá shoda obou jmen v širším okně
+    if (!best || best.score < cfg.autoAccept) {
+      const wide = (ev.sport === 'tennis' ? 6 : 3) * 3600_000;
+      const widePool = [...this.events.values()].filter(
+        (e) => e.sport === ev.sport && e.isSim === isSim && !e.linkedBooks.has(bk) && Math.abs(e.startTime - ev.startTime) <= wide && !rejected?.has(e.id),
+      );
+      const wc = this.candidates(ev, widePool).filter((c) => Math.min(c.home, c.away) >= WIDE_MIN_NAME);
+      const w = wc[0];
+      if (w && (!wc[1] || wc[1].score < w.score - 0.05) && (!w.swapped || ev.sport === 'tennis')) {
+        this.stats.auto++;
+        return this.link(bk, ev, w.event, w.swapped, w.score, 'auto');
       }
+    }
+
+    if (best && best.score >= cfg.review) {
+      await this.enqueue(bk, ev, best);
+      return { status: 'pending' };
     }
 
     // 3) nová kanonická událost

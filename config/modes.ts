@@ -12,12 +12,18 @@ export interface ModeConfig {
   maxLegAgeMs: number;
   /** Preferovat websocket (push) strategie, pokud je adaptér má. */
   preferPush: boolean;
+  /**
+   * Potvrzovací okno: nový arb se ukáže (a uloží) až poté, co vydrží tolik ms. V live většina
+   * „arbů“ trvá jen pár set ms – jedna sázkovka zareagovala na gól/bod dřív než druhá – a vsadit
+   * se nedají. Životnost se i tak měří od prvního okamžiku.
+   */
+  confirmMs: number;
 }
 
 export const MODE_DEFAULTS: Record<Mode, ModeConfig> = {
-  PREMATCH: { pollMinMs: 30_000, pollMaxMs: 60_000, minMarginPct: 0.5, maxLegAgeMs: 300_000, preferPush: false },
-  PAUSED: { pollMinMs: 3_000, pollMaxMs: 5_000, minMarginPct: 1.0, maxLegAgeMs: 15_000, preferPush: false },
-  LIVE: { pollMinMs: 700, pollMaxMs: 1_000, minMarginPct: 1.5, maxLegAgeMs: 5_000, preferPush: true },
+  PREMATCH: { pollMinMs: 30_000, pollMaxMs: 60_000, minMarginPct: 0.5, maxLegAgeMs: 300_000, preferPush: false, confirmMs: 0 },
+  PAUSED: { pollMinMs: 3_000, pollMaxMs: 5_000, minMarginPct: 1.0, maxLegAgeMs: 15_000, preferPush: false, confirmMs: 1_000 },
+  LIVE: { pollMinMs: 700, pollMaxMs: 1_000, minMarginPct: 1.5, maxLegAgeMs: 5_000, preferPush: true, confirmMs: 1_500 },
 };
 
 /** Očekávaná délka přestávek (s). */

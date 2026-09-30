@@ -85,6 +85,9 @@ export default function SettingsPage() {
               <th className="text-right">Sběr od (ms)</th>
               <th className="text-right">Sběr do (ms)</th>
               <th className="text-right">Max stáří nohy (ms)</th>
+              <th className="text-right" title="Nový arb se ukáže až poté, co vydrží tolik ms (live: odfiltruje arby vzniklé jen rozdílnou rychlostí reakce sázkovek)">
+                Potvrzení (ms)
+              </th>
               <th>Websocket</th>
             </tr>
           </thead>
@@ -98,6 +101,7 @@ export default function SettingsPage() {
                 <td className="text-right">{num(['modes', m, 'pollMinMs'], s.modes[m].pollMinMs, { step: 100, min: 200, w: 'w-28' })}</td>
                 <td className="text-right">{num(['modes', m, 'pollMaxMs'], s.modes[m].pollMaxMs, { step: 100, min: 200, w: 'w-28' })}</td>
                 <td className="text-right">{num(['modes', m, 'maxLegAgeMs'], s.modes[m].maxLegAgeMs, { step: 500, min: 500, w: 'w-28' })}</td>
+                <td className="text-right">{num(['modes', m, 'confirmMs'], s.modes[m].confirmMs, { step: 250, min: 0, w: 'w-24' })}</td>
                 <td>
                   <input type="checkbox" checked={s.modes[m].preferPush} onChange={(e) => upd(['modes', m, 'preferPush'], e.target.checked)} />
                 </td>

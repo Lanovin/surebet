@@ -108,7 +108,13 @@ export function validateRawOdds(input: unknown, limits: ValidationLimits): Valid
         continue;
       }
       seenMarkets.add(m.key);
-      const type = parseMarketKey(m.key).type;
+      const { type, line } = parseMarketKey(m.key);
+      // čtvrtinové linie (±0.25, 2.75 …) jsou dělené sázky (půl vkladu na každou sousední linii) –
+      // arb se počítá jako dvoucestný trh s plnou výhrou/prohrou, takže je nepodporujeme
+      if (line !== undefined && Math.abs(line * 2 - Math.round(line * 2)) > 1e-9) {
+        stats.droppedMarkets++;
+        continue;
+      }
       const allowed = new Set(REQUIRED_SELECTIONS[type]);
       const sels = [];
       const seenSel = new Set<string>();

@@ -67,6 +67,9 @@ export class EventTracker {
     }
     let r = t.reports.get(bk);
     if (!r) t.reports.set(bk, (r = { live: false, seenAt: 0, marketOpen: false, tracker: {}, authoritative: false }));
+    // zápas, který sázkovka pořád nabízí i v prematch feedu: to hlášení nesmí přepsat živý stav
+    // (jinak by událost na chvíli "skončila" a arby zanikly jako event_finished)
+    if (!raw.live && r.live && now - r.seenAt < FRESH_MS) return;
     r.live = raw.live;
     r.seenAt = now;
     r.state = raw.state ? (swapped ? swapState(raw.state) : raw.state) : undefined;
@@ -96,7 +99,10 @@ export class EventTracker {
     v.books = [...t.reports.keys()];
     const wasLive = v.live;
     v.live = liveReports.length > 0 || (wasLive && !v.finished && fresh.length === 0);
-    v.finished = liveReports.some(([, r]) => r.state?.finished);
+    // konec: většina živých hlášení se stavem (jediná sázkovka – např. se špatně čteným
+    // „pozastaveno“ – nesmí ukončit zápas všem, dokud ho ostatní hlásí jako běžící)
+    const withStateNow = liveReports.filter(([, r]) => r.state);
+    v.finished = withStateNow.filter(([, r]) => r.state!.finished).length * 2 > withStateNow.length;
     // primární stav: autoritativní (flag/text) sázkovka s nejčerstvějšími daty, jinak kdokoli s hodinami
     const withState = liveReports.filter(([, r]) => r.state);
     withState.sort((a, b) => Number(b[1].authoritative) - Number(a[1].authoritative) || b[1].seenAt - a[1].seenAt);

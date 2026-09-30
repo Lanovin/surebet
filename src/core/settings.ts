@@ -10,6 +10,8 @@ const modeSchema = z.object({
   minMarginPct: z.number().min(0).max(50),
   maxLegAgeMs: z.number().int().min(500).max(3_600_000),
   preferPush: z.boolean(),
+  /** Arb se ukáže až po tolika ms trvání (live: odfiltruje rozdíly v rychlosti reakce sázkovek). */
+  confirmMs: z.number().int().min(0).max(60_000),
 });
 
 const bookmakerSchema = z.object({

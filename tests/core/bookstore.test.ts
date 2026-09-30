@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { BookStore } from '../../src/services/ingest/bookStore.js';
+import { BookStore, LIVE_PRECEDENCE_MS } from '../../src/services/ingest/bookStore.js';
 import type { RawEvent } from '../../src/core/types.js';
 
 const raw = (odds: number, extra: Partial<RawEvent> = {}): RawEvent => ({
@@ -32,5 +32,29 @@ describe('BookStore diff', () => {
     const st = s.get('betx').get(7)!;
     expect(st.markets['ML|MATCH'].sels.AWAY!.odds).toBe(1.8); // HOME u sázkovky = AWAY kanonicky
     expect(st.markets['AH|MATCH|2.5']).toBeDefined(); // handicap mění znaménko
+  });
+
+  it('prematch feed nepřepíše čerstvé live kurzy téže sázkovky ani je nepotvrdí jako čerstvé', () => {
+    const s = new BookStore();
+    s.apply('betx', 'live', 10_000, [{ eventId: 7, swapped: false, raw: raw(1.5, { live: true }) }]);
+    const p = s.apply('betx', 'prematch', 20_000, [{ eventId: 7, swapped: false, raw: raw(1.8) }]);
+    expect(p.seen).toEqual([]);
+    expect(p.changes).toEqual([]);
+    expect(s.get('betx').get(7)!.markets['ML|MATCH'].sels.HOME!.odds).toBe(1.5);
+    expect(s.get('betx').get(7)!.seenAt).toBe(10_000);
+    // live feed ho dlouho nehlásí (zápas skončil / zmizel) → prematch data se znovu použijí
+    const late = s.apply('betx', 'prematch', 10_000 + LIVE_PRECEDENCE_MS + 1, [{ eventId: 7, swapped: false, raw: raw(1.8) }]);
+    expect(late.seen).toEqual([7]);
+  });
+
+  it('starší odpověď (cache mimo pořadí) nepřepíše novější kurzy ani událost neodebere', () => {
+    const s = new BookStore();
+    s.apply('sazka', 'prematch', 5000, [{ eventId: 7, swapped: false, raw: raw(1.9) }]);
+    const old = s.apply('sazka', 'prematch', 3000, [{ eventId: 7, swapped: false, raw: raw(1.7) }]);
+    expect(old.changes).toEqual([]);
+    expect(old.removed).toEqual([]);
+    expect(old.seen).toEqual([]);
+    expect(s.get('sazka').get(7)!.markets['ML|MATCH'].sels.HOME!.odds).toBe(1.9);
+    expect(s.get('sazka').get(7)!.seenAt).toBe(5000);
   });
 });

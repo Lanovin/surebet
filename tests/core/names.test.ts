@@ -15,6 +15,12 @@ describe('name normalization', () => {
 });
 
 describe('name similarity', () => {
+  it('tenis: jednopísmenná iniciála Z./W. není značka žen', () => {
+    expect(normalizeName('Bergs Z.', 'tennis').tags).toEqual([]);
+    expect(nameSimilarity('Bergs Z.', 'Bergs, Zizou', 'tennis')).toBeGreaterThan(0.95);
+    expect(nameSimilarity('Bergs Z.', 'Zizou Bergs', 'tennis')).toBeGreaterThan(0.95);
+    expect(nameSimilarity('Kwon S. W.', 'Kwon, Soon-woo', 'tennis')).toBeGreaterThan(0.8);
+  });
   it('matches common Czech variants', () => {
     expect(nameSimilarity('Viktoria Plzeň', 'FC Viktoria Plzen', 'football')).toBe(1);
     expect(nameSimilarity('Plzeň', 'Viktoria Plzeň', 'football')).toBeGreaterThan(0.8);
