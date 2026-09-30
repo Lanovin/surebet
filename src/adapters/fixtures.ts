@@ -24,6 +24,8 @@ export class Fixtures {
 
   /** fixtures/<bookmaker>/broken-<datum>.json; nejvýš jednou za 10 minut, aby se disk nezaplnil. */
   async saveBroken(info: { strategy: string; error: string; details?: unknown; sample?: unknown }): Promise<string | null> {
+    // simulátor chyby záměrně vyrábí – jejich vzorky nemají diagnostickou hodnotu
+    if (info.strategy.startsWith('sim')) return null;
     if (Date.now() - this.lastBrokenAt < 10 * 60_000) return null;
     this.lastBrokenAt = Date.now();
     const stamp = new Date().toISOString().replace(/[:.]/g, '-');

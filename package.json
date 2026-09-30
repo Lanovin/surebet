@@ -19,6 +19,7 @@
     "gateway": "tsx src/services/gateway/main.ts",
     "web": "npm run dev -w web",
     "dev": "tsx scripts/dev.ts",
+    "dev:real": "DATA_SOURCE=real tsx scripts/dev.ts",
     "test": "vitest run",
     "test:watch": "vitest",
     "typecheck": "tsc -p tsconfig.json --noEmit",

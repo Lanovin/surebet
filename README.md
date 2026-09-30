@@ -20,7 +20,7 @@ docker compose --profile analytics up -d      # + noční retrénink modelu (fá
 ```bash
 npm install
 npm run dev                          # Postgres+Timescale a Redis (scripts/local-infra.sh), migrace, všechny služby, web
-DATA_SOURCE=real npm run dev         # skutečné sázkovky
+npm run dev:real                     # skutečné sázkovky (= DATA_SOURCE=real npm run dev)
 DATA_SOURCE=real BOOKMAKERS=fortuna,kingsbet npm run dev   # jen vybrané
 WEB=prod npm run dev                 # next build + start (méně paměti než next dev)
 bash scripts/stop-local.sh           # zastavit služby (infra běží dál; scripts/local-infra.sh stop)
