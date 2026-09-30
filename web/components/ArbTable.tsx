@@ -11,18 +11,21 @@ type SortKey = 'margin' | 'lifetime' | 'age';
 
 interface Filters {
   modes: Mode[];
-  sports: Sport[];
+  /** skryté sporty (ukládá se výčet skrytých, aby nově přidané sporty byly vidět) */
+  hiddenSports: Sport[];
   minMargin: number;
   bookmakers: BookmakerId[];
   sort: SortKey;
   hideMuted: boolean;
 }
 
-const DEFAULT_FILTERS: Filters = { modes: [...MODES], sports: [...SPORTS], minMargin: 0, bookmakers: [...BOOKMAKERS], sort: 'margin', hideMuted: false };
+const DEFAULT_FILTERS: Filters = { modes: [...MODES], hiddenSports: [], minMargin: 0, bookmakers: [...BOOKMAKERS], sort: 'margin', hideMuted: false };
 
 function loadFilters(): Filters {
   try {
-    return { ...DEFAULT_FILTERS, ...JSON.parse(localStorage.getItem('surebet:filters') ?? '{}') };
+    const stored = JSON.parse(localStorage.getItem('surebet:filters') ?? '{}');
+    delete stored.sports; // starý formát (výčet zobrazených) by skryl nově přidané sporty
+    return { ...DEFAULT_FILTERS, ...stored };
   } catch {
     return DEFAULT_FILTERS;
   }
@@ -47,7 +50,7 @@ export function ArbTable({ onOpen, selectedId }: { onOpen: (id: string) => void;
     const list = [...arbs.values()].filter(
       (a) =>
         f.modes.includes(a.mode) &&
-        f.sports.includes(a.sport) &&
+        !f.hiddenSports.includes(a.sport) &&
         a.margin >= f.minMargin &&
         a.legs.every((l) => f.bookmakers.includes(l.bookmaker)) &&
         (!f.hideMuted || !a.muted || a.status === 'ended'),
@@ -62,6 +65,11 @@ export function ArbTable({ onOpen, selectedId }: { onOpen: (id: string) => void;
   }, [arbs, f]);
 
   const toggle = <T,>(arr: T[], v: T) => (arr.includes(v) ? arr.filter((x) => x !== v) : [...arr, v]);
+  const sportCounts = useMemo(() => {
+    const c: Partial<Record<Sport, number>> = {};
+    for (const a of arbs.values()) if (a.status === 'active') c[a.sport] = (c[a.sport] ?? 0) + 1;
+    return c;
+  }, [arbs]);
 
   return (
     <div className="card overflow-hidden">
@@ -73,18 +81,7 @@ export function ArbTable({ onOpen, selectedId }: { onOpen: (id: string) => void;
             </button>
           ))}
         </div>
-        <div className="flex items-center gap-1">
-          {SPORTS.map((s) => (
-            <button
-              key={s}
-              className={`rounded px-2 py-0.5 ${f.sports.includes(s) ? 'bg-surface-3 text-ink' : 'text-muted'}`}
-              onClick={() => update({ sports: toggle(f.sports, s) })}
-              aria-pressed={f.sports.includes(s)}
-            >
-              {SPORT_LABEL[s]}
-            </button>
-          ))}
-        </div>
+        <SportFilter hidden={f.hiddenSports} counts={sportCounts} onChange={(hiddenSports) => update({ hiddenSports })} />
         <label className="flex items-center gap-1.5 text-ink-2">
           min. marže
           <input
@@ -225,5 +222,34 @@ function Row({ a, now, selected, onOpen }: { a: ArbRow; now: number; selected: b
         {formatKc(a.minProfit)}
       </td>
     </tr>
+  );
+}
+
+/** Výběr sportů: rozbalovací seznam se zaškrtávátky a počtem aktivních arbů (13 sportů by lištu zahltilo). */
+function SportFilter({ hidden, counts, onChange }: { hidden: Sport[]; counts: Partial<Record<Sport, number>>; onChange: (hidden: Sport[]) => void }) {
+  const shown = SPORTS.length - hidden.length;
+  return (
+    <details className="relative">
+      <summary className="btn cursor-pointer list-none py-1 text-sm">
+        Sporty: {hidden.length ? `${shown} z ${SPORTS.length}` : 'všechny'} ▾
+      </summary>
+      <div className="card absolute left-0 z-30 mt-1 w-56 space-y-0.5 p-2 shadow-xl">
+        <div className="mb-1 flex gap-2 text-xs">
+          <button className="text-accent hover:underline" onClick={() => onChange([])}>
+            všechny
+          </button>
+          <button className="text-accent hover:underline" onClick={() => onChange([...SPORTS])}>
+            žádný
+          </button>
+        </div>
+        {SPORTS.map((sp) => (
+          <label key={sp} className="flex cursor-pointer items-center gap-2 rounded px-1 py-0.5 hover:bg-surface-2">
+            <input type="checkbox" checked={!hidden.includes(sp)} onChange={() => onChange(hidden.includes(sp) ? hidden.filter((x) => x !== sp) : [...hidden, sp])} />
+            <span className="flex-1">{SPORT_LABEL[sp]}</span>
+            {counts[sp] ? <span className="badge">{counts[sp]}</span> : null}
+          </label>
+        ))}
+      </div>
+    </details>
   );
 }

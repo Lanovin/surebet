@@ -96,6 +96,19 @@ Blokované sázkovky adaptér nemají – ochrana proti botům se neobchází (�
 podvrhování otisků ani řešení CAPTCHA). `src/adapters/tipsport/platform.ts` umí jedním požadavkem
 ověřit, jestli se přístup neuvolnil. Jak psát adaptér: `docs/adapters.md`.
 
+## Sporty a typy arbů
+
+* **Sporty (13):** fotbal, tenis, basket, lední hokej, házená, volejbal, baseball, americký fotbal, MMA, box,
+  šipky, snooker, stolní tenis. Každá sázkovka mapuje jen trhy, u nichž je vyhodnocení ověřené
+  (vč. prodloužení / extra směn, jednotky totalu, pravidla při remíze) – co nejde ověřit, se vynechává.
+  Americký fotbal: vítěz se nemapuje (NFL může skončit remízou), jen 1X2 základní doby a handicap vč. prodloužení.
+  MMA/box: 3cestné 1X2 (u Fortuny a Sazky i 2cestný vítěz s vrácením při remíze).
+* **Arby napříč trhy** (`src/core/groups.ts`): detektor nevyhodnocuje jen jeden trh, ale skupiny ekvivalentních
+  sázek – 1 proti X2, 2 proti 1X, X proti 12 (dvojtip), nohy 1X2 přes asijský handicap −0.5/+0.5,
+  handicap 0 = sázka bez remízy, vítěz vč. prodloužení = handicap ±0.5 (hokej, basket, házená).
+  U každé nohy se ukazuje trh, na který se skutečně sází (v přehledu hvězdička, v kalkulačce řádek „sází se na trh …“).
+* Čtvrtinové linie (±0.25, 2.75) a evropský (3cestný) handicap zatím ne (dělené sázky / jiný rozklad).
+
 ## Přesnost live dat
 
 Audit 30. 9. 2026 (proti živým API a webům sázkovek) opravil hlavně tyto zdroje falešných live arbů:

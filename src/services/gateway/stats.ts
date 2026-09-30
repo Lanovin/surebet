@@ -1,6 +1,6 @@
 // Agregace pro stránku Statistiky.
 import { db } from '../../infra/db.js';
-import { isCensored } from '../../core/types.js';
+import { isCensored, SPORTS } from '../../core/types.js';
 import { downsampleCurve, kaplanMeier, summarize } from '../../core/survival.js';
 
 export interface StatsQuery {
@@ -57,7 +57,9 @@ export async function computeStats(q: StatsQuery) {
     return { summary: summarize(c), curve: downsampleCurve(c, 150) };
   };
   const kmByMode = Object.fromEntries(['PREMATCH', 'PAUSED', 'LIVE'].map((m) => [m, km((r) => r.mode === m)]));
-  const kmBySport = Object.fromEntries(['football', 'tennis', 'basketball', 'hockey'].map((s) => [s, km((r) => r.sport === s)]));
+  // křivky jen pro sporty, které v datech jsou (13 sportů by graf zahltilo)
+  const present = [...new Set(rows.map((r) => r.sport))];
+  const kmBySport = Object.fromEntries(SPORTS.filter((s) => present.includes(s)).map((s) => [s, km((r) => r.sport === s)]));
 
   const endReasons = (
     await pool.query(

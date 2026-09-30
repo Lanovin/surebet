@@ -28,7 +28,7 @@ interface Stats {
   endReasons: { key: string; n: number }[];
   histogram: { lo: number; hi: number | null; ended: number; censored: number }[];
   kmByMode: Record<Mode, KM | null>;
-  kmBySport: Record<Sport, KM | null>;
+  kmBySport: Partial<Record<Sport, KM | null>>;
   actions: {
     total: number;
     placed: number;
