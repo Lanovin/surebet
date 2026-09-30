@@ -7,7 +7,7 @@ import { decodeEventsResponse } from './proto.js';
 import type { SynLiveDiscipline } from './parse.js';
 import { ORIGIN, parseLive, parsePrematch, PREMATCH_GAME_IDS } from './parse.js';
 import type { CallStats, Transport } from './api.js';
-import { API, HTTP_HEADERS, LANGUAGE_ID, liveBody, mainBody, marketsBody, SESSION_API, SynotApi } from './api.js';
+import { API, HTTP_HEADERS, LANGUAGE_ID, LIVE_URL, liveBody, liveHeaders, mainBody, marketsBody, SESSION_API, SnapshotClock, SynotApi } from './api.js';
 
 export interface SynotOptions {
   /**
@@ -22,6 +22,8 @@ const DEFAULTS: Required<SynotOptions> = { marketsHorizonHours: 24 };
 export class SynotCore {
   readonly o: Required<SynotOptions>;
   readonly api: SynotApi;
+  /** Odhad stáří live snapshotu z jeho TimeStamp (server ho cachuje ~1 s). */
+  private readonly liveClock = new SnapshotClock();
   constructor(
     private readonly ctx: AdapterContext,
     transport: Transport,
@@ -45,9 +47,12 @@ export class SynotCore {
     const stats: CallStats = { requests: 0, bytes: 0 };
     const t0 = performance.now();
     let events: RawEvent[];
+    let fetchedAt: number;
     if (req.scope === 'live') {
-      const r = await this.api.call<SynLiveDiscipline[]>(`${API}/GetLIPEvtsDsk`, liveBody, 10_000, stats);
+      const r = await this.api.call<SynLiveDiscipline[]>(LIVE_URL, liveBody, 10_000, stats, liveHeaders);
       if (!Array.isArray(r.ReturnValue)) throw new StrategyError('synot: live feed without ReturnValue', 'structure');
+      const t1 = stats.lastEnd ?? Date.now();
+      fetchedAt = this.liveClock.generatedAt(r.TimeStamp, stats.lastStart ?? t1, t1);
       events = parseLive({ Result: r.Result, ReturnValue: r.ReturnValue }, { now: Date.now(), sports: req.sports });
     } else {
       const now = Date.now();
@@ -67,8 +72,8 @@ export class SynotCore {
       const responses = (await Promise.all(req.sports.map(perSport))).flat();
       events = parsePrematch(responses, { now, sports: req.sports });
       if (!events.length) throw new StrategyError('synot: no prematch events parsed', 'empty', { ...stats });
+      fetchedAt = Math.min(Date.now(), stats.oldest ?? Date.now());
     }
-    const fetchedAt = Math.min(Date.now(), stats.oldest ?? Date.now());
     this.ctx.log.debug('fetched', { strategy, scope: req.scope, ...stats, ms: Math.round(performance.now() - t0), events: events.length });
     return { bookmaker: 'synot', strategy, scope: req.scope, fetchedAt, events };
   }
@@ -90,11 +95,11 @@ export class SynotCore {
 }
 
 export function httpTransport(ctx: AdapterContext): Transport {
-  return async (url, body, timeoutMs) => {
+  return async (url, body, timeoutMs, headers) => {
     const r = await ctx.http.text(url, {
       method: 'POST',
       body,
-      headers: HTTP_HEADERS,
+      headers: headers ? { ...HTTP_HEADERS, ...headers } : HTTP_HEADERS,
       timeoutMs,
       allowStatus: [400, 403, 404, 429, 500, 502, 503],
     });
@@ -106,7 +111,7 @@ export class SynotApiStrategy implements Strategy {
   readonly name = 'ebet-api';
   readonly level: StrategyLevel = 2;
   readonly supports = { prematch: true, live: true };
-  // live data se na serveru mění zhruba každou sekundu (TimeStamp), rychlejší polling nemá smysl
+  // live snapshot server přegenerovává každých ~1,03 s (TimeStamp), rychlejší polling nemá smysl
   readonly minIntervalMs = { live: 1_000 };
   private readonly core: SynotCore;
   constructor(ctx: AdapterContext, opts?: SynotOptions) {
@@ -132,21 +137,24 @@ export class SynotBrowserStrategy implements Strategy {
   readonly minIntervalMs = { live: 1_000 };
   private readonly core: SynotCore;
   constructor(private readonly ctx: AdapterContext, opts?: SynotOptions) {
-    this.core = new SynotCore(ctx, (url, body, timeoutMs) => this.transport(url, body, timeoutMs), { marketsHorizonHours: 12, ...opts });
+    this.core = new SynotCore(ctx, (url, body, timeoutMs, headers) => this.transport(url, body, timeoutMs, headers), {
+      marketsHorizonHours: 12,
+      ...opts,
+    });
   }
 
-  private transport(url: string, body: string, timeoutMs: number): Promise<{ status: number; text: string }> {
+  private transport(url: string, body: string, timeoutMs: number, headers?: Record<string, string>): Promise<{ status: number; text: string }> {
     return this.ctx.browser.withPage('synot', async (page) => {
       if (!page.url().startsWith(ORIGIN)) await page.goto(`${ORIGIN}/`, { waitUntil: 'domcontentloaded', timeout: 45_000 });
       return page.evaluate(
-        async ({ url, body, timeoutMs }) => {
+        async ({ url, body, timeoutMs, headers }) => {
           const ctrl = new AbortController();
           const timer = setTimeout(() => ctrl.abort(), timeoutMs);
           try {
             const res = await fetch(url, {
               method: 'POST',
               body,
-              headers: { 'content-type': 'application/json;charset=UTF-8', accept: 'application/json' },
+              headers: { 'content-type': 'application/json;charset=UTF-8', accept: 'application/json', ...headers },
               credentials: 'same-origin',
               signal: ctrl.signal,
             });
@@ -155,7 +163,7 @@ export class SynotBrowserStrategy implements Strategy {
             clearTimeout(timer);
           }
         },
-        { url, body, timeoutMs },
+        { url, body, timeoutMs, headers: headers ?? {} },
       );
     });
   }

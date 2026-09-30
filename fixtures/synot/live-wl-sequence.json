@@ -1,0 +1,770 @@
+[
+ {
+  "t": 1790796617000,
+  "Result": 1,
+  "Token": "00000000000000000000000000000000",
+  "TimeStamp": 1099908962,
+  "ReturnValue": [
+   {
+    "ID": 14,
+    "DisciplineID": 14,
+    "ParentID": 0,
+    "Name": "Hokej",
+    "EventCount": 0,
+    "Events": [
+     {
+      "CanCustomBet": true,
+      "DisciplineID": 14,
+      "CatIds": [
+       286,
+       1137
+      ],
+      "DetailsCount": 43,
+      "MatchTracker": {
+       "Id": "72123356"
+      },
+      "Results": [
+       {
+        "ID": 1,
+        "Name": "Zápas",
+        "Score": "2:4",
+        "MainResult": true,
+        "IconID": 0
+       },
+       {
+        "ID": 26,
+        "Name": "1. třetina",
+        "Score": "2:2",
+        "ImportantResult": true,
+        "Flags": 64,
+        "IconID": 0
+       },
+       {
+        "ID": 27,
+        "Name": "2. třetina",
+        "Score": "0:2",
+        "ImportantResult": true,
+        "Flags": 64,
+        "IconID": 0
+       }
+      ],
+      "State": 2,
+      "StateName": "Přestávka",
+      "ClockStopped": false,
+      "Stats": {
+       "Id": "72123356"
+      },
+      "SportExtId": "sr:sport:4",
+      "RegionExtId": "sr:category:54",
+      "TournamentExtId": "sr:tournament:128",
+      "ID": 3785233,
+      "Name": "Lausanne HC - Geneve-Servette HC",
+      "Date": "2026-09-30T19:45:00+02:00",
+      "GameGroups": [
+       {
+        "ID": 47,
+        "Name": "Hlavní sázky",
+        "Games": [
+         {
+          "ID": "2d462486575",
+          "Name": "Zápas",
+          "Details": [
+           {
+            "ID": 462486575,
+            "OddsList": [
+             {
+              "TipID": "1014047634",
+              "Name": "1",
+              "Rate": 45.05,
+              "State": 2
+             },
+             {
+              "TipID": "1014047635",
+              "Name": "0",
+              "Rate": 8.5,
+              "State": 2
+             },
+             {
+              "TipID": "1014047636",
+              "Name": "2",
+              "Rate": 1.1,
+              "State": 2
+             }
+            ],
+            "State": 2,
+            "LineNumber": 20288
+           }
+          ],
+          "State": 2,
+          "IsDetails": false,
+          "Sequence": 0,
+          "Initial": true,
+          "SelectionVisualisationFlags": 2
+         }
+        ],
+        "Sequence": 1
+       },
+       {
+        "ID": 45,
+        "Name": "Góly",
+        "Games": [
+         {
+          "ID": "79",
+          "Name": "Celkový počet gólů",
+          "Details": [
+           {
+            "ID": 462487902,
+            "OddsList": [
+             {
+              "TipID": "1014050529",
+              "Name": "Pod (6.5)",
+              "Rate": 7.66,
+              "State": 2
+             },
+             {
+              "TipID": "1014050528",
+              "Name": "Nad (6.5)",
+              "Rate": 1.08,
+              "State": 2
+             }
+            ],
+            "State": 2,
+            "LineNumber": 54959
+           }
+          ],
+          "State": 2,
+          "IsDetails": false,
+          "Sequence": 0,
+          "Initial": false,
+          "SelectionVisualisationFlags": 1
+         }
+        ],
+        "Sequence": 2
+       },
+       {
+        "ID": 46,
+        "Name": "Handicap",
+        "Games": [
+         {
+          "ID": "7",
+          "Name": "Handicap",
+          "Details": [
+           {
+            "ID": 462487886,
+            "OddsList": [
+             {
+              "TipID": "1014050665",
+              "Name": "Tým 1 (+0.5)",
+              "Rate": 6.59,
+              "State": 2
+             },
+             {
+              "TipID": "1014050667",
+              "Name": "Tým 2 (-0.5)",
+              "Rate": 1.09,
+              "State": 2
+             }
+            ],
+            "State": 2,
+            "LineNumber": 54834
+           }
+          ],
+          "State": 2,
+          "IsDetails": false,
+          "Sequence": 0,
+          "Initial": false,
+          "SelectionVisualisationFlags": 1
+         }
+        ],
+        "Sequence": 3
+       }
+      ],
+      "CategoryPath": "Švýcarsko / National League",
+      "ExternalID": "72123356",
+      "Sequence": 7001138
+     },
+     {
+      "CanCustomBet": false,
+      "DisciplineID": 14,
+      "CatIds": [
+       286,
+       19628
+      ],
+      "DetailsCount": 19,
+      "MatchTracker": {
+       "Id": "73297728"
+      },
+      "Results": [
+       {
+        "ID": 1,
+        "Name": "Zápas",
+        "Score": "2:2",
+        "MainResult": true,
+        "IconID": 0
+       },
+       {
+        "ID": 26,
+        "Name": "1. třetina",
+        "Score": "0:2",
+        "ImportantResult": true,
+        "Flags": 64,
+        "IconID": 0
+       },
+       {
+        "ID": 27,
+        "Name": "2. třetina",
+        "Score": "2:0",
+        "ImportantResult": true,
+        "Flags": 64,
+        "IconID": 0
+       }
+      ],
+      "State": 2,
+      "StateName": "Přestávka",
+      "ClockStopped": false,
+      "Stats": {
+       "Id": "73297728"
+      },
+      "SportExtId": "sr:sport:4",
+      "RegionExtId": "sr:category:54",
+      "TournamentExtId": "sr:tournament:39539",
+      "ID": 3855866,
+      "Name": "HC Lugano U21 - HC Davos",
+      "Date": "2026-09-30T20:00:00+02:00",
+      "GameGroups": [
+       {
+        "ID": 47,
+        "Name": "Hlavní sázky",
+        "Games": [
+         {
+          "ID": "2d463053560",
+          "Name": "Zápas",
+          "Details": [
+           {
+            "ID": 463053560,
+            "OddsList": [
+             {
+              "TipID": "1015273860",
+              "Name": "1",
+              "Rate": 3.02,
+              "State": 2
+             },
+             {
+              "TipID": "1015273861",
+              "Name": "0",
+              "Rate": 2.68,
+              "State": 2
+             },
+             {
+              "TipID": "1015273862",
+              "Name": "2",
+              "Rate": 2.53,
+              "State": 2
+             }
+            ],
+            "State": 2,
+            "LineNumber": 890686
+           }
+          ],
+          "State": 2,
+          "IsDetails": false,
+          "Sequence": 0,
+          "Initial": true,
+          "SelectionVisualisationFlags": 2
+         }
+        ],
+        "Sequence": 1
+       },
+       {
+        "ID": 45,
+        "Name": "Góly",
+        "Games": [
+         {
+          "ID": "79",
+          "Name": "Celkový počet gólů",
+          "Details": [
+           {
+            "ID": 463053575,
+            "OddsList": [
+             {
+              "TipID": "1015273827",
+              "Name": "Pod (4.5)",
+              "Rate": 5.5,
+              "State": 2
+             },
+             {
+              "TipID": "1015273826",
+              "Name": "Nad (4.5)",
+              "Rate": 1.09,
+              "State": 2
+             }
+            ],
+            "State": 2,
+            "LineNumber": 890701
+           }
+          ],
+          "State": 2,
+          "IsDetails": false,
+          "Sequence": 0,
+          "Initial": false,
+          "SelectionVisualisationFlags": 1
+         }
+        ],
+        "Sequence": 2
+       },
+       {
+        "ID": 46,
+        "Name": "Handicap",
+        "Games": [
+         {
+          "ID": "7",
+          "Name": "Handicap",
+          "Details": [
+           {
+            "ID": 463053566,
+            "OddsList": [
+             {
+              "TipID": "1015273824",
+              "Name": "Tým 1 (-0.5)",
+              "Rate": 2.84,
+              "State": 2
+             },
+             {
+              "TipID": "1015273825",
+              "Name": "Tým 2 (+0.5)",
+              "Rate": 1.34,
+              "State": 2
+             }
+            ],
+            "State": 2,
+            "LineNumber": 890692
+           }
+          ],
+          "State": 2,
+          "IsDetails": false,
+          "Sequence": 0,
+          "Initial": false,
+          "SelectionVisualisationFlags": 1
+         }
+        ],
+        "Sequence": 3
+       }
+      ],
+      "CategoryPath": "Švýcarsko / Elit, U21",
+      "ExternalID": "73297728",
+      "Sequence": 7019629
+     }
+    ],
+    "GraphicsPresentationID": 834,
+    "Sequence": 65
+   },
+   {
+    "ID": 19,
+    "DisciplineID": 19,
+    "ParentID": 0,
+    "Name": "Tenis",
+    "EventCount": 0,
+    "Events": [
+     {
+      "CanCustomBet": false,
+      "DisciplineID": 19,
+      "CatIds": [
+       1271,
+       19718
+      ],
+      "DetailsCount": 3,
+      "MatchTracker": {
+       "Id": "75050588"
+      },
+      "Results": [
+       {
+        "ID": 1,
+        "Name": "Zápas",
+        "Score": "0:0",
+        "MainResult": true,
+        "IconID": 0
+       }
+      ],
+      "State": 2,
+      "StateName": "Nezačalo",
+      "ClockStopped": false,
+      "Stats": {
+       "Id": "75050588"
+      },
+      "SportExtId": "sr:sport:5",
+      "RegionExtId": "sr:category:2516",
+      "TournamentExtId": "sr:tournament:48563",
+      "ID": 3848721,
+      "Name": "Fernandes, Rodrigo - Ion, Nicola",
+      "Date": "2026-09-30T21:30:00+02:00",
+      "GameGroups": [
+       {
+        "ID": 67,
+        "Name": "Hlavní sázky",
+        "Games": [
+         {
+          "ID": "178d462840410",
+          "Name": "Vítěz zápasu",
+          "Details": [
+           {
+            "ID": 462840410,
+            "OddsList": [
+             {
+              "TipID": "1014826943",
+              "Name": "1",
+              "Rate": 1.07,
+              "State": 2
+             },
+             {
+              "TipID": "1014826944",
+              "Name": "2",
+              "Rate": 5.94,
+              "State": 2
+             }
+            ],
+            "State": 2,
+            "LineNumber": 345229
+           }
+          ],
+          "State": 2,
+          "IsDetails": false,
+          "Sequence": 0,
+          "Initial": true,
+          "SelectionVisualisationFlags": 2
+         }
+        ],
+        "Sequence": 1
+       },
+       {
+        "ID": 68,
+        "Name": "Set",
+        "Games": [
+         {
+          "ID": "221d463087567",
+          "Name": "1. set - Vítěz",
+          "Details": [
+           {
+            "ID": 463087567,
+            "OddsList": [
+             {
+              "TipID": "1015345128",
+              "Name": "1",
+              "Rate": 1.11,
+              "State": 2
+             },
+             {
+              "TipID": "1015345129",
+              "Name": "2",
+              "Rate": 4.74,
+              "State": 2
+             }
+            ],
+            "State": 2,
+            "LineNumber": 628212
+           }
+          ],
+          "State": 2,
+          "IsDetails": false,
+          "Sequence": 0,
+          "Initial": false,
+          "SelectionVisualisationFlags": 1
+         }
+        ],
+        "Sequence": 2
+       }
+      ],
+      "CategoryPath": "UTR, muži / Ithaca M01 (USA, tvrdý p.)",
+      "ExternalID": "75050588",
+      "Sequence": 12000127
+     }
+    ],
+    "GraphicsPresentationID": 836,
+    "Sequence": 66
+   }
+  ]
+ },
+ {
+  "t": 1790798081787,
+  "t0": 1790798080718,
+  "Result": 1,
+  "Token": "00000000000000000000000000000000",
+  "TimeStamp": 717635494,
+  "ReturnValue": [
+   {
+    "ID": 14,
+    "DisciplineID": 14,
+    "ParentID": 0,
+    "Name": "Hokej",
+    "EventCount": 0,
+    "Events": [
+     {
+      "CanCustomBet": false,
+      "DisciplineID": 14,
+      "CatIds": [
+       286,
+       19628
+      ],
+      "DetailsCount": 17,
+      "MatchTracker": {
+       "Id": "73297728"
+      },
+      "Results": [
+       {
+        "ID": 1,
+        "Name": "Zápas",
+        "Score": "3:2",
+        "MainResult": true,
+        "IconID": 0
+       },
+       {
+        "ID": 26,
+        "Name": "1. třetina",
+        "Score": "0:2",
+        "ImportantResult": true,
+        "Flags": 64,
+        "IconID": 0
+       },
+       {
+        "ID": 27,
+        "Name": "2. třetina",
+        "Score": "2:0",
+        "ImportantResult": true,
+        "Flags": 64,
+        "IconID": 0
+       },
+       {
+        "ID": 28,
+        "Name": "3. třetina",
+        "Score": "1:0",
+        "ImportantResult": true,
+        "Flags": 64,
+        "IconID": 0
+       }
+      ],
+      "State": 2,
+      "StateTime": 3415,
+      "StateName": "3. třetina",
+      "ClockStopped": false,
+      "RemainingPeriodTime": 185,
+      "Stats": {
+       "Id": "73297728"
+      },
+      "SportExtId": "sr:sport:4",
+      "RegionExtId": "sr:category:54",
+      "TournamentExtId": "sr:tournament:39539",
+      "ID": 3855866,
+      "Name": "HC Lugano U21 - HC Davos",
+      "Date": "2026-09-30T20:00:00+02:00",
+      "GameGroups": [
+       {
+        "ID": 47,
+        "Name": "Hlavní sázky",
+        "Games": [
+         {
+          "ID": "2d463053560",
+          "Name": "Zápas",
+          "Details": [
+           {
+            "ID": 463053560,
+            "OddsList": [
+             {
+              "TipID": "1015273860",
+              "Name": "1",
+              "Rate": 1.14,
+              "State": 2
+             },
+             {
+              "TipID": "1015273861",
+              "Name": "0",
+              "Rate": 4.66,
+              "State": 2
+             },
+             {
+              "TipID": "1015273862",
+              "Name": "2",
+              "Rate": 57.55,
+              "State": 2
+             }
+            ],
+            "State": 2,
+            "LineNumber": 890686
+           }
+          ],
+          "State": 2,
+          "IsDetails": false,
+          "Sequence": 0,
+          "Initial": true,
+          "SelectionVisualisationFlags": 2
+         }
+        ],
+        "Sequence": 1
+       },
+       {
+        "ID": 45,
+        "Name": "Góly",
+        "Games": [
+         {
+          "ID": "79",
+          "Name": "Celkový počet gólů",
+          "Details": [
+           {
+            "ID": 463053576,
+            "OddsList": [
+             {
+              "TipID": "1015273868",
+              "Name": "Pod (5.5)",
+              "Rate": 2.34,
+              "State": 2
+             },
+             {
+              "TipID": "1015273867",
+              "Name": "Nad (5.5)",
+              "Rate": 1.47,
+              "State": 2
+             }
+            ],
+            "State": 2,
+            "LineNumber": 890702
+           }
+          ],
+          "State": 2,
+          "IsDetails": false,
+          "Sequence": 0,
+          "Initial": false,
+          "SelectionVisualisationFlags": 1
+         }
+        ],
+        "Sequence": 2
+       },
+       {
+        "ID": 46,
+        "Name": "Handicap",
+        "Games": [
+         {
+          "ID": "7",
+          "Name": "Handicap",
+          "Details": [
+           {
+            "ID": 463053568,
+            "OddsList": [
+             {
+              "TipID": "1015284121",
+              "Name": "Tým 1 (-1.5)",
+              "Rate": 2.12,
+              "State": 2
+             },
+             {
+              "TipID": "1015284122",
+              "Name": "Tým 2 (+1.5)",
+              "Rate": 1.57,
+              "State": 2
+             }
+            ],
+            "State": 2,
+            "LineNumber": 890694
+           }
+          ],
+          "State": 2,
+          "IsDetails": false,
+          "Sequence": 0,
+          "Initial": false,
+          "SelectionVisualisationFlags": 1
+         }
+        ],
+        "Sequence": 3
+       }
+      ],
+      "CategoryPath": "Švýcarsko / Elit, U21",
+      "ExternalID": "73297728",
+      "Sequence": 7019629
+     }
+    ],
+    "GraphicsPresentationID": 834,
+    "Sequence": 65
+   }
+  ]
+ },
+ {
+  "t": 1790798084862,
+  "t0": 1790798081796,
+  "Result": 1,
+  "Token": "00000000000000000000000000000000",
+  "TimeStamp": 738105197,
+  "ReturnValue": [
+   {
+    "ID": 14,
+    "DisciplineID": 14,
+    "ParentID": 0,
+    "Name": "Hokej",
+    "EventCount": 0,
+    "Events": [
+     {
+      "CanCustomBet": false,
+      "DisciplineID": 14,
+      "CatIds": [
+       286,
+       19628
+      ],
+      "DetailsCount": 0,
+      "MatchTracker": {
+       "Id": "73297728"
+      },
+      "Results": [
+       {
+        "ID": 1,
+        "Name": "Zápas",
+        "Score": "3:2",
+        "MainResult": true,
+        "IconID": 0
+       },
+       {
+        "ID": 26,
+        "Name": "1. třetina",
+        "Score": "0:2",
+        "ImportantResult": true,
+        "Flags": 64,
+        "IconID": 0
+       },
+       {
+        "ID": 27,
+        "Name": "2. třetina",
+        "Score": "2:0",
+        "ImportantResult": true,
+        "Flags": 64,
+        "IconID": 0
+       },
+       {
+        "ID": 28,
+        "Name": "3. třetina",
+        "Score": "1:0",
+        "ImportantResult": true,
+        "Flags": 64,
+        "IconID": 0
+       }
+      ],
+      "State": 3,
+      "StateTime": 3420,
+      "StateName": "3. třetina",
+      "ClockStopped": false,
+      "RemainingPeriodTime": 180,
+      "Stats": {
+       "Id": "73297728"
+      },
+      "SportExtId": "sr:sport:4",
+      "RegionExtId": "sr:category:54",
+      "TournamentExtId": "sr:tournament:39539",
+      "ID": 3855866,
+      "Name": "HC Lugano U21 - HC Davos",
+      "Date": "2026-09-30T20:00:00+02:00",
+      "GameGroups": [],
+      "CategoryPath": "Švýcarsko / Elit, U21",
+      "ExternalID": "73297728",
+      "Sequence": 7019629
+     }
+    ],
+    "GraphicsPresentationID": 834,
+    "Sequence": 65
+   }
+  ]
+ }
+]

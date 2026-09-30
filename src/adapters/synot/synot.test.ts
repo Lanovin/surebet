@@ -4,10 +4,10 @@ import { validateRawOdds } from '../../core/validate.js';
 import { isValidMarketKey, parseMarketKey } from '../../core/markets.js';
 import type { RawEvent, RawOdds, Sport } from '../../core/types.js';
 import type { ApiEnvelope } from './api.js';
-import { marketsBody, wcfDate } from './api.js';
+import { LIVE_SNAPSHOT_MS, marketsBody, SnapshotClock, wcfDate } from './api.js';
 import { decodeEventsResponse } from './proto.js';
-import type { SynLiveResponse } from './parse.js';
-import { gameTypeId, mapGame, parseLive, parsePrematch, parseWcfDate, PREMATCH_GAME_IDS, splitName } from './parse.js';
+import type { SynLiveEvent, SynLiveResponse } from './parse.js';
+import { gameTypeId, mapGame, parseLive, parsePrematch, parseState, parseWcfDate, PREMATCH_GAME_IDS, splitName } from './parse.js';
 
 // fixtures/synot/meta.json: recordedAt 2026-09-29T15:31:00.500Z
 const NOW = 1790695860500;
@@ -120,7 +120,7 @@ describe('synot prematch (ebet-api / browser-fetch: GetWebStandardEvents, protob
   });
 });
 
-describe('synot live (GetLIPEvtsDsk, JSON)', async () => {
+describe('synot live – starší endpoint GetLIPEvtsDsk (stejný tvar JSON)', async () => {
   const live = await loadFixture<SynLiveResponse>('synot', 'live.json');
   const events = parseLive(live, { now: NOW });
   const byId = (id: string) => events.find((e) => e.sourceId === id)!;
@@ -129,7 +129,10 @@ describe('synot live (GetLIPEvtsDsk, JSON)', async () => {
     const by: Record<string, number> = {};
     for (const e of events) by[e.sport] = (by[e.sport] ?? 0) + 1;
     expect(by).toEqual({ football: 12, hockey: 18, tennis: 19, basketball: 5 });
-    expect(events.every((e) => e.live && e.state)).toBe(true);
+    expect(events.every((e) => e.state)).toBe(true);
+    // "Nezačalo" = v live nabídce, ale ještě se nehraje → live: false
+    expect(events.every((e) => e.live === (e.state?.statusText !== 'Nezačalo'))).toBe(true);
+    expect(events.some((e) => !e.live)).toBe(true);
     const v = validateRawOdds(odds(events, 'live'), { minEvents: 1, maxAgeMs: 60_000, now: NOW });
     expect(v.ok).toBe(true);
     const keys = new Set(events.flatMap((e) => e.markets.map((m) => m.key)));
@@ -178,6 +181,193 @@ describe('synot live (GetLIPEvtsDsk, JSON)', async () => {
   });
 });
 
+interface WlFixture extends SynLiveResponse {
+  recordedAt: string;
+  requestStart: number;
+  responseEnd: number;
+}
+
+describe('synot live (ebet-api: GetLiveEventsWL = live stránka webu)', async () => {
+  // výřez skutečné odpovědi 30. 9. 2026 21:49:57 (17 událostí), token vynulován
+  const fx = await loadFixture<WlFixture>('synot', 'live-wl.json');
+  const events = parseLive(fx, { now: fx.responseEnd });
+  const byId = (id: string) => events.find((e) => e.sourceId === id)!;
+
+  it('ISO dates, all four sports, validates; OU/AH/sets present, replacement markets absent', () => {
+    expect(events.length).toBe(17);
+    expect(new Set(events.map((e) => e.sport))).toEqual(new Set(['football', 'hockey', 'tennis', 'basketball']));
+    const v = validateRawOdds({ ...odds(events, 'live'), fetchedAt: fx.responseEnd }, { minEvents: 1, maxAgeMs: 60_000, now: fx.responseEnd });
+    expect(v.ok).toBe(true);
+    expect(v.stats.droppedOdds).toBe(0);
+    const keys = new Set(events.flatMap((e) => e.markets.map((m) => m.key.split('|').slice(0, 2).join('|'))));
+    expect([...keys].sort()).toEqual(['1X2|REG', 'AH|MATCH', 'AH|REG', 'ML|MATCH', 'ML|S1', 'ML|S2', 'OU_HOME|REG', 'OU|MATCH', 'OU|REG', 'OU|S1']);
+    // live `Date` = plánovaný začátek (výkop 20:45 SELČ), ISO s posunem
+    expect(byId('3853986').startTime).toBe(Date.parse('2026-09-30T18:45:00Z'));
+  });
+
+  it('football: full-match 1X2 / OU / AH incl. line 0 (web: 4,04 2,89 1,94 | Pod 2.5 4,70 | Tým 1 (0) 2,69)', () => {
+    const e = byId('3853986');
+    expect([e.home, e.away]).toEqual(['AFC Whyteleafe', 'Brentwood Town FC']);
+    expect(e.state).toMatchObject({ statusText: 'Poločas', score: [1, 1], breakFlag: true, period: 1 });
+    expect(price(e, '1X2|REG', 'HOME')).toBe(4.04);
+    expect(price(e, '1X2|REG', 'DRAW')).toBe(2.89);
+    expect(price(e, '1X2|REG', 'AWAY')).toBe(1.94);
+    expect(price(e, 'OU|REG|2.5', 'UNDER')).toBe(4.7);
+    expect(price(e, 'OU|REG|2.5', 'OVER')).toBe(1.11);
+    // AH na celý zápas (góly už padlé se počítají): při 1:1 musí domácí vyhrát → 2.69
+    expect(price(e, 'AH|REG|0', 'HOME')).toBe(2.69);
+    expect(price(e, 'AH|REG|0', 'AWAY')).toBe(1.36);
+    // celá čísla linií zůstávají (asijský handicap s vrácením)
+    expect(price(byId('3844566'), 'AH|REG|-1', 'HOME')).toBe(5.52);
+    expect(price(byId('3856021'), 'AH|REG|-7', 'HOME')).toBe(4.57);
+  });
+
+  it('replacement / locked markets: "zbytek zápasu" (365) skipped, Rate 0 → line omitted, x.25 omitted, team total mapped', () => {
+    // FAS 6:0: v "Hlavní sázky" místo Zápasu "Který tým vyhraje zbytek zápasu od skóre 5:0" (typ 365)
+    const fas = byId('3856021');
+    expect(fas.markets.map((m) => m.key)).toEqual(['OU|REG|6.5', 'AH|REG|-7']);
+    // Portugalsko U21: 1 zamčený (Rate 0) → Zápas vynechán; "Pod (4.25)" čtvrtinová linie vynechána
+    expect(byId('3813523').markets.map((m) => m.key)).toEqual(['AH|REG|-6.5']);
+    // West Ham: skupina Góly nese "Tým1 celkový počet gólů" (80) → OU_HOME, Zápas se zamčeným favoritem vynechán
+    const wh = byId('3855878');
+    expect(wh.markets.map((m) => m.key)).toEqual(['OU_HOME|REG|3.5']);
+    expect(price(wh, 'OU_HOME|REG|3.5', 'OVER')).toBe(4.32);
+    // tenis Chodur: "2" Rate 0 → vítěz i set vynechány
+    expect(byId('3848353').markets).toEqual([]);
+  });
+
+  it('event State 3 (Suspended) is not "finished"; only "Ukončeno" is', () => {
+    // Middlesbrough: State 3 v 90:00 (nastavení, sázky zastaveny) → hraje se dál
+    const mb = byId('3856432');
+    expect(mb.state?.finished).toBeUndefined();
+    expect(mb.live).toBe(true);
+    expect(mb.markets).toEqual([]);
+    // basket 4. čtvrtina 2:10 před koncem, State 3 → nekončí
+    expect(byId('3853077').state).toMatchObject({ statusText: '4. čtvrtina', period: 4, clockSec: 2270, periodRemainingSec: 130 });
+    expect(byId('3853077').state?.finished).toBeUndefined();
+    expect(byId('3857157').state).toMatchObject({ statusText: 'Ukončeno', finished: true });
+    expect(byId('3852064').state).toMatchObject({ statusText: 'Ukončeno', finished: true });
+  });
+
+  it('tennis: winner, set winner, games totals (whole match / set); basketball incl. OT markets + clock', () => {
+    const t = byId('3840842');
+    expect(t.state).toEqual({ statusText: '2. set', score: [0, 1], periodScores: [[3, 6], [5, 5]], period: 2, games: [5, 5], points: '0:0' });
+    expect(price(t, 'ML|MATCH', 'HOME')).toBe(8.47);
+    expect(price(t, 'ML|S2', 'AWAY')).toBe(1.25);
+    expect(price(t, 'OU|MATCH|21.5', 'OVER')).toBe(1.46);
+    expect(price(byId('3852054'), 'OU|S1|10.5', 'UNDER')).toBe(2.18);
+    const b = byId('3785232');
+    expect(b.state).toMatchObject({ statusText: '2. čtvrtina', period: 2, clockSec: 1044, periodRemainingSec: 156, clockRunning: false, score: [37, 32] });
+    expect(price(b, 'ML|MATCH', 'HOME')).toBe(1.33);
+    expect(price(b, 'AH|MATCH|-9.5', 'HOME')).toBe(2.92);
+    expect(price(b, 'OU|MATCH|157.5', 'OVER')).toBe(1.46);
+    // Napoli: přestávka po 3. čtvrtině, vítěz se zamčeným favoritem vynechán, handicap/body zůstávají
+    const n = byId('3853623');
+    expect(n.state).toMatchObject({ statusText: 'Přestávka', period: 3, breakFlag: true });
+    expect(n.markets.map((m) => m.key)).toEqual(['OU|MATCH|153.5', 'AH|MATCH|-18.5']);
+  });
+});
+
+describe('synot live – sequences (hockey intermission, State 3 with 3 min left, not started)', async () => {
+  const seq = await loadFixture<(SynLiveResponse & { t: number })[]>('synot', 'live-wl-sequence.json');
+  const [s0, s1, s2] = seq.map((s) => parseLive(s, { now: s.t }));
+  const find = (evs: RawEvent[], id: string) => evs.find((e) => e.sourceId === id)!;
+
+  it('hockey intermission with REG markets; "Nezačalo" → live false', () => {
+    const l = find(s0, '3785233');
+    expect(l.state).toMatchObject({ statusText: 'Přestávka', period: 2, breakFlag: true, score: [2, 4] });
+    expect(price(l, '1X2|REG', 'HOME')).toBe(45.05);
+    expect(price(l, 'OU|REG|6.5', 'OVER')).toBe(1.08);
+    expect(price(l, 'AH|REG|0.5', 'HOME')).toBe(6.59);
+    const ns = find(s0, '3848721');
+    expect(ns.state?.statusText).toBe('Nezačalo');
+    expect(ns.live).toBe(false);
+    expect(price(ns, 'ML|MATCH', 'HOME')).toBe(1.07);
+  });
+
+  it('hockey 3 min before end: State 2 with markets → State 3 without markets, still live and not finished', () => {
+    const a = find(s1, '3855866');
+    expect(a.markets.map((m) => m.key)).toEqual(['1X2|REG', 'OU|REG|5.5', 'AH|REG|-1.5']);
+    const b = find(s2, '3855866');
+    expect(b.markets).toEqual([]);
+    expect(b.live).toBe(true);
+    expect(b.state).toMatchObject({ statusText: '3. třetina', clockSec: 3420, periodRemainingSec: 180 });
+    expect(b.state?.finished).toBeUndefined();
+  });
+});
+
+describe('synot suspension & state semantics', () => {
+  const game = { ID: '2d1', Name: 'Zápas', State: 2, Details: [{ ID: 1, State: 2, OddsList: [{ Name: '1', Rate: 2.1, State: 2 }, { Name: '0', Rate: 3.2, State: 2 }, { Name: '2', Rate: 3.5, State: 2 }] }] };
+
+  it('event-level Suspended/Closed and game-level state close the markets', () => {
+    expect(mapGame('football', game)[0].open).toBe(true);
+    expect(mapGame('football', game, false)[0].open).toBe(false);
+    expect(mapGame('football', { ...game, State: 3 })[0].open).toBe(false);
+    const ev = (State: number): SynLiveResponse => ({
+      Result: 1,
+      ReturnValue: [{ DisciplineID: 12, Events: [{ ID: 1, Name: 'A - B', Date: '2026-09-30T20:45:00+02:00', State, StateName: '1. poločas', GameGroups: [{ Games: [game] }] }] }],
+    });
+    expect(parseLive(ev(2), { now: NOW })[0].markets[0].open).toBe(true);
+    expect(parseLive(ev(3), { now: NOW })[0].markets[0].open).toBe(false);
+    expect(parseLive(ev(4), { now: NOW })[0].markets[0].open).toBe(false);
+  });
+
+  it('finished only from text; waiting for OT is a break; OT has no period', () => {
+    const st = (StateName: string, State = 3, sport: Sport = 'hockey') => parseState({ ID: 1, Name: 'A - B', Date: '', State, StateName } as SynLiveEvent, sport);
+    expect(st('2. poločas', 3, 'football').finished).toBeUndefined();
+    expect(st('Prodloužení').finished).toBeUndefined();
+    expect(st('Prodloužení').period).toBeUndefined();
+    expect(st('1. prodloužení', 2, 'basketball').period).toBeUndefined();
+    expect(st('Čekání na prodloužení')).toMatchObject({ breakFlag: true, clockRunning: false });
+    expect(st('Čekání na prodloužení').finished).toBeUndefined();
+    expect(st('Po prodloužení').finished).toBe(true);
+    expect(st('Po sam. nájezdech').finished).toBe(true);
+    expect(st('Ukončeno').finished).toBe(true);
+    expect(st('Nezačalo', 3, 'tennis').finished).toBeUndefined();
+  });
+});
+
+describe('synot live snapshot clock (fetchedAt)', () => {
+  // server: snapshot každých ~1030 ms, TimeStamp = 100ns tiky; posun hodin uzlu C
+  const C = 1_790_000_000_000;
+  const ts = (gen: number) => (gen - C) * 10_000;
+
+  it('conservative until calibrated, then ≈ generation time; same snapshot keeps its time', () => {
+    const clock = new SnapshotClock();
+    let gen = C + 5_000_000;
+    const out: number[] = [];
+    for (let i = 0; i < 20; i++) {
+      gen += 1030;
+      const t0 = gen + ((i * 97) % 1000); // dotaz v náhodné fázi
+      const t1 = t0 + 60;
+      out.push(clock.generatedAt(ts(gen), t0, t1) - gen);
+      if (i < 9) expect(out[i]).toBeLessThanOrEqual(t0 - LIVE_SNAPSHOT_MS - gen);
+    }
+    // po kalibraci chyba jen desítky ms (nejkratší pozorované zpoždění 60 ms + prosakování 2 ms/vzorek)
+    for (const d of out.slice(12)) expect(Math.abs(d)).toBeLessThanOrEqual(120);
+    // opakovaný dotaz na stejný snapshot nesmí data "omladit"
+    const again = clock.generatedAt(ts(gen), gen + 900, gen + 950);
+    expect(again).toBe(out[19] + gen);
+  });
+
+  it('node switch (other TimeStamp base) recalibrates; missing TimeStamp → t0 − snapshot period', () => {
+    const clock = new SnapshotClock();
+    let gen = C + 1_000_000;
+    for (let i = 0; i < 15; i++) clock.generatedAt(ts((gen += 1030)), gen + 200, gen + 260);
+    // jiný uzel: báze tiků o 214 s větší → offset o 214 s menší → okamžitá nová kalibrace (konzervativně)
+    gen += 1030;
+    const r = clock.generatedAt(ts(gen) + 214_000 * 10_000, gen + 200, gen + 260);
+    expect(r).toBe(gen + 200 - LIVE_SNAPSHOT_MS);
+    // uzel s menší bází (offset o 214 s větší): nejednoznačné → konzervativně, nikdy "214 s staré"
+    const clock2 = new SnapshotClock();
+    let g2 = C + 2_000_000;
+    for (let i = 0; i < 15; i++) clock2.generatedAt(ts((g2 += 1030)), g2 + 200, g2 + 260);
+    g2 += 1030;
+    expect(clock2.generatedAt(ts(g2) - 214_000 * 10_000, g2 + 200, g2 + 260)).toBe(g2 + 200 - LIVE_SNAPSHOT_MS);
+    expect(new SnapshotClock().generatedAt(undefined, 10_000, 10_100)).toBe(10_000 - LIVE_SNAPSHOT_MS);
+  });
+});
+
 describe('synot helpers', () => {
   it('game type id, names, dates', () => {
     expect(gameTypeId('233d462443661')).toBe(233);
@@ -187,6 +377,8 @@ describe('synot helpers', () => {
     expect(splitName('A - B - C')).toBeNull();
     expect(splitName('Vítěz Ligy mistrů')).toBeNull();
     expect(parseWcfDate('/Date(1790690400000+0200)/')).toBe(1790690400000);
+    expect(parseWcfDate('2026-09-30T20:45:00+02:00')).toBe(Date.parse('2026-09-30T18:45:00Z'));
+    expect(parseWcfDate('30.9.2026')).toBeUndefined();
     expect(wcfDate(1790690400000)).toBe('/Date(1790690400000)/');
     expect(marketsBody('t', 'hockey', [79], 0, 1)).toMatchObject({ CategoryID: '14', GameIds: [79], From: '/Date(0)/', To: '/Date(1)/' });
     expect(PREMATCH_GAME_IDS.football).not.toContain(2);

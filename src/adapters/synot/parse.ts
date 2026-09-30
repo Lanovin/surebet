@@ -1,11 +1,15 @@
 // SYNOT TIP (sport.synottip.cz) – platforma eBet, čisté parsování.
 //
 // Prematch: GetWebStandardEvents → base64 protobuf (proto.ts) se stromem sport → země → liga →
-// události. Live: GetLIPEvtsDsk → čistý JSON (stejné názvy polí, navíc stav zápasu).
+// události. Live: GetLiveEventsWL (live stránka webu; starší GetLIPEvtsDsk = live box na prematch
+// stránce má stejný tvar, jen jiný výběr trhů) → čistý JSON (stejné názvy polí, navíc stav zápasu).
 // Událost má GameGroups[] → Games[] (typ trhu; `ID` = "<typ>d<detail>" nebo jen "<typ>" u trhů
 // s liniemi) → Details[] (jedna linie) → OddsList[] (výběr: Name "1"/"0"/"2", "Pod (2.5)",
 // "Tým 1 (-1.5)", "Ano"…, Rate, State). Typ trhu bereme z čísla na začátku Game.ID a navíc
-// kontrolujeme název (vč. prodloužení vs. základní doba).
+// kontrolujeme název (vč. prodloužení vs. základní doba). Live seznam posílá v každé skupině
+// (Hlavní sázky / Góly / Handicap / Gamy / Set / Body) jen JEDEN trh a ten se mění podle stavu
+// zápasu – např. "Zápas" nahradí "Který tým vyhraje zbytek zápasu od skóre 5:0" (typ 365),
+// "Celkový počet gólů" nahradí "Tým1 celkový počet gólů" (80) → vždy rozhoduje typ + název.
 import { marketKey } from '../../core/markets.js';
 import type { GameState, MarketScope, MarketType, RawEvent, RawMarket, RawSelection, SelectionKey, Sport } from '../../core/types.js';
 import type { PbCategory, PbDetail, PbEvent, PbEventsResponse, PbGame } from './proto.js';
@@ -38,11 +42,18 @@ export interface SynLiveResult {
 export interface SynLiveEvent {
   ID: number;
   Name: string;
-  /** "/Date(1790690400000+0200)/" */
+  /**
+   * Plánovaný začátek (ne skutečný výkop): "2026-09-30T20:45:00+02:00" (GetLiveEventsWL)
+   * nebo "/Date(1790793900000+0200)/" (GetLIPEvtsDsk).
+   */
   Date: string;
   CategoryPath?: string;
   DisciplineID?: number;
-  /** 2 = běží / před začátkem, 3 = ukončeno */
+  /**
+   * Stav nabídky události (enum webu): 1 Created, 2 Opened, 3 Suspended, 4 Closed.
+   * 3 = sázení zastaveno – gól (~3 s), konec zákl. doby (fotbal 90:00), posledních ~3 min hokeje,
+   * prodloužení, "Nezačalo", "Ukončeno" … → NEZNAMENÁ konec zápasu. Web při 3 zamkne všechny kurzy.
+   */
   State?: number;
   StateName?: string;
   /** Uplynulý herní čas v s od začátku zápasu. */
@@ -234,7 +245,12 @@ function selectionOf(kind: Kind, name: string): Sel | null | undefined {
   }
 }
 
-/** Stav výběru/linie: 0 None (prematch protobuf neposílá), 2 Opened = aktivní; 1 Created, 3 Suspended, 4 Closed = ne. */
+/**
+ * Stav události/trhu/linie/výběru (OfferItemState webu): 0 None (prematch protobuf neposílá),
+ * 2 Opened = aktivní; 1 Created, 3 Suspended, 4 Closed = ne. Suspendovaný výběr chodí v live s
+ * `Rate: 0` → celá linie se vynechá (web zamkne jen ten výběr, ostatní nechá – typicky jde o
+ * favorita s kurzem < 1.01, takže o arb nepřicházíme).
+ */
 const isOpenState = (s: number | undefined) => s === undefined || s === 0 || s === 2;
 
 function odds2dp(rate: number | undefined): number | null {
@@ -244,8 +260,12 @@ function odds2dp(rate: number | undefined): number | null {
   return o >= 1.01 ? o : null;
 }
 
-/** Jeden Synot trh (Game) → 0..n kanonických trhů (každý Detail = jedna linie). */
-export function mapGame(sport: Sport, g: PbGame): RawMarket[] {
+/**
+ * Jeden Synot trh (Game) → 0..n kanonických trhů (každý Detail = jedna linie).
+ * `eventOpen` = false (událost ve stavu Suspended/Closed) zavře všechny trhy – web v tu chvíli
+ * zamyká všechny kurzy události, i kdyby výběry samy hlásily Opened.
+ */
+export function mapGame(sport: Sport, g: PbGame, eventOpen = true): RawMarket[] {
   const typeId = gameTypeId(g.ID);
   if (typeId === undefined) return [];
   const rule = RULES[sport][typeId];
@@ -293,7 +313,8 @@ export function mapGame(sport: Sport, g: PbGame): RawMarket[] {
     const key = marketKey(rule.type, scope, line);
     if (seen.has(key)) continue;
     seen.add(key);
-    const detailOpen = isOpenState(d.State) && !d.Suspended;
+    // Game.State posílá jen live JSON (prematch protobuf ho nemá → undefined = otevřeno)
+    const detailOpen = eventOpen && isOpenState(g.State) && isOpenState(d.State) && !d.Suspended;
     out.push({
       key,
       open: detailOpen && sels.some((s) => s.open !== false),
@@ -305,12 +326,12 @@ export function mapGame(sport: Sport, g: PbGame): RawMarket[] {
   return out;
 }
 
-function mapGroups(sport: Sport, groups: PbEvent['GameGroups']): RawMarket[] {
+function mapGroups(sport: Sport, groups: PbEvent['GameGroups'], eventOpen = true): RawMarket[] {
   const out: RawMarket[] = [];
   const keys = new Set<string>();
   for (const gg of groups ?? []) {
     for (const g of gg.Games ?? []) {
-      for (const m of mapGame(sport, g)) {
+      for (const m of mapGame(sport, g, eventOpen)) {
         if (keys.has(m.key)) continue;
         keys.add(m.key);
         out.push(m);
@@ -395,10 +416,16 @@ export function parsePrematch(responses: PbEventsResponse[], o: ParseOptions): R
 
 // ---------- live ----------
 
-/** "/Date(1790690400000+0200)/" → epoch ms. */
+/**
+ * Datum z API → epoch ms: WCF "/Date(1790690400000+0200)/" (číslo je UTC ms, posun jen informativní)
+ * nebo ISO s posunem "2026-09-30T20:45:00+02:00" (GetLiveEventsWL).
+ */
 export function parseWcfDate(s: string | undefined): number | undefined {
   const m = /\/Date\((-?\d+)(?:[+-]\d{4})?\)\//.exec(s ?? '');
-  return m ? Number(m[1]) : undefined;
+  if (m) return Number(m[1]);
+  if (!s || !/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}(:\d{2}(\.\d+)?)?(Z|[+-]\d{2}:?\d{2})$/.test(s)) return undefined;
+  const t = Date.parse(s);
+  return Number.isFinite(t) ? t : undefined;
 }
 
 function parseScore(s: string | undefined): [number, number] | undefined {
@@ -406,13 +433,18 @@ function parseScore(s: string | undefined): [number, number] | undefined {
   return m ? [Number(m[1]), Number(m[2])] : undefined;
 }
 
-const BREAK_RE = /^poločas$|přestávk|pauza/i;
-const FINISHED_RE = /^ukončen|^konec zápasu|^konec$/i;
+/** "Poločas", "Přestávka" (hokej i basket), "Čekání na prodloužení" (před prodloužením). */
+const BREAK_RE = /^poločas$|přestávk|pauza|^čekání/i;
+/** Konec zápasu jen z textu – event State 3 (Suspended) chodí i při gólu, v prodloužení, 3 min před koncem hokeje … */
+const FINISHED_RE = /^ukončen|^konec zápasu$|^konec$|^po prodloužení$|^po (sam\.\s*|samostatných\s*)?nájezd/i;
+/** Zápas je v live nabídce, ale ještě nezačal. */
+const NOT_STARTED_RE = /^nezačal/i;
 
 /**
  * Stav z live feedu: StateName (surový text: "1. poločas", "Poločas", "2. třetina", "Přestávka",
- * "3. set", "Nezačalo", "Přerušeno", "Ukončeno"), StateTime (uplynulé s), RemainingPeriodTime,
- * ClockStopped, Results[] (hlavní skóre, periody s Flags 64, tenisové "Game skóre" s Flags 1).
+ * "3. set", "Nezačalo", "Přerušeno", "Čekání na prodloužení", "Prodloužení", "Po prodloužení",
+ * "Ukončeno"), StateTime (uplynulé s), RemainingPeriodTime, ClockStopped, Results[] (hlavní skóre,
+ * periody s Flags 64, tenisové "Game skóre" s Flags 1). Event `State` se na konec zápasu nepoužívá.
  */
 export function parseState(e: SynLiveEvent, sport: Sport): GameState {
   const st: GameState = {};
@@ -426,11 +458,12 @@ export function parseState(e: SynLiveEvent, sport: Sport): GameState {
   const periodScores = periods.map((r) => parseScore(r.Score)).filter((x): x is [number, number] => !!x);
   if (periodScores.length && periodScores.length === periods.length) st.periodScores = periodScores;
 
-  const per = /^(\d)\.\s*(poločas|třetina|čtvrtina|set|prodl)/i.exec(text);
+  // "1. prodloužení" není 1. perioda → prodloužení periodu nenastavuje
+  const per = /^(\d)\.\s*(poločas|třetina|čtvrtina|set)/i.exec(text);
   if (per) st.period = Number(per[1]);
   else if (BREAK_RE.test(text) && periods.length) st.period = periods.length; // přestávka po n-té periodě
   if (BREAK_RE.test(text)) st.breakFlag = true;
-  if (FINISHED_RE.test(text) || e.State === 3) st.finished = true;
+  if (FINISHED_RE.test(text)) st.finished = true;
 
   if (sport === 'tennis') {
     if (st.period && periodScores.length >= st.period) st.games = periodScores[st.period - 1];
@@ -447,7 +480,12 @@ export function parseState(e: SynLiveEvent, sport: Sport): GameState {
   return st;
 }
 
-/** GetLIPEvtsDsk → RawEvent[] (běžící zápasy s hlavními trhy; "Nezačalo" = v live nabídce před začátkem). */
+/**
+ * GetLiveEventsWL / GetLIPEvtsDsk → RawEvent[]. "Nezačalo" = v live nabídce před začátkem →
+ * `live: false` (jinak by Synot přepnul kanonickou událost do LIVE ještě před výkopem).
+ * Event State 3/4 (Suspended/Closed) → všechny trhy `open: false` (v praxi feed trhy v tu chvíli
+ * rovnou vynechává). Id události je stejné jako v prematch nabídce, `startTime` = plánovaný začátek.
+ */
 export function parseLive(r: SynLiveResponse, o: ParseOptions): RawEvent[] {
   const out: RawEvent[] = [];
   const seen = new Set<string>();
@@ -461,6 +499,7 @@ export function parseLive(r: SynLiveResponse, o: ParseOptions): RawEvent[] {
       if (!teams || startTime === undefined || seen.has(id)) continue;
       seen.add(id);
       const path = norm(e.CategoryPath).split(' / ').map((s) => s.trim());
+      const eventOpen = isOpenState(e.State);
       const ev: RawEvent = {
         sourceId: id,
         sport,
@@ -468,9 +507,9 @@ export function parseLive(r: SynLiveResponse, o: ParseOptions): RawEvent[] {
         home: teams[0],
         away: teams[1],
         startTime,
-        live: true,
+        live: !NOT_STARTED_RE.test(norm(e.StateName)),
         state: parseState(e, sport),
-        markets: mapGroups(sport, e.GameGroups as PbEvent['GameGroups']),
+        markets: mapGroups(sport, e.GameGroups as PbEvent['GameGroups'], eventOpen),
         url: liveEventUrl(id),
       };
       if (path.length > 1 && path[0]) ev.country = path[0];

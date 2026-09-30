@@ -69,6 +69,8 @@ export interface PbGame {
   ID?: string;
   Name?: string;
   Details?: PbDetail[];
+  /** Jen live JSON (stav trhu, 2 = Opened); protobuf zpráva Game toto pole nemá. */
+  State?: number;
 }
 export interface PbGameGroup {
   ID?: number;

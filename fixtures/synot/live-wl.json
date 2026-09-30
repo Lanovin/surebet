@@ -1,0 +1,2274 @@
+{
+ "recordedAt": "2026-09-30T19:49:57.121Z",
+ "requestStart": 1790797796563,
+ "responseEnd": 1790797797121,
+ "endpoint": "webapi/GetLiveEventsWL",
+ "Result": 1,
+ "Token": "00000000000000000000000000000000",
+ "TimeStamp": 17155315,
+ "ReturnValue": [
+  {
+   "ID": 12,
+   "DisciplineID": 12,
+   "ParentID": 0,
+   "Name": "Fotbal",
+   "EventCount": 0,
+   "Events": [
+    {
+     "CanCustomBet": true,
+     "DisciplineID": 12,
+     "CatIds": [
+      17,
+      653
+     ],
+     "DetailsCount": 19,
+     "MatchTracker": {
+      "Id": "58208457"
+     },
+     "Results": [
+      {
+       "ID": 1,
+       "Name": "Zápas",
+       "Score": "2:0",
+       "MainResult": true,
+       "IconID": 0
+      },
+      {
+       "ID": 2,
+       "Name": "1. poločas",
+       "Score": "2:0",
+       "ImportantResult": true,
+       "Flags": 64,
+       "IconID": 0
+      }
+     ],
+     "State": 2,
+     "StateName": "Poločas",
+     "ClockStopped": false,
+     "Stats": {
+      "Id": "58208457"
+     },
+     "SportExtId": "sr:sport:1",
+     "RegionExtId": "sr:category:392",
+     "TournamentExtId": "sr:tournament:26",
+     "ID": 3813523,
+     "Name": "Portugalsko U21 - Gibraltar U21",
+     "Date": "2026-09-30T21:00:00+02:00",
+     "GameGroups": [
+      {
+       "ID": 59,
+       "Name": "Hlavní sázky",
+       "Games": [
+        {
+         "ID": "2d462557872",
+         "Name": "Zápas",
+         "Details": [
+          {
+           "ID": 462557872,
+           "OddsList": [
+            {
+             "TipID": "1014200090",
+             "Name": "1",
+             "Rate": 0,
+             "State": 3
+            },
+            {
+             "TipID": "1014200091",
+             "Name": "0",
+             "Rate": 14.9,
+             "State": 2
+            },
+            {
+             "TipID": "1014200092",
+             "Name": "2",
+             "Rate": 250,
+             "State": 2
+            }
+           ],
+           "State": 2,
+           "LineNumber": 15219
+          }
+         ],
+         "State": 2,
+         "IsDetails": false,
+         "Sequence": 0,
+         "Initial": true,
+         "SelectionVisualisationFlags": 2
+        }
+       ],
+       "Sequence": 1
+      },
+      {
+       "ID": 56,
+       "Name": "Góly",
+       "Games": [
+        {
+         "ID": "79",
+         "Name": "Celkový počet gólů",
+         "Details": [
+          {
+           "ID": 463082636,
+           "OddsList": [
+            {
+             "TipID": "1015339871",
+             "Name": "Pod (4.25)",
+             "Rate": 3.71,
+             "State": 2
+            },
+            {
+             "TipID": "1015339870",
+             "Name": "Nad (4.25)",
+             "Rate": 1.23,
+             "State": 2
+            }
+           ],
+           "State": 2,
+           "LineNumber": 609564
+          }
+         ],
+         "State": 2,
+         "IsDetails": false,
+         "Sequence": 0,
+         "Initial": false,
+         "SelectionVisualisationFlags": 1
+        }
+       ],
+       "Sequence": 2
+      },
+      {
+       "ID": 58,
+       "Name": "Handicap",
+       "Games": [
+        {
+         "ID": "7",
+         "Name": "Handicap",
+         "Details": [
+          {
+           "ID": 462775329,
+           "OddsList": [
+            {
+             "TipID": "1014680951",
+             "Name": "Tým 1 (-6.5)",
+             "Rate": 3.17,
+             "State": 2
+            },
+            {
+             "TipID": "1014680952",
+             "Name": "Tým 2 (+6.5)",
+             "Rate": 1.29,
+             "State": 2
+            }
+           ],
+           "State": 2,
+           "LineNumber": 74940
+          }
+         ],
+         "State": 2,
+         "IsDetails": false,
+         "Sequence": 0,
+         "Initial": false,
+         "SelectionVisualisationFlags": 1
+        }
+       ],
+       "Sequence": 4
+      }
+     ],
+     "CategoryPath": "Mezinárodní mládežnické / Kvalifikace ME, U21",
+     "ExternalID": "58208457",
+     "Sequence": 2000001
+    },
+    {
+     "CanCustomBet": false,
+     "DisciplineID": 12,
+     "CatIds": [
+      17,
+      12407
+     ],
+     "DetailsCount": 0,
+     "MatchTracker": {
+      "Id": "73734894"
+     },
+     "Results": [
+      {
+       "ID": 1,
+       "Name": "Zápas",
+       "Score": "1:0",
+       "MainResult": true,
+       "IconID": 0
+      },
+      {
+       "ID": 2,
+       "Name": "1. poločas",
+       "Score": "0:0",
+       "ImportantResult": true,
+       "Flags": 64,
+       "IconID": 0
+      },
+      {
+       "ID": 33,
+       "Name": "2. poločas",
+       "Score": "1:0",
+       "ImportantResult": true,
+       "Flags": 64,
+       "IconID": 0
+      }
+     ],
+     "State": 3,
+     "StateTime": 5400,
+     "StateName": "2. poločas",
+     "ClockStopped": false,
+     "Stats": {
+      "Id": "73734894"
+     },
+     "SportExtId": "sr:sport:1",
+     "RegionExtId": "sr:category:392",
+     "TournamentExtId": "sr:tournament:39285",
+     "ID": 3856432,
+     "Name": "Middlesbrough rez. - Juventus Turín U23",
+     "Date": "2026-09-30T20:00:00+02:00",
+     "GameGroups": [],
+     "CategoryPath": "Mezinárodní mládežnické / Premier League International Cup, U21",
+     "ExternalID": "73734894",
+     "Sequence": 2000057
+    },
+    {
+     "CanCustomBet": false,
+     "DisciplineID": 12,
+     "CatIds": [
+      55,
+      652
+     ],
+     "DetailsCount": 16,
+     "MatchTracker": {
+      "Id": "72740668"
+     },
+     "Results": [
+      {
+       "ID": 1,
+       "Name": "Zápas",
+       "Score": "0:0",
+       "MainResult": true,
+       "IconID": 0
+      },
+      {
+       "ID": 2,
+       "Name": "1. poločas",
+       "Score": "0:0",
+       "ImportantResult": true,
+       "Flags": 64,
+       "IconID": 0
+      },
+      {
+       "ID": 33,
+       "Name": "2. poločas",
+       "Score": "0:0",
+       "ImportantResult": true,
+       "Flags": 64,
+       "IconID": 0
+      }
+     ],
+     "State": 2,
+     "StateTime": 2700,
+     "StateName": "2. poločas",
+     "ClockStopped": false,
+     "Stats": {
+      "Id": "72740668"
+     },
+     "SportExtId": "sr:sport:1",
+     "RegionExtId": "sr:category:1",
+     "TournamentExtId": "sr:tournament:173",
+     "ID": 3844566,
+     "Name": "Tamworth - Sutton Utd.",
+     "Date": "2026-09-30T20:45:00+02:00",
+     "GameGroups": [
+      {
+       "ID": 59,
+       "Name": "Hlavní sázky",
+       "Games": [
+        {
+         "ID": "2d461998384",
+         "Name": "Zápas",
+         "Details": [
+          {
+           "ID": 461998384,
+           "OddsList": [
+            {
+             "TipID": "1012929943",
+             "Name": "1",
+             "Rate": 2.9,
+             "State": 2
+            },
+            {
+             "TipID": "1012929944",
+             "Name": "0",
+             "Rate": 2.55,
+             "State": 2
+            },
+            {
+             "TipID": "1012929945",
+             "Name": "2",
+             "Rate": 2.92,
+             "State": 2
+            }
+           ],
+           "State": 2,
+           "LineNumber": 547837
+          }
+         ],
+         "State": 2,
+         "IsDetails": false,
+         "Sequence": 0,
+         "Initial": true,
+         "SelectionVisualisationFlags": 2
+        }
+       ],
+       "Sequence": 1
+      },
+      {
+       "ID": 56,
+       "Name": "Góly",
+       "Games": [
+        {
+         "ID": "79",
+         "Name": "Celkový počet gólů",
+         "Details": [
+          {
+           "ID": 461998390,
+           "OddsList": [
+            {
+             "TipID": "1015330197",
+             "Name": "Pod (0.5)",
+             "Rate": 3.82,
+             "State": 2
+            },
+            {
+             "TipID": "1015330196",
+             "Name": "Nad (0.5)",
+             "Rate": 1.21,
+             "State": 2
+            }
+           ],
+           "State": 2,
+           "LineNumber": 547960
+          }
+         ],
+         "State": 2,
+         "IsDetails": false,
+         "Sequence": 0,
+         "Initial": false,
+         "SelectionVisualisationFlags": 1
+        }
+       ],
+       "Sequence": 2
+      },
+      {
+       "ID": 58,
+       "Name": "Handicap",
+       "Games": [
+        {
+         "ID": "7",
+         "Name": "Handicap",
+         "Details": [
+          {
+           "ID": 463069695,
+           "OddsList": [
+            {
+             "TipID": "1015310628",
+             "Name": "Tým 1 (-1)",
+             "Rate": 5.52,
+             "State": 2
+            },
+            {
+             "TipID": "1015310629",
+             "Name": "Tým 2 (+1)",
+             "Rate": 1.1,
+             "State": 2
+            }
+           ],
+           "State": 2,
+           "LineNumber": 552952
+          }
+         ],
+         "State": 2,
+         "IsDetails": false,
+         "Sequence": 0,
+         "Initial": false,
+         "SelectionVisualisationFlags": 1
+        }
+       ],
+       "Sequence": 4
+      }
+     ],
+     "CategoryPath": "Anglie / National League",
+     "ExternalID": "72740668",
+     "Sequence": 5000005
+    },
+    {
+     "CanCustomBet": false,
+     "DisciplineID": 12,
+     "CatIds": [
+      32,
+      16573
+     ],
+     "DetailsCount": 0,
+     "MatchTracker": {
+      "Id": "74987966"
+     },
+     "Results": [
+      {
+       "ID": 1,
+       "Name": "Zápas",
+       "Score": "0:0",
+       "MainResult": true,
+       "IconID": 0
+      },
+      {
+       "ID": 2,
+       "Name": "1. poločas",
+       "Score": "0:0",
+       "ImportantResult": true,
+       "Flags": 64,
+       "IconID": 0
+      },
+      {
+       "ID": 33,
+       "Name": "2. poločas",
+       "Score": "0:0",
+       "ImportantResult": true,
+       "Flags": 64,
+       "IconID": 0
+      }
+     ],
+     "State": 3,
+     "StateName": "Ukončeno",
+     "ClockStopped": false,
+     "Stats": {
+      "Id": "74987966"
+     },
+     "SportExtId": "sr:sport:1",
+     "RegionExtId": "sr:category:33",
+     "TournamentExtId": "sr:tournament:43373",
+     "ID": 3857157,
+     "Name": "Royal Charleroi SC B - RSC Habay",
+     "Date": "2026-09-30T20:00:00+02:00",
+     "GameGroups": [],
+     "CategoryPath": "Belgie / Nationale 1 ACFF",
+     "ExternalID": "74987966",
+     "Sequence": 13000012
+    },
+    {
+     "CanCustomBet": false,
+     "DisciplineID": 12,
+     "CatIds": [
+      92,
+      959
+     ],
+     "DetailsCount": 10,
+     "MatchTracker": {
+      "Id": "74889922"
+     },
+     "Results": [
+      {
+       "ID": 1,
+       "Name": "Zápas",
+       "Score": "1:1",
+       "MainResult": true,
+       "IconID": 0
+      },
+      {
+       "ID": 2,
+       "Name": "1. poločas",
+       "Score": "1:1",
+       "ImportantResult": true,
+       "Flags": 64,
+       "IconID": 0
+      }
+     ],
+     "State": 2,
+     "StateName": "Poločas",
+     "ClockStopped": false,
+     "Stats": {
+      "Id": "74889922"
+     },
+     "SportExtId": "sr:sport:1",
+     "RegionExtId": "sr:category:252",
+     "TournamentExtId": "sr:tournament:1131",
+     "ID": 3853986,
+     "Name": "AFC Whyteleafe - Brentwood Town FC",
+     "Date": "2026-09-30T20:45:00+02:00",
+     "GameGroups": [
+      {
+       "ID": 59,
+       "Name": "Hlavní sázky",
+       "Games": [
+        {
+         "ID": "2d462341886",
+         "Name": "Zápas",
+         "Details": [
+          {
+           "ID": 462341886,
+           "OddsList": [
+            {
+             "TipID": "1013723316",
+             "Name": "1",
+             "Rate": 4.04,
+             "State": 2
+            },
+            {
+             "TipID": "1013723317",
+             "Name": "0",
+             "Rate": 2.89,
+             "State": 2
+            },
+            {
+             "TipID": "1013723318",
+             "Name": "2",
+             "Rate": 1.94,
+             "State": 2
+            }
+           ],
+           "State": 2,
+           "LineNumber": 544764
+          }
+         ],
+         "State": 2,
+         "IsDetails": false,
+         "Sequence": 0,
+         "Initial": true,
+         "SelectionVisualisationFlags": 2
+        }
+       ],
+       "Sequence": 1
+      },
+      {
+       "ID": 56,
+       "Name": "Góly",
+       "Games": [
+        {
+         "ID": "79",
+         "Name": "Celkový počet gólů",
+         "Details": [
+          {
+           "ID": 462341891,
+           "OddsList": [
+            {
+             "TipID": "1013723308",
+             "Name": "Pod (2.5)",
+             "Rate": 4.7,
+             "State": 2
+            },
+            {
+             "TipID": "1013723307",
+             "Name": "Nad (2.5)",
+             "Rate": 1.11,
+             "State": 2
+            }
+           ],
+           "State": 2,
+           "LineNumber": 544785
+          }
+         ],
+         "State": 2,
+         "IsDetails": false,
+         "Sequence": 0,
+         "Initial": false,
+         "SelectionVisualisationFlags": 1
+        }
+       ],
+       "Sequence": 2
+      },
+      {
+       "ID": 58,
+       "Name": "Handicap",
+       "Games": [
+        {
+         "ID": "7",
+         "Name": "Handicap",
+         "Details": [
+          {
+           "ID": 463069975,
+           "OddsList": [
+            {
+             "TipID": "1015306320",
+             "Name": "Tým 1 (0)",
+             "Rate": 2.69,
+             "State": 2
+            },
+            {
+             "TipID": "1015306322",
+             "Name": "Tým 2 (0)",
+             "Rate": 1.36,
+             "State": 2
+            }
+           ],
+           "State": 2,
+           "LineNumber": 554531
+          }
+         ],
+         "State": 2,
+         "IsDetails": false,
+         "Sequence": 0,
+         "Initial": false,
+         "SelectionVisualisationFlags": 1
+        }
+       ],
+       "Sequence": 4
+      }
+     ],
+     "CategoryPath": "Anglie amatéři / Isthmian Premier Div.",
+     "ExternalID": "74889922",
+     "Sequence": 17000002
+    },
+    {
+     "CanCustomBet": false,
+     "DisciplineID": 12,
+     "CatIds": [
+      92,
+      2622
+     ],
+     "DetailsCount": 4,
+     "MatchTracker": {
+      "Id": "73607404"
+     },
+     "Results": [
+      {
+       "ID": 1,
+       "Name": "Zápas",
+       "Score": "3:1",
+       "MainResult": true,
+       "IconID": 0
+      },
+      {
+       "ID": 2,
+       "Name": "1. poločas",
+       "Score": "0:1",
+       "ImportantResult": true,
+       "Flags": 64,
+       "IconID": 0
+      },
+      {
+       "ID": 33,
+       "Name": "2. poločas",
+       "Score": "3:0",
+       "ImportantResult": true,
+       "Flags": 64,
+       "IconID": 0
+      }
+     ],
+     "State": 2,
+     "StateTime": 5354,
+     "StateName": "2. poločas",
+     "ClockStopped": false,
+     "Stats": {
+      "Id": "73607404"
+     },
+     "SportExtId": "sr:sport:1",
+     "RegionExtId": "sr:category:252",
+     "TournamentExtId": "sr:tournament:27659",
+     "ID": 3855878,
+     "Name": "West Ham Utd. - Southampton",
+     "Date": "2026-09-30T20:00:00+02:00",
+     "GameGroups": [
+      {
+       "ID": 59,
+       "Name": "Hlavní sázky",
+       "Games": [
+        {
+         "ID": "2d462554012",
+         "Name": "Zápas",
+         "Details": [
+          {
+           "ID": 462554012,
+           "OddsList": [
+            {
+             "TipID": "1014192097",
+             "Name": "1",
+             "Rate": 0,
+             "State": 3
+            },
+            {
+             "TipID": "1014192098",
+             "Name": "0",
+             "Rate": 9.25,
+             "State": 2
+            },
+            {
+             "TipID": "1014192099",
+             "Name": "2",
+             "Rate": 100,
+             "State": 2
+            }
+           ],
+           "State": 2,
+           "LineNumber": 766496
+          }
+         ],
+         "State": 2,
+         "IsDetails": false,
+         "Sequence": 0,
+         "Initial": true,
+         "SelectionVisualisationFlags": 2
+        }
+       ],
+       "Sequence": 1
+      },
+      {
+       "ID": 56,
+       "Name": "Góly",
+       "Games": [
+        {
+         "ID": "80",
+         "Name": "Tým1 celkový počet gólů",
+         "Details": [
+          {
+           "ID": 463050507,
+           "OddsList": [
+            {
+             "TipID": "1015267354",
+             "Name": "Pod (3.5)",
+             "Rate": 1.15,
+             "State": 2
+            },
+            {
+             "TipID": "1015267353",
+             "Name": "Nad (3.5)",
+             "Rate": 4.32,
+             "State": 2
+            }
+           ],
+           "State": 2,
+           "LineNumber": 887410
+          }
+         ],
+         "State": 2,
+         "IsDetails": false,
+         "Sequence": 0,
+         "Initial": false,
+         "SelectionVisualisationFlags": 1
+        }
+       ],
+       "Sequence": 2
+      }
+     ],
+     "CategoryPath": "Anglie amatéři / Ligový pohár, ženy",
+     "ExternalID": "73607404",
+     "Sequence": 17002623
+    },
+    {
+     "CanCustomBet": false,
+     "DisciplineID": 12,
+     "CatIds": [
+      92,
+      2622
+     ],
+     "DetailsCount": 16,
+     "MatchTracker": {
+      "Id": "73607408"
+     },
+     "Results": [
+      {
+       "ID": 1,
+       "Name": "Zápas",
+       "Score": "0:0",
+       "MainResult": true,
+       "IconID": 0
+      },
+      {
+       "ID": 2,
+       "Name": "1. poločas",
+       "Score": "0:0",
+       "ImportantResult": true,
+       "Flags": 64,
+       "IconID": 0
+      },
+      {
+       "ID": 33,
+       "Name": "2. poločas",
+       "Score": "0:0",
+       "ImportantResult": true,
+       "Flags": 64,
+       "IconID": 0
+      }
+     ],
+     "State": 2,
+     "StateTime": 3743,
+     "StateName": "2. poločas",
+     "ClockStopped": false,
+     "Stats": {
+      "Id": "73607408"
+     },
+     "SportExtId": "sr:sport:1",
+     "RegionExtId": "sr:category:252",
+     "TournamentExtId": "sr:tournament:27659",
+     "ID": 3855882,
+     "Name": "Ipswich Town - London City Lionesses",
+     "Date": "2026-09-30T20:30:00+02:00",
+     "GameGroups": [
+      {
+       "ID": 59,
+       "Name": "Hlavní sázky",
+       "Games": [
+        {
+         "ID": "2d462517125",
+         "Name": "Zápas",
+         "Details": [
+          {
+           "ID": 462517125,
+           "OddsList": [
+            {
+             "TipID": "1014113160",
+             "Name": "1",
+             "Rate": 14.8,
+             "State": 2
+            },
+            {
+             "TipID": "1014113161",
+             "Name": "0",
+             "Rate": 3.12,
+             "State": 2
+            },
+            {
+             "TipID": "1014113162",
+             "Name": "2",
+             "Rate": 1.4,
+             "State": 2
+            }
+           ],
+           "State": 2,
+           "LineNumber": 742266
+          }
+         ],
+         "State": 2,
+         "IsDetails": false,
+         "Sequence": 0,
+         "Initial": true,
+         "SelectionVisualisationFlags": 2
+        }
+       ],
+       "Sequence": 1
+      },
+      {
+       "ID": 56,
+       "Name": "Góly",
+       "Games": [
+        {
+         "ID": "79",
+         "Name": "Celkový počet gólů",
+         "Details": [
+          {
+           "ID": 462518453,
+           "OddsList": [
+            {
+             "TipID": "1015335559",
+             "Name": "Pod (0.5)",
+             "Rate": 3.71,
+             "State": 2
+            },
+            {
+             "TipID": "1015335558",
+             "Name": "Nad (0.5)",
+             "Rate": 1.2,
+             "State": 2
+            }
+           ],
+           "State": 2,
+           "LineNumber": 744655
+          }
+         ],
+         "State": 2,
+         "IsDetails": false,
+         "Sequence": 0,
+         "Initial": false,
+         "SelectionVisualisationFlags": 1
+        }
+       ],
+       "Sequence": 2
+      },
+      {
+       "ID": 58,
+       "Name": "Handicap",
+       "Games": [
+        {
+         "ID": "7",
+         "Name": "Handicap",
+         "Details": [
+          {
+           "ID": 463078806,
+           "OddsList": [
+            {
+             "TipID": "1015334803",
+             "Name": "Tým 1 (+0.5)",
+             "Rate": 2.6,
+             "State": 2
+            },
+            {
+             "TipID": "1015334804",
+             "Name": "Tým 2 (-0.5)",
+             "Rate": 1.4,
+             "State": 2
+            }
+           ],
+           "State": 2,
+           "LineNumber": 596940
+          }
+         ],
+         "State": 2,
+         "IsDetails": false,
+         "Sequence": 0,
+         "Initial": false,
+         "SelectionVisualisationFlags": 1
+        }
+       ],
+       "Sequence": 4
+      }
+     ],
+     "CategoryPath": "Anglie amatéři / Ligový pohár, ženy",
+     "ExternalID": "73607408",
+     "Sequence": 17002623
+    },
+    {
+     "CanCustomBet": false,
+     "DisciplineID": 12,
+     "CatIds": [
+      325,
+      22005
+     ],
+     "DetailsCount": 7,
+     "MatchTracker": {
+      "Id": "75126252"
+     },
+     "Results": [
+      {
+       "ID": 1,
+       "Name": "Zápas",
+       "Score": "6:0",
+       "MainResult": true,
+       "IconID": 0
+      },
+      {
+       "ID": 2,
+       "Name": "1. poločas",
+       "Score": "2:0",
+       "ImportantResult": true,
+       "Flags": 64,
+       "IconID": 0
+      },
+      {
+       "ID": 33,
+       "Name": "2. poločas",
+       "Score": "4:0",
+       "ImportantResult": true,
+       "Flags": 64,
+       "IconID": 0
+      }
+     ],
+     "State": 2,
+     "StateTime": 5115,
+     "StateName": "2. poločas",
+     "ClockStopped": false,
+     "SportExtId": "sr:sport:1",
+     "RegionExtId": "sr:category:367",
+     "TournamentExtId": "sr:tournament:52564",
+     "ID": 3856021,
+     "Name": "FAS - Isidro Metapán",
+     "Date": "2026-09-30T20:00:00+02:00",
+     "GameGroups": [
+      {
+       "ID": 59,
+       "Name": "Hlavní sázky",
+       "Games": [
+        {
+         "ID": "365d463094530",
+         "Name": "Který tým vyhraje zbytek zápasu od skóre 6:0",
+         "Details": [
+          {
+           "ID": 463094530,
+           "OddsList": [
+            {
+             "TipID": "1015359482",
+             "Name": "1",
+             "Rate": 2.11,
+             "State": 2
+            },
+            {
+             "TipID": "1015359483",
+             "Name": "0",
+             "Rate": 1.63,
+             "State": 2
+            },
+            {
+             "TipID": "1015359484",
+             "Name": "2",
+             "Rate": 47.49,
+             "State": 2
+            }
+           ],
+           "State": 2,
+           "LineNumber": 906485
+          }
+         ],
+         "State": 2,
+         "IsDetails": false,
+         "Sequence": 0,
+         "Initial": false,
+         "SelectionVisualisationFlags": 1
+        }
+       ],
+       "Sequence": 1
+      },
+      {
+       "ID": 56,
+       "Name": "Góly",
+       "Games": [
+        {
+         "ID": "79",
+         "Name": "Celkový počet gólů",
+         "Details": [
+          {
+           "ID": 463047653,
+           "OddsList": [
+            {
+             "TipID": "1015261463",
+             "Name": "Pod (6.5)",
+             "Rate": 1.65,
+             "State": 2
+            },
+            {
+             "TipID": "1015261462",
+             "Name": "Nad (6.5)",
+             "Rate": 1.99,
+             "State": 2
+            }
+           ],
+           "State": 2,
+           "LineNumber": 884020
+          }
+         ],
+         "State": 2,
+         "IsDetails": false,
+         "Sequence": 0,
+         "Initial": false,
+         "SelectionVisualisationFlags": 1
+        }
+       ],
+       "Sequence": 2
+      },
+      {
+       "ID": 58,
+       "Name": "Handicap",
+       "Games": [
+        {
+         "ID": "7",
+         "Name": "Handicap",
+         "Details": [
+          {
+           "ID": 463068396,
+           "OddsList": [
+            {
+             "TipID": "1015348071",
+             "Name": "Tým 1 (-7)",
+             "Rate": 4.57,
+             "State": 2
+            },
+            {
+             "TipID": "1015348072",
+             "Name": "Tým 2 (+7)",
+             "Rate": 1.12,
+             "State": 2
+            }
+           ],
+           "State": 2,
+           "LineNumber": 546864
+          }
+         ],
+         "State": 2,
+         "IsDetails": false,
+         "Sequence": 0,
+         "Initial": false,
+         "SelectionVisualisationFlags": 1
+        }
+       ],
+       "Sequence": 4
+      }
+     ],
+     "CategoryPath": "Salvádor / Primera Division, ženy",
+     "ExternalID": "75126252",
+     "Sequence": 147022006
+    }
+   ],
+   "GraphicsPresentationID": 831,
+   "Sequence": 64
+  },
+  {
+   "ID": 14,
+   "DisciplineID": 14,
+   "ParentID": 0,
+   "Name": "Hokej",
+   "EventCount": 0,
+   "Events": [
+    {
+     "CanCustomBet": false,
+     "DisciplineID": 14,
+     "CatIds": [
+      286,
+      19628
+     ],
+     "DetailsCount": 0,
+     "MatchTracker": {
+      "Id": "73297728"
+     },
+     "Results": [
+      {
+       "ID": 1,
+       "Name": "Zápas",
+       "Score": "3:2",
+       "MainResult": true,
+       "IconID": 0
+      },
+      {
+       "ID": 26,
+       "Name": "1. třetina",
+       "Score": "0:2",
+       "ImportantResult": true,
+       "Flags": 64,
+       "IconID": 0
+      },
+      {
+       "ID": 27,
+       "Name": "2. třetina",
+       "Score": "2:0",
+       "ImportantResult": true,
+       "Flags": 64,
+       "IconID": 0
+      },
+      {
+       "ID": 28,
+       "Name": "3. třetina",
+       "Score": "1:0",
+       "ImportantResult": true,
+       "Flags": 64,
+       "IconID": 0
+      }
+     ],
+     "State": 2,
+     "StateTime": 3224,
+     "StateName": "3. třetina",
+     "ClockStopped": false,
+     "RemainingPeriodTime": 376,
+     "Stats": {
+      "Id": "73297728"
+     },
+     "SportExtId": "sr:sport:4",
+     "RegionExtId": "sr:category:54",
+     "TournamentExtId": "sr:tournament:39539",
+     "ID": 3855866,
+     "Name": "HC Lugano U21 - HC Davos",
+     "Date": "2026-09-30T20:00:00+02:00",
+     "GameGroups": [],
+     "CategoryPath": "Švýcarsko / Elit, U21",
+     "ExternalID": "73297728",
+     "Sequence": 7019629
+    }
+   ],
+   "GraphicsPresentationID": 834,
+   "Sequence": 65
+  },
+  {
+   "ID": 19,
+   "DisciplineID": 19,
+   "ParentID": 0,
+   "Name": "Tenis",
+   "EventCount": 0,
+   "Events": [
+    {
+     "CanCustomBet": false,
+     "DisciplineID": 19,
+     "CatIds": [
+      35,
+      6309
+     ],
+     "DetailsCount": 33,
+     "ActiveCompetitor": 2,
+     "MatchTracker": {
+      "Id": "74983720"
+     },
+     "Results": [
+      {
+       "ID": 1,
+       "Name": "Zápas",
+       "Score": "0:1",
+       "MainResult": true,
+       "IconID": 0
+      },
+      {
+       "ID": 9,
+       "Name": "1. set",
+       "Score": "3:6",
+       "ImportantResult": true,
+       "Flags": 64,
+       "IconID": 0
+      },
+      {
+       "ID": 10,
+       "Name": "2. set",
+       "Score": "5:5",
+       "ImportantResult": true,
+       "Flags": 64,
+       "IconID": 0
+      },
+      {
+       "ID": 75,
+       "Name": "Game skóre",
+       "Score": "0:0",
+       "ImportantResult": true,
+       "Flags": 1,
+       "IconID": 0
+      }
+     ],
+     "State": 2,
+     "StateName": "2. set",
+     "ClockStopped": false,
+     "Stats": {
+      "Id": "74983720"
+     },
+     "SportExtId": "sr:sport:5",
+     "RegionExtId": "sr:category:72",
+     "TournamentExtId": "sr:tournament:12855",
+     "ID": 3840842,
+     "Name": "Staeheli, Luca - Andrade, Andres",
+     "Date": "2026-09-30T20:25:00+02:00",
+     "GameGroups": [
+      {
+       "ID": 67,
+       "Name": "Hlavní sázky",
+       "Games": [
+        {
+         "ID": "178d462781991",
+         "Name": "Vítěz zápasu",
+         "Details": [
+          {
+           "ID": 462781991,
+           "OddsList": [
+            {
+             "TipID": "1014699360",
+             "Name": "1",
+             "Rate": 8.47,
+             "State": 2
+            },
+            {
+             "TipID": "1014699361",
+             "Name": "2",
+             "Rate": 1.04,
+             "State": 2
+            }
+           ],
+           "State": 2,
+           "LineNumber": 19831
+          }
+         ],
+         "State": 2,
+         "IsDetails": false,
+         "Sequence": 0,
+         "Initial": true,
+         "SelectionVisualisationFlags": 2
+        }
+       ],
+       "Sequence": 1
+      },
+      {
+       "ID": 68,
+       "Name": "Set",
+       "Games": [
+        {
+         "ID": "221d462782000",
+         "Name": "2. set - Vítěz",
+         "Details": [
+          {
+           "ID": 462782000,
+           "OddsList": [
+            {
+             "TipID": "1014699376",
+             "Name": "1",
+             "Rate": 3.31,
+             "State": 2
+            },
+            {
+             "TipID": "1014699377",
+             "Name": "2",
+             "Rate": 1.25,
+             "State": 2
+            }
+           ],
+           "State": 2,
+           "LineNumber": 20170
+          }
+         ],
+         "State": 2,
+         "IsDetails": false,
+         "Sequence": 0,
+         "Initial": false,
+         "SelectionVisualisationFlags": 1
+        }
+       ],
+       "Sequence": 2
+      },
+      {
+       "ID": 66,
+       "Name": "Gamy",
+       "Games": [
+        {
+         "ID": "211",
+         "Name": "Celkový počet gamů",
+         "Details": [
+          {
+           "ID": 462826073,
+           "OddsList": [
+            {
+             "TipID": "1014797489",
+             "Name": "Pod (21.5)",
+             "Rate": 2.55,
+             "State": 2
+            },
+            {
+             "TipID": "1014797488",
+             "Name": "Nad (21.5)",
+             "Rate": 1.46,
+             "State": 2
+            }
+           ],
+           "State": 2,
+           "LineNumber": 80314
+          }
+         ],
+         "State": 2,
+         "IsDetails": false,
+         "Sequence": 0,
+         "Initial": false,
+         "SelectionVisualisationFlags": 1
+        }
+       ],
+       "Sequence": 3
+      }
+     ],
+     "CategoryPath": "Challenger, muži / Columbus (USA, tvrdý p.)",
+     "ExternalID": "74983720",
+     "Sequence": 6000183
+    },
+    {
+     "CanCustomBet": false,
+     "DisciplineID": 19,
+     "CatIds": [
+      35,
+      14027
+     ],
+     "DetailsCount": 13,
+     "ActiveCompetitor": 2,
+     "MatchTracker": {
+      "Id": "75089600"
+     },
+     "Results": [
+      {
+       "ID": 1,
+       "Name": "Zápas",
+       "Score": "0:0",
+       "MainResult": true,
+       "IconID": 0
+      },
+      {
+       "ID": 9,
+       "Name": "1. set",
+       "Score": "5:4",
+       "ImportantResult": true,
+       "Flags": 64,
+       "IconID": 0
+      },
+      {
+       "ID": 75,
+       "Name": "Game skóre",
+       "Score": "30:15",
+       "ImportantResult": true,
+       "Flags": 1,
+       "IconID": 0
+      }
+     ],
+     "State": 2,
+     "StateName": "1. set",
+     "ClockStopped": false,
+     "Stats": {
+      "Id": "75089600"
+     },
+     "SportExtId": "sr:sport:5",
+     "RegionExtId": "sr:category:72",
+     "TournamentExtId": "sr:tournament:14063",
+     "ID": 3852054,
+     "Name": "Remondy Pagotto V H / Roveri Sidney G - Miguel L G / Ribeiro E",
+     "Date": "2026-09-30T21:00:00+02:00",
+     "GameGroups": [
+      {
+       "ID": 67,
+       "Name": "Hlavní sázky",
+       "Games": [
+        {
+         "ID": "178d462832036",
+         "Name": "Vítěz zápasu",
+         "Details": [
+          {
+           "ID": 462832036,
+           "OddsList": [
+            {
+             "TipID": "1014809567",
+             "Name": "1",
+             "Rate": 3.06,
+             "State": 2
+            },
+            {
+             "TipID": "1014809568",
+             "Name": "2",
+             "Rate": 1.31,
+             "State": 2
+            }
+           ],
+           "State": 2,
+           "LineNumber": 180580
+          }
+         ],
+         "State": 2,
+         "IsDetails": false,
+         "Sequence": 0,
+         "Initial": true,
+         "SelectionVisualisationFlags": 2
+        }
+       ],
+       "Sequence": 1
+      },
+      {
+       "ID": 68,
+       "Name": "Set",
+       "Games": [
+        {
+         "ID": "221d462832037",
+         "Name": "1. set - Vítěz",
+         "Details": [
+          {
+           "ID": 462832037,
+           "OddsList": [
+            {
+             "TipID": "1014809569",
+             "Name": "1",
+             "Rate": 1.61,
+             "State": 2
+            },
+            {
+             "TipID": "1014809570",
+             "Name": "2",
+             "Rate": 2.09,
+             "State": 2
+            }
+           ],
+           "State": 2,
+           "LineNumber": 180588
+          }
+         ],
+         "State": 2,
+         "IsDetails": false,
+         "Sequence": 0,
+         "Initial": false,
+         "SelectionVisualisationFlags": 1
+        }
+       ],
+       "Sequence": 2
+      },
+      {
+       "ID": 66,
+       "Name": "Gamy",
+       "Games": [
+        {
+         "ID": "223",
+         "Name": "1. set - Počet gamů",
+         "Details": [
+          {
+           "ID": 463093083,
+           "OddsList": [
+            {
+             "TipID": "1015356235",
+             "Name": "Pod (10.5)",
+             "Rate": 2.18,
+             "State": 2
+            },
+            {
+             "TipID": "1015356234",
+             "Name": "Nad (10.5)",
+             "Rate": 1.56,
+             "State": 2
+            }
+           ],
+           "State": 2,
+           "LineNumber": 904966
+          }
+         ],
+         "State": 2,
+         "IsDetails": false,
+         "Sequence": 0,
+         "Initial": false,
+         "SelectionVisualisationFlags": 1
+        }
+       ],
+       "Sequence": 3
+      }
+     ],
+     "CategoryPath": "Challenger, muži / Curitiba, 4hra (BRA, antuka)",
+     "ExternalID": "75089600",
+     "Sequence": 6000201
+    },
+    {
+     "CanCustomBet": false,
+     "DisciplineID": 19,
+     "CatIds": [
+      35,
+      16531
+     ],
+     "DetailsCount": 0,
+     "MatchTracker": {
+      "Id": "75089626"
+     },
+     "Results": [
+      {
+       "ID": 1,
+       "Name": "Zápas",
+       "Score": "2:1",
+       "MainResult": true,
+       "IconID": 0
+      },
+      {
+       "ID": 9,
+       "Name": "1. set",
+       "Score": "6:3",
+       "ImportantResult": true,
+       "Flags": 64,
+       "IconID": 0
+      },
+      {
+       "ID": 10,
+       "Name": "2. set",
+       "Score": "6:7",
+       "ImportantResult": true,
+       "Flags": 64,
+       "IconID": 0
+      },
+      {
+       "ID": 11,
+       "Name": "3. set",
+       "Score": "1:0",
+       "ImportantResult": true,
+       "Flags": 64,
+       "IconID": 0
+      }
+     ],
+     "State": 3,
+     "StateName": "Ukončeno",
+     "ClockStopped": false,
+     "Stats": {
+      "Id": "75089626"
+     },
+     "SportExtId": "sr:sport:5",
+     "RegionExtId": "sr:category:72",
+     "TournamentExtId": "sr:tournament:42839",
+     "ID": 3852064,
+     "Name": "Arneodo R / Kittay B - Pereira T / Rocha F",
+     "Date": "2026-09-30T19:45:00+02:00",
+     "GameGroups": [],
+     "CategoryPath": "Challenger, muži / Porto 2, 4hra (POR, antuka)",
+     "ExternalID": "75089626",
+     "Sequence": 6000552
+    },
+    {
+     "CanCustomBet": false,
+     "DisciplineID": 19,
+     "CatIds": [
+      1271,
+      19718
+     ],
+     "DetailsCount": 4,
+     "ActiveCompetitor": 2,
+     "MatchTracker": {
+      "Id": "75050588"
+     },
+     "Results": [
+      {
+       "ID": 1,
+       "Name": "Zápas",
+       "Score": "0:0",
+       "MainResult": true,
+       "IconID": 0
+      },
+      {
+       "ID": 9,
+       "Name": "1. set",
+       "Score": "1:1",
+       "ImportantResult": true,
+       "Flags": 64,
+       "IconID": 0
+      },
+      {
+       "ID": 75,
+       "Name": "Game skóre",
+       "Score": "0:15",
+       "ImportantResult": true,
+       "Flags": 1,
+       "IconID": 0
+      }
+     ],
+     "State": 2,
+     "StateName": "1. set",
+     "ClockStopped": false,
+     "Stats": {
+      "Id": "75050588"
+     },
+     "SportExtId": "sr:sport:5",
+     "RegionExtId": "sr:category:2516",
+     "TournamentExtId": "sr:tournament:48563",
+     "ID": 3848721,
+     "Name": "Fernandes, Rodrigo - Ion, Nicola",
+     "Date": "2026-09-30T21:30:00+02:00",
+     "GameGroups": [
+      {
+       "ID": 67,
+       "Name": "Hlavní sázky",
+       "Games": [
+        {
+         "ID": "178d462840410",
+         "Name": "Vítěz zápasu",
+         "Details": [
+          {
+           "ID": 462840410,
+           "OddsList": [
+            {
+             "TipID": "1014826943",
+             "Name": "1",
+             "Rate": 1.11,
+             "State": 2
+            },
+            {
+             "TipID": "1014826944",
+             "Name": "2",
+             "Rate": 5.12,
+             "State": 2
+            }
+           ],
+           "State": 2,
+           "LineNumber": 345229
+          }
+         ],
+         "State": 2,
+         "IsDetails": false,
+         "Sequence": 0,
+         "Initial": true,
+         "SelectionVisualisationFlags": 2
+        }
+       ],
+       "Sequence": 1
+      },
+      {
+       "ID": 68,
+       "Name": "Set",
+       "Games": [
+        {
+         "ID": "221d463087567",
+         "Name": "1. set - Vítěz",
+         "Details": [
+          {
+           "ID": 463087567,
+           "OddsList": [
+            {
+             "TipID": "1015345128",
+             "Name": "1",
+             "Rate": 1.17,
+             "State": 2
+            },
+            {
+             "TipID": "1015345129",
+             "Name": "2",
+             "Rate": 3.94,
+             "State": 2
+            }
+           ],
+           "State": 2,
+           "LineNumber": 628212
+          }
+         ],
+         "State": 2,
+         "IsDetails": false,
+         "Sequence": 0,
+         "Initial": false,
+         "SelectionVisualisationFlags": 1
+        }
+       ],
+       "Sequence": 2
+      }
+     ],
+     "CategoryPath": "UTR, muži / Ithaca M01 (USA, tvrdý p.)",
+     "ExternalID": "75050588",
+     "Sequence": 12000127
+    },
+    {
+     "CanCustomBet": false,
+     "DisciplineID": 19,
+     "CatIds": [
+      1271,
+      22488
+     ],
+     "DetailsCount": 3,
+     "ActiveCompetitor": 1,
+     "MatchTracker": {
+      "Id": "75048574"
+     },
+     "Results": [
+      {
+       "ID": 1,
+       "Name": "Zápas",
+       "Score": "0:1",
+       "MainResult": true,
+       "IconID": 0
+      },
+      {
+       "ID": 9,
+       "Name": "1. set",
+       "Score": "4:6",
+       "ImportantResult": true,
+       "Flags": 64,
+       "IconID": 0
+      },
+      {
+       "ID": 10,
+       "Name": "2. set",
+       "Score": "4:5",
+       "ImportantResult": true,
+       "Flags": 64,
+       "IconID": 0
+      },
+      {
+       "ID": 75,
+       "Name": "Game skóre",
+       "Score": "15:40",
+       "ImportantResult": true,
+       "Flags": 1,
+       "IconID": 0
+      }
+     ],
+     "State": 2,
+     "StateName": "2. set",
+     "ClockStopped": false,
+     "Stats": {
+      "Id": "75048574"
+     },
+     "SportExtId": "sr:sport:5",
+     "RegionExtId": "sr:category:2516",
+     "TournamentExtId": "sr:tournament:53400",
+     "ID": 3848353,
+     "Name": "Chodur, Adam - Calvelo, Xavier",
+     "Date": "2026-09-30T20:00:00+02:00",
+     "GameGroups": [
+      {
+       "ID": 67,
+       "Name": "Hlavní sázky",
+       "Games": [
+        {
+         "ID": "178d462815860",
+         "Name": "Vítěz zápasu",
+         "Details": [
+          {
+           "ID": 462815860,
+           "OddsList": [
+            {
+             "TipID": "1014775932",
+             "Name": "1",
+             "Rate": 9.98,
+             "State": 2
+            },
+            {
+             "TipID": "1014775933",
+             "Name": "2",
+             "Rate": 0,
+             "State": 3
+            }
+           ],
+           "State": 2,
+           "LineNumber": 608063
+          }
+         ],
+         "State": 2,
+         "IsDetails": false,
+         "Sequence": 0,
+         "Initial": true,
+         "SelectionVisualisationFlags": 2
+        }
+       ],
+       "Sequence": 1
+      },
+      {
+       "ID": 68,
+       "Name": "Set",
+       "Games": [
+        {
+         "ID": "221d463049145",
+         "Name": "2. set - Vítěz",
+         "Details": [
+          {
+           "ID": 463049145,
+           "OddsList": [
+            {
+             "TipID": "1015264641",
+             "Name": "1",
+             "Rate": 8.84,
+             "State": 2
+            },
+            {
+             "TipID": "1015264642",
+             "Name": "2",
+             "Rate": 0,
+             "State": 3
+            }
+           ],
+           "State": 2,
+           "LineNumber": 885822
+          }
+         ],
+         "State": 2,
+         "IsDetails": false,
+         "Sequence": 0,
+         "Initial": false,
+         "SelectionVisualisationFlags": 1
+        }
+       ],
+       "Sequence": 2
+      }
+     ],
+     "CategoryPath": "UTR, muži / Newport Beach M23 (USA, tvrdý p.)",
+     "ExternalID": "75048574",
+     "Sequence": 12022489
+    }
+   ],
+   "GraphicsPresentationID": 836,
+   "Sequence": 66
+  },
+  {
+   "ID": 21,
+   "DisciplineID": 21,
+   "ParentID": 0,
+   "Name": "Basketbal",
+   "EventCount": 0,
+   "Events": [
+    {
+     "CanCustomBet": false,
+     "DisciplineID": 21,
+     "CatIds": [
+      149,
+      1073
+     ],
+     "DetailsCount": 20,
+     "MatchTracker": {
+      "Id": "72902418"
+     },
+     "Results": [
+      {
+       "ID": 1,
+       "Name": "Zápas",
+       "Score": "65:50",
+       "MainResult": true,
+       "IconID": 0
+      },
+      {
+       "ID": 5,
+       "Name": "1. čtvrtina",
+       "Score": "19:17",
+       "ImportantResult": true,
+       "Flags": 64,
+       "IconID": 0
+      },
+      {
+       "ID": 6,
+       "Name": "2. čtvrtina",
+       "Score": "28:20",
+       "ImportantResult": true,
+       "Flags": 64,
+       "IconID": 0
+      },
+      {
+       "ID": 7,
+       "Name": "3. čtvrtina",
+       "Score": "18:13",
+       "ImportantResult": true,
+       "Flags": 64,
+       "IconID": 0
+      }
+     ],
+     "State": 2,
+     "StateName": "Přestávka",
+     "ClockStopped": false,
+     "Stats": {
+      "Id": "72902418"
+     },
+     "SportExtId": "sr:sport:2",
+     "RegionExtId": "sr:category:103",
+     "TournamentExtId": "sr:tournament:141",
+     "ID": 3853623,
+     "Name": "Napoli Basket - JL Bourg Basket",
+     "Date": "2026-09-30T20:00:00+02:00",
+     "GameGroups": [
+      {
+       "ID": 25,
+       "Name": "Hlavní sázky",
+       "Games": [
+        {
+         "ID": "251d462178560",
+         "Name": "Vítěz (včetně prodloužení)",
+         "Details": [
+          {
+           "ID": 462178560,
+           "OddsList": [
+            {
+             "TipID": "1013361024",
+             "Name": "1",
+             "Rate": 0,
+             "State": 3
+            },
+            {
+             "TipID": "1013361025",
+             "Name": "2",
+             "Rate": 10.83,
+             "State": 2
+            }
+           ],
+           "State": 2,
+           "LineNumber": 460400
+          }
+         ],
+         "State": 2,
+         "IsDetails": false,
+         "Sequence": 0,
+         "Initial": true,
+         "SelectionVisualisationFlags": 1
+        }
+       ],
+       "Sequence": 1
+      },
+      {
+       "ID": 28,
+       "Name": "Body",
+       "Games": [
+        {
+         "ID": "253",
+         "Name": "Počet bodů (včetně prodloužení)",
+         "Details": [
+          {
+           "ID": 463062111,
+           "OddsList": [
+            {
+             "TipID": "1015295585",
+             "Name": "Pod (153.5)",
+             "Rate": 2.56,
+             "State": 2
+            },
+            {
+             "TipID": "1015295586",
+             "Name": "Nad (153.5)",
+             "Rate": 1.43,
+             "State": 2
+            }
+           ],
+           "State": 2,
+           "LineNumber": 902238
+          }
+         ],
+         "State": 2,
+         "IsDetails": false,
+         "Sequence": 0,
+         "Initial": false,
+         "SelectionVisualisationFlags": 1
+        }
+       ],
+       "Sequence": 2
+      },
+      {
+       "ID": 24,
+       "Name": "Handicap",
+       "Games": [
+        {
+         "ID": "252",
+         "Name": "Handicap (včetně prodloužení)",
+         "Details": [
+          {
+           "ID": 463055974,
+           "OddsList": [
+            {
+             "TipID": "1015315949",
+             "Name": "Tým 1 (-18.5)",
+             "Rate": 2.37,
+             "State": 2
+            },
+            {
+             "TipID": "1015315950",
+             "Name": "Tým 2 (+18.5)",
+             "Rate": 1.5,
+             "State": 2
+            }
+           ],
+           "State": 2,
+           "LineNumber": 893294
+          }
+         ],
+         "State": 2,
+         "IsDetails": false,
+         "Sequence": 0,
+         "Initial": false,
+         "SelectionVisualisationFlags": 1
+        }
+       ],
+       "Sequence": 3
+      }
+     ],
+     "CategoryPath": "Mezinárodní / Eurocup",
+     "ExternalID": "72902418",
+     "Sequence": 43
+    },
+    {
+     "CanCustomBet": false,
+     "DisciplineID": 21,
+     "CatIds": [
+      149,
+      1073
+     ],
+     "DetailsCount": 25,
+     "MatchTracker": {
+      "Id": "72902262"
+     },
+     "Results": [
+      {
+       "ID": 1,
+       "Name": "Zápas",
+       "Score": "37:32",
+       "MainResult": true,
+       "IconID": 0
+      },
+      {
+       "ID": 5,
+       "Name": "1. čtvrtina",
+       "Score": "24:17",
+       "ImportantResult": true,
+       "Flags": 64,
+       "IconID": 0
+      },
+      {
+       "ID": 6,
+       "Name": "2. čtvrtina",
+       "Score": "13:15",
+       "ImportantResult": true,
+       "Flags": 64,
+       "IconID": 0
+      }
+     ],
+     "State": 2,
+     "StateTime": 1044,
+     "StateName": "2. čtvrtina",
+     "ClockStopped": true,
+     "RemainingPeriodTime": 156,
+     "Stats": {
+      "Id": "72902262"
+     },
+     "SportExtId": "sr:sport:2",
+     "RegionExtId": "sr:category:103",
+     "TournamentExtId": "sr:tournament:141",
+     "ID": 3785232,
+     "Name": "CB 1939 Canarias - Türk Telekom",
+     "Date": "2026-09-30T21:00:00+02:00",
+     "GameGroups": [
+      {
+       "ID": 25,
+       "Name": "Hlavní sázky",
+       "Games": [
+        {
+         "ID": "251d462111541",
+         "Name": "Vítěz (včetně prodloužení)",
+         "Details": [
+          {
+           "ID": 462111541,
+           "OddsList": [
+            {
+             "TipID": "1013222186",
+             "Name": "1",
+             "Rate": 1.33,
+             "State": 2
+            },
+            {
+             "TipID": "1013222187",
+             "Name": "2",
+             "Rate": 2.94,
+             "State": 2
+            }
+           ],
+           "State": 2,
+           "LineNumber": 78051
+          }
+         ],
+         "State": 2,
+         "IsDetails": false,
+         "Sequence": 0,
+         "Initial": true,
+         "SelectionVisualisationFlags": 1
+        }
+       ],
+       "Sequence": 1
+      },
+      {
+       "ID": 28,
+       "Name": "Body",
+       "Games": [
+        {
+         "ID": "253",
+         "Name": "Počet bodů (včetně prodloužení)",
+         "Details": [
+          {
+           "ID": 462832114,
+           "OddsList": [
+            {
+             "TipID": "1014809740",
+             "Name": "Pod (157.5)",
+             "Rate": 2.48,
+             "State": 2
+            },
+            {
+             "TipID": "1014809739",
+             "Name": "Nad (157.5)",
+             "Rate": 1.46,
+             "State": 2
+            }
+           ],
+           "State": 2,
+           "LineNumber": 182029
+          }
+         ],
+         "State": 2,
+         "IsDetails": false,
+         "Sequence": 0,
+         "Initial": false,
+         "SelectionVisualisationFlags": 1
+        }
+       ],
+       "Sequence": 2
+      },
+      {
+       "ID": 24,
+       "Name": "Handicap",
+       "Games": [
+        {
+         "ID": "252",
+         "Name": "Handicap (včetně prodloužení)",
+         "Details": [
+          {
+           "ID": 462832109,
+           "OddsList": [
+            {
+             "TipID": "1014809728",
+             "Name": "Tým 1 (-9.5)",
+             "Rate": 2.92,
+             "State": 2
+            },
+            {
+             "TipID": "1014809730",
+             "Name": "Tým 2 (+9.5)",
+             "Rate": 1.34,
+             "State": 2
+            }
+           ],
+           "State": 2,
+           "LineNumber": 181967
+          }
+         ],
+         "State": 2,
+         "IsDetails": false,
+         "Sequence": 0,
+         "Initial": false,
+         "SelectionVisualisationFlags": 1
+        }
+       ],
+       "Sequence": 3
+      }
+     ],
+     "CategoryPath": "Mezinárodní / Eurocup",
+     "ExternalID": "72902262",
+     "Sequence": 43
+    },
+    {
+     "CanCustomBet": false,
+     "DisciplineID": 21,
+     "CatIds": [
+      244,
+      4384
+     ],
+     "DetailsCount": 0,
+     "MatchTracker": {
+      "Id": "74457750"
+     },
+     "Results": [
+      {
+       "ID": 1,
+       "Name": "Zápas",
+       "Score": "69:64",
+       "MainResult": true,
+       "IconID": 0
+      },
+      {
+       "ID": 5,
+       "Name": "1. čtvrtina",
+       "Score": "17:16",
+       "ImportantResult": true,
+       "Flags": 64,
+       "IconID": 0
+      },
+      {
+       "ID": 6,
+       "Name": "2. čtvrtina",
+       "Score": "18:13",
+       "ImportantResult": true,
+       "Flags": 64,
+       "IconID": 0
+      },
+      {
+       "ID": 7,
+       "Name": "3. čtvrtina",
+       "Score": "22:22",
+       "ImportantResult": true,
+       "Flags": 64,
+       "IconID": 0
+      },
+      {
+       "ID": 8,
+       "Name": "4. čtvrtina",
+       "Score": "12:13",
+       "ImportantResult": true,
+       "Flags": 64,
+       "IconID": 0
+      }
+     ],
+     "State": 3,
+     "StateTime": 2270,
+     "StateName": "4. čtvrtina",
+     "ClockStopped": false,
+     "RemainingPeriodTime": 130,
+     "SportExtId": "sr:sport:2",
+     "RegionExtId": "sr:category:292",
+     "TournamentExtId": "sr:tournament:2500",
+     "ID": 3853077,
+     "Name": "Jance Ljubljana - KK Slovenske Konjice",
+     "Date": "2026-09-30T20:15:00+02:00",
+     "GameGroups": [],
+     "CategoryPath": "Slovinsko / Pohár",
+     "ExternalID": "74457750",
+     "Sequence": 95004385
+    }
+   ],
+   "GraphicsPresentationID": 830,
+   "Sequence": 67
+  }
+ ]
+}
