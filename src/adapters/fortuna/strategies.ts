@@ -90,7 +90,17 @@ export class FortunaApi {
         scope === 'live'
           ? `${STRUCTURE}/live/sport/${id}/matches?pageSize=500&page=${page}`
           : `${STRUCTURE}/sport/${id}/matches?timeFilter=all&pageSize=500&page=${page}`;
-      const p = await this.get<FtnMatchesPage>(url, signal);
+      let p: FtnMatchesPage;
+      try {
+        p = await this.get<FtnMatchesPage>(url, signal);
+      } catch (e) {
+        // sport bez jediného (live) zápasu: 404 „Structure with id ufo:sprt:0w not found“ = prázdný výpis
+        if (page === 0 && (e as StrategyError).details?.status === 404) {
+          pages.push({ fixtures: [] });
+          break;
+        }
+        throw e;
+      }
       if (!p || !Array.isArray(p.fixtures)) throw new StrategyError(`unexpected matches response for ${sport}`, 'structure', { url });
       pages.push(p);
       if (!p.pagingInfo?.hasNext) break;
@@ -183,6 +193,7 @@ export async function collectPrematch(
   for (const s of sports) pages.push(...(await api.sportMatches(s, 'prematch', signal)));
   const fixtures = selectFixtures(pages, 'prematch', sports);
   const markets: FtnMarketsByFixture = {};
+  const dataAt = Date.now();
   for (const [sport, list] of bySport(fixtures)) Object.assign(markets, await api.overview(list, [sport], signal));
 
   if (detail && detailCache) {
@@ -215,7 +226,8 @@ export async function collectPrematch(
       markets[id] = [...(markets[id] ?? []), ...d.markets];
     }
   }
-  return { scope: 'prematch', pages, markets };
+  // pozn.: trhy z detailu můžou být až ttlMs staré (jeden fetchedAt na celý výstup to nevyjádří)
+  return { scope: 'prematch', pages, markets, dataAt };
 }
 
 /** Sběr live: výpis live zápasů (cache ttl) + 1 overview + 1 miniscoreboards požadavek. */
@@ -235,9 +247,11 @@ export async function collectLive(
   }
   const fixtures = selectFixtures(list.pages, 'live', sports);
   const allIds = fixtures.map((f) => f.id);
+  // kurzy platí k okamžiku požadavku na overview (bez CDN cache), ne ke konci celého sběru
+  const dataAt = Date.now();
   const markets: FtnMarketsByFixture = allIds.length ? await api.overview(allIds, typed ? sports : null, signal) : {};
   const scoreboards = allIds.length ? await api.miniscoreboards(allIds, signal) : [];
-  return { bundle: { scope: 'live', pages: list.pages, markets, scoreboards }, list };
+  return { bundle: { scope: 'live', pages: list.pages, markets, scoreboards, dataAt }, list };
 }
 
 export interface PollOptions {
@@ -280,7 +294,7 @@ export class FortunaPollStrategy implements Strategy {
     const events = buildEvents(bundle, req.sports);
     this.ctx.log.debug(`${this.name} ${req.scope}`, { requests: api.requests, events: events.length, ms: Date.now() - t0 });
     if (req.scope === 'prematch' && !events.length) throw new StrategyError('no prematch events parsed', 'empty');
-    return { bookmaker: 'fortuna', strategy: this.name, scope: req.scope, fetchedAt: Date.now(), events };
+    return { bookmaker: 'fortuna', strategy: this.name, scope: req.scope, fetchedAt: bundle.dataAt ?? t0, events };
   }
 
   async healthCheck(): Promise<HealthResult> {

@@ -107,6 +107,8 @@ export interface FtnMarket {
   name: string;
   marketTypeName?: string;
   syntheticGroupKey?: string;
+  /** STANDARD (vše, co mapujeme) | GOALSCORER | COMPOUND_EXT … */
+  variant?: string;
   outcomes: FtnOutcome[];
 }
 
@@ -154,6 +156,8 @@ export interface FortunaBundle {
   markets: FtnMarketsByFixture;
   scoreboards?: FtnMiniScoreboard[];
   clocks?: Record<string, FtnScoreboard>;
+  /** Kdy se začaly stahovat kurzy (overview je bez CDN cache) = fetchedAt výstupu. */
+  dataAt?: number;
 }
 
 // ---------- mapování trhů ----------
@@ -360,6 +364,8 @@ export function mapMarket(m: FtnMarket, sport: Sport, home: string, away: string
   const def = DEFS[typeId];
   if (!def || !typeId.startsWith(SPORTS_MAP[sport].code + '-')) return null;
   if (!m.outcomes?.length) return null;
+  // jiná varianta téhož typu (hráčské, kombinované, náhradní trhy) nemá stejná pravidla vyhodnocení
+  if (m.variant && m.variant !== 'STANDARD') return null;
 
   let scope: MarketScope;
   if (def.scope.length === 1) {
@@ -458,7 +464,10 @@ function pair(s: FtnSideScore | undefined): [number, number] | undefined {
   return h !== undefined && a !== undefined ? [h, a] : undefined;
 }
 
-const NOT_STARTED = /^(začne brzy|začíná)|^\d{1,2}\.\s?\d{1,2}\.\s?\d{2,4}/i;
+/** Ještě nezačalo: „Začne brzy“, „Začíná …“, „Za 3 m“ (odpočet do začátku), „29.09.26 3:00:00“. */
+const NOT_STARTED = /^(začne brzy|začíná|za\s+\d)|^\d{1,2}\.\s?\d{1,2}\.\s?\d{2,4}/i;
+/** Prodloužení („Prodl. < 5m“) – číslo periody = počet řádných period + 1. */
+const OVERTIME_PERIOD: Partial<Record<Sport, number>> = { football: 3, hockey: 4, basketball: 5 };
 
 /**
  * Při „Přestávka“ feed často pošle miniscoreboard bez overview.info (periody) – převezmeme
@@ -473,8 +482,9 @@ export function mergeMini(prev: FtnMiniScoreboard | undefined, next: FtnMiniScor
 /**
  * Herní stav z miniscoreboardu (+ volitelně plného scoreboardu z WS). Texty gameTime:
  *  fotbal „1. pol. - 14m“ (uplynulá minuta), hokej „2. tř. < 3m“, basket „3. čt. < 4m“ (zbývá méně než N min),
- *  tenis „2. set“, přestávky „Přestávka“ (poločas, mezi třetinami/čtvrtinami), „Přerušeno“/„Zápas přerušen“,
- *  „Zápas skončil“, před začátkem „Začne brzy“ / „Začíná …“.
+ *  tenis „2. set“, prodloužení „Prodl. < 5m“, přestávky „Přestávka“ (poločas, mezi třetinami/čtvrtinami),
+ *  „Přerušeno“/„Zápas přerušen“, konec „Konec“ / „Zápas skončil“, bez detailu „Probíhá“,
+ *  před začátkem „Začne brzy“ / „Začíná …“ / „Za 3 m“.
  */
 export function parseGameState(
   sport: Sport,
@@ -501,24 +511,28 @@ export function parseGameState(
   if (score) st.score = score;
 
   const isBreak = /přestávka|^poločas$|^ht$/i.test(text);
-  const finished = /skončil|ukončen/i.test(text);
+  // „Konec“ = konec zápasu (u všech sportů, periody už jsou finished), „Zápas skončil“
+  const finished = /skončil|ukončen|^konec$/i.test(text);
   const interrupted = /přerušen/i.test(text);
+  const overtime = /^prodl/i.test(text) ? OVERTIME_PERIOD[sport] : undefined;
   const lead = /^(\d{1,2})\.\s/.exec(text);
+  const running = !!lead || overtime !== undefined;
   const maxOrder = info.length ? info[info.length - 1].order : undefined;
-  const period = lead ? Number(lead[1]) : isBreak || interrupted ? maxOrder : undefined;
+  const period = lead ? Number(lead[1]) : overtime ?? (isBreak || interrupted ? maxOrder : undefined);
   if (period !== undefined && Number.isInteger(period) && period >= 1 && period <= 20) st.period = period;
 
   if (finished) st.finished = true;
   if (isBreak) st.breakFlag = true;
-  else if (lead) st.breakFlag = false;
+  else if (running) st.breakFlag = false;
   if (isBreak || interrupted || finished) st.clockRunning = false;
 
   if (sport === 'football') {
+    // „1. pol. - 14m“ = uplynulá minuta; „< 3m“ (zbývá) jen u e-sportů – uplynulý čas z toho nejde
     const m = /(\d{1,3})(?:\s*\+\s*(\d{1,2}))?\s*\.?\s*m(?:in)?\b/i.exec(text);
-    if (lead && m) st.clockSec = (Number(m[1]) + Number(m[2] ?? 0)) * 60;
+    if (running && m && !text.includes('<')) st.clockSec = (Number(m[1]) + Number(m[2] ?? 0)) * 60;
   } else if (sport === 'hockey' || sport === 'basketball') {
     const m = /<\s*(\d{1,2})\s*m/i.exec(text);
-    if (lead && m) st.periodRemainingSec = Number(m[1]) * 60;
+    if (running && m) st.periodRemainingSec = Number(m[1]) * 60;
   } else if (sport === 'tennis') {
     const games = pair(mini?.columns?.PartialScoreL1);
     if (games) st.games = games;

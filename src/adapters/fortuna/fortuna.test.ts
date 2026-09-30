@@ -14,8 +14,11 @@ import {
   type FtnMatchesPage,
   type FtnMiniScoreboard,
 } from './parse.js';
-import { FortunaLiveStore, type FtnWsMessage } from './live-store.js';
-import { parseSockJs, unescapeHeader } from './ws.js';
+import { FortunaLiveStore, TOPIC, type FtnWsMessage } from './live-store.js';
+import { FortunaWsStrategy, SNAPSHOT_REPLAY_MARGIN_MS, parseSockJs, unescapeHeader } from './ws.js';
+import { WebSocketServer, type WebSocket as WsClient } from 'ws';
+import { StrategyError, type AdapterContext } from '../types.js';
+import { FortunaApi, collectLive, type Transport } from './strategies.js';
 
 const odds = (e: RawEvent | undefined, key: string) =>
   Object.fromEntries((e?.markets.find((m) => m.key === key)?.selections ?? []).map((s) => [s.key, s.odds]));
@@ -346,5 +349,338 @@ describe('fortuna websocket (SockJS/STOMP + live store)', async () => {
     expect(c.remainingTimeInPeriod).toBe(70);
     expect(store.apply('/topic/offer/cs/fixtures', { id, operation: 'DELETE' }, 41_000)).toBe(true);
     expect(buildEvents(store.bundle(41_000)).some((e) => e.sourceId === id)).toBe(false);
+  });
+});
+
+describe('fortuna live game state – texts seen live 30. 9. 2026', () => {
+  it('„Konec“ = finished (hockey Leksand – Vasteras, 3:7)', () => {
+    const st = parseGameState('hockey', {
+      fixtureId: 'ufo:mtch:1wg-0dk',
+      columns: { TotalScore: { Home: '3', Away: '7' } },
+      overview: { gameTime: 'Konec', info: [{ order: 1, home: 0, away: 2, finished: true }, { order: 2, home: 0, away: 2, finished: true }, { order: 3, home: 3, away: 3, finished: false }] },
+    }).state;
+    expect(st).toMatchObject({ statusText: 'Konec', finished: true, clockRunning: false, score: [3, 7] });
+    expect(st?.breakFlag).toBeUndefined();
+  });
+
+  it('„Za 3 m“ = not started yet (tennis Niedner N. – Markovina D.)', () => {
+    const gs = parseGameState('tennis', { fixtureId: 'x', overview: { gameTime: 'Za 3 m' } });
+    expect(gs.started).toBe(false);
+    expect(gs.state).toEqual({ statusText: 'Za 3 m' });
+  });
+
+  it('„Prodl. < 5m“ = overtime period, running, countdown (hockey Ostersunds IK – Kalmar 4:4)', () => {
+    const st = parseGameState('hockey', {
+      fixtureId: 'x',
+      columns: { TotalScore: { Home: '4', Away: '4' } },
+      overview: { gameTime: 'Prodl. < 5m', info: [{ order: 1, home: 0, away: 1, finished: true }, { order: 2, home: 0, away: 2, finished: true }, { order: 3, home: 4, away: 1, finished: true }] },
+    }).state;
+    expect(st).toMatchObject({ period: 4, breakFlag: false, periodRemainingSec: 300, score: [4, 4] });
+  });
+
+  it('football „< 3m“ is time remaining, never elapsed time (e-sport 2×4 min text)', () => {
+    const st = parseGameState('football', { fixtureId: 'x', columns: { TotalScore: { Home: '0', Away: '0' } }, overview: { gameTime: '1. pol. < 3m', info: [{ order: 1, home: 0, away: 0 }] } }).state;
+    expect(st).toMatchObject({ period: 1, breakFlag: false });
+    expect(st?.clockSec).toBeUndefined();
+  });
+});
+
+interface RaceScenario {
+  name: string;
+  fixtureId: string;
+  page: FtnMatchesPage;
+  snapshot: { requestAtMs: number; loadAtMs: number; markets: FtnMarketsByFixture; scoreboards: FtnMiniScoreboard[] };
+  messages: [number, string, FtnWsMessage][];
+}
+
+describe('fortuna websocket: REST resync must not overwrite newer push messages (recorded 30. 9. 2026)', async () => {
+  const { scenarios } = await loadFixture<{ scenarios: RaceScenario[] }>('fortuna', 'ws-resync-race.json');
+  const T0 = 1_790_000_000_000;
+  /** Přehraje záznam (zprávy + snapshot načtený v loadAtMs) a vrátí událost v čase `until` (ms od požadavku). */
+  const replayRecording = (sc: RaceScenario, until: number, replay: boolean) => {
+    const store = new FortunaLiveStore();
+    const bundle: FortunaBundle = { scope: 'live', pages: [sc.page], markets: sc.snapshot.markets, scoreboards: sc.snapshot.scoreboards };
+    store.loadSnapshot(bundle, T0 - 60_000); // předchozí resync
+    let loaded = false;
+    const load = () => {
+      loaded = true;
+      store.loadSnapshot(bundle, T0 + sc.snapshot.loadAtMs, replay ? T0 + sc.snapshot.requestAtMs - SNAPSHOT_REPLAY_MARGIN_MS : undefined);
+    };
+    for (const [dt, dest, msg] of sc.messages) {
+      if (dt > until) break;
+      if (!loaded && dt > sc.snapshot.loadAtMs) load();
+      store.apply(dest, msg, T0 + dt);
+    }
+    if (!loaded && until >= sc.snapshot.loadAtMs) load();
+    return buildEvents(store.bundle(T0 + until)).find((e) => e.sourceId === sc.fixtureId)!;
+  };
+
+  it('tennis Koike – Zucchini: match-winner UPDATE 217 ms after the snapshot request survives the resync', () => {
+    const sc = scenarios[0];
+    expect(sc.snapshot.loadAtMs).toBeGreaterThan(363);
+    // bez přehrání: snapshot vrátil kurzy z doby před brejkem a platily by 32 s (do další zprávy)
+    const stale = replayRecording(sc, 30_000, false);
+    expect(odds(stale, 'ML|MATCH')).toEqual({ HOME: 1.12, AWAY: 4.75 });
+    expect(odds(stale, 'ML|S2')).toEqual({ HOME: 1.66, AWAY: 2.06 });
+    const fixed = replayRecording(sc, 30_000, true);
+    expect(odds(fixed, 'ML|MATCH')).toEqual({ HOME: 1.08, AWAY: 5.8 });
+    expect(odds(fixed, 'ML|S2')).toEqual({ HOME: 1.44, AWAY: 2.5 });
+  });
+
+  it('football Barinas – Barquisimeto: markets suspended (DELETE) during the snapshot download stay suspended', () => {
+    const sc = scenarios[1];
+    const at = sc.snapshot.loadAtMs + 100; // před znovuotevřením trhů (668 ms)
+    const stale = replayRecording(sc, at, false);
+    expect(odds(stale, '1X2|REG')).toEqual({ HOME: 1.95, DRAW: 3.85, AWAY: 3.25 }); // vzkříšený suspendovaný trh
+    const fixed = replayRecording(sc, at, true);
+    expect(fixed.markets.map((m) => m.key)).toEqual([]);
+    // po znovuotevření nové kurzy
+    expect(odds(replayRecording(sc, 1000, true), '1X2|REG')).toEqual({ HOME: 2, DRAW: 3.45, AWAY: 3.4 });
+  });
+});
+
+describe('fortuna websocket strategy against a local SockJS/STOMP server', () => {
+  const sc = { page: null as unknown as FtnMatchesPage, markets: {} as FtnMarketsByFixture, minis: [] as FtnMiniScoreboard[], update: null as unknown as FtnWsMessage };
+  const frame = (command: string, headers: Record<string, string>, body = '') =>
+    'a' + JSON.stringify([`${command}\n${Object.entries(headers).map(([k, v]) => `${k}:${v}`).join('\n')}\n\n${body}\u0000`]);
+  const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
+
+  async function setup(overviewDelayMs: () => number) {
+    const { scenarios } = await loadFixture<{ scenarios: RaceScenario[] }>('fortuna', 'ws-resync-race.json');
+    const tennis = scenarios[0];
+    sc.page = tennis.page;
+    sc.markets = tennis.snapshot.markets;
+    sc.minis = tennis.snapshot.scoreboards;
+    sc.update = tennis.messages.find(([dt, dest]) => dt === 217 && dest.endsWith('overview-markets'))![2];
+    const wss = new WebSocketServer({ port: 0 });
+    await new Promise<void>((r) => wss.on('listening', () => r()));
+    const clients: WsClient[] = [];
+    wss.on('connection', (c) => {
+      clients.push(c);
+      c.send('o');
+      c.on('message', (d) => {
+        const s = d.toString();
+        if (s.includes('CONNECT\\n')) c.send(frame('CONNECTED', { version: '1.2', 'heart-beat': '10000,10000' }));
+      });
+    });
+    const http = {
+      json: async (url: string) => {
+        if (url.includes('/matches')) return { status: 200, body: url.includes('ufo:sprt:0x') ? sc.page : { fixtures: [] } };
+        if (url.includes('/overview')) {
+          await sleep(overviewDelayMs());
+          return { status: 200, body: sc.markets };
+        }
+        if (url.includes('miniscoreboards')) return { status: 200, body: sc.minis };
+        throw new Error(`unexpected ${url}`);
+      },
+    };
+    const noop = () => {};
+    const log = { debug: noop, info: noop, warn: noop, error: noop, child: () => log };
+    const ctx = { bookmaker: 'fortuna', http, log } as unknown as AdapterContext;
+    const port = (wss.address() as { port: number }).port;
+    const strategy = new FortunaWsStrategy(ctx, { wsBase: `ws://127.0.0.1:${port}/stomp`, emitThrottleMs: 10, heartbeatEmitMs: 60_000, silenceMs: 600 });
+    const push = (msg: FtnWsMessage) => {
+      for (const c of clients) if (c.readyState === c.OPEN) c.send(frame('MESSAGE', { destination: '/topic/offer/cs/sport/ufo\\csprt\\c0x/overview-markets', subscription: 'sub-1', 'message-id': 'm' }, JSON.stringify(msg)));
+    };
+    return { wss, clients, strategy, push };
+  }
+
+  it('keeps a push UPDATE that arrives while the REST snapshot is loading; fetchedAt = last frame', async () => {
+    const { wss, strategy, push } = await setup(() => 200);
+    const got: RawOdds[] = [];
+    const sub = strategy.subscribe({ scope: 'live', sports: ['tennis'] }, (r) => got.push(r), () => {});
+    await sleep(80); // spojeno, snapshot se stahuje
+    const pushedAt = Date.now();
+    push(sc.update);
+    await sub;
+    const unsub = await sub;
+    await sleep(50);
+    const last = got[got.length - 1];
+    const ev = last.events.find((e) => e.sourceId === 'ufo:mtch:1wg-2n1')!;
+    expect(odds(ev, 'ML|MATCH')).toEqual({ HOME: 1.08, AWAY: 5.8 }); // ne stará 1.12 / 4.75 ze snapshotu
+    expect(last.fetchedAt).toBeGreaterThanOrEqual(pushedAt - 5);
+    expect(last.fetchedAt).toBeLessThanOrEqual(Date.now());
+    await unsub();
+    await strategy.dispose();
+    wss.close();
+  });
+
+  it('silent socket -> reconnect; nothing is emitted until the fresh snapshot is loaded', async () => {
+    let delay = 0;
+    const { wss, clients, strategy, push } = await setup(() => delay);
+    const got: { at: number; raw: RawOdds }[] = [];
+    const errors: string[] = [];
+    const unsub = await strategy.subscribe({ scope: 'live', sports: ['tennis'] }, (raw) => got.push({ at: Date.now(), raw }), (e) => errors.push(e.message));
+    expect(got.length).toBeGreaterThan(0);
+    // server přestane posílat cokoli (ani heartbeat) -> watchdog (600 ms) spojení zahodí a naváže nové
+    delay = 400;
+    await sleep(900);
+    expect(errors.some((m) => /silent/.test(m))).toBe(true);
+    const before = got.length;
+    // reconnect po 1 s; během stahování nového snapshotu přijde zpráva – emitovat se nesmí, dokud snapshot není načtený
+    while (clients.length < 2) await sleep(20);
+    await sleep(60);
+    push(sc.update);
+    await sleep(150);
+    expect(got.length).toBe(before);
+    await sleep(400);
+    expect(got.length).toBeGreaterThan(before);
+    const ev = got[got.length - 1].raw.events.find((e) => e.sourceId === 'ufo:mtch:1wg-2n1')!;
+    expect(odds(ev, 'ML|MATCH')).toEqual({ HOME: 1.08, AWAY: 5.8 });
+    await unsub();
+    await strategy.dispose();
+    wss.close();
+  }, 10_000);
+});
+
+describe('fortuna websocket: full market set per fixture (market.{id} topic, recorded 30. 9. 2026)', async () => {
+  const rec = await loadFixture<{
+    fixtureId: string;
+    page: FtnMatchesPage;
+    detail: (FtnMarket & { overview?: boolean })[];
+    messages: [number, string, FtnWsMessage][];
+  }>('fortuna', 'ws-detail-topic.json');
+  const T0 = 1_790_000_000_000;
+  const fid = rec.fixtureId; // Olympique Lyon – Chelsea FC (poločas, 0:0)
+  // overview = jen hlavní plně otevřené trhy (to, co vrací overview endpoint / overview-markets topic)
+  const overview = rec.detail.filter((m) => m.overview && m.outcomes.every((o) => o.displayType === 'OPEN'));
+  const fresh = () => {
+    const store = new FortunaLiveStore();
+    store.loadSnapshot({ scope: 'live', pages: [rec.page], markets: { [fid]: overview } }, T0);
+    return store;
+  };
+  const ev = (store: FortunaLiveStore, at: number) => buildEvents(store.bundle(T0 + at)).find((e) => e.sourceId === fid)!;
+  const upTo = (store: FortunaLiveStore, from: number, to: number) => {
+    for (const [dt, dest, msg] of rec.messages) if (dt > from && dt <= to) store.apply(dest, msg, T0 + dt);
+  };
+
+  it('detail adds AH, team totals, BTTS…; messages received before the detail was loaded are replayed', () => {
+    const store = fresh();
+    const before = ev(store, 0).markets.map((m) => m.key);
+    expect(before.some((k) => k.startsWith('AH|'))).toBe(false);
+    upTo(store, -Infinity, 22_400); // topic odebíraný, detail se stahuje – zprávy jen do journalu
+    expect(ev(store, 22_400).markets.map((m) => m.key)).toEqual(before);
+    store.loadDetail(fid, rec.detail, T0 + 22_400, T0 - 1_000);
+    const e = ev(store, 22_400);
+    const keys = e.markets.map((m) => m.key);
+    expect(keys.length).toBeGreaterThan(before.length + 8);
+    expect(keys).toEqual(expect.arrayContaining(['1X2|REG', 'DNB|REG', 'AH|REG|-0.5', 'BTTS|REG', 'OU_HOME|REG|0.5', 'OU_AWAY|REG|2.5', 'OU|REG|1']));
+    // přehraná zpráva z 22 365 ms (dorazila během stahování detailu)
+    expect(odds(e, 'AH|REG|-0.5')).toEqual({ HOME: 1.95, AWAY: 1.75 });
+    upTo(store, 22_400, 30_000);
+    const e2 = ev(store, 30_000);
+    expect(odds(e2, '1X2|REG')).toEqual({ HOME: 1.95, DRAW: 2.75, AWAY: 4.6 });
+    expect(odds(e2, 'AH|REG|-1.5')).toEqual({ HOME: 4.1, AWAY: 1.2 }); // trh přibyl zprávou (v REST detailu nebyl)
+    // „- 2.5 = 1 (SUSPENDED)“: výběr bez kurzu vypadne, otevřený OVER zůstane
+    expect(e2.markets.find((m) => m.key === 'OU_AWAY|REG|2.5')?.selections).toEqual([{ key: 'OVER', odds: 16, rawName: '+ 2.5' }]);
+    const v = validateRawOdds(raw([e2], 'live', 'websocket'), { minEvents: 1, maxAgeMs: 60_000 });
+    expect(v.errors).toEqual([]);
+  });
+
+  it('suspended outcome with a real price is open=false; DELETE removes the market', () => {
+    const store = fresh();
+    store.loadDetail(fid, rec.detail, T0, T0 - 1_000);
+    const m1x2 = rec.detail.find((m) => m.marketTypeId === 'ufo:mtyp:00-00')!;
+    const locked = { ...m1x2, outcomes: m1x2.outcomes.map((o) => (o.name === '1' ? { ...o, displayType: 'SUSPENDED' } : o)) };
+    store.apply(TOPIC.detail(fid), { data: locked, operation: 'UPDATE', type: 'MARKET' }, T0 + 1_000);
+    const mk = ev(store, 1_000).markets.find((m) => m.key === '1X2|REG')!;
+    expect(mk.selections.find((x) => x.key === 'HOME')?.open).toBe(false);
+    store.apply(TOPIC.detail(fid), { id: m1x2.id, operation: 'DELETE', type: 'MARKET' }, T0 + 2_000);
+    expect(ev(store, 2_000).markets.some((m) => m.key === '1X2|REG')).toBe(false);
+  });
+
+  it('silent market.{id} topic: overview brings a change the detail never gets -> fall back to overview', () => {
+    const store = fresh();
+    store.loadDetail(fid, rec.detail, T0, T0 - 1_000);
+    const m1x2 = overview.find((m) => m.marketTypeId === 'ufo:mtyp:00-00')!;
+    const moved = { ...m1x2, outcomes: m1x2.outcomes.map((o) => ({ ...o, odds: o.name === '1' ? 2.4 : o.odds })) };
+    store.apply(TOPIC.markets('ufo:sprt:00'), { data: moved, operation: 'UPDATE', type: 'MARKET' }, T0 + 5_000);
+    expect(store.dropSilentDetails(T0 + 6_000)).toEqual([]); // ještě v toleranci
+    expect(store.dropSilentDetails(T0 + 8_500)).toEqual([fid]);
+    const e = ev(store, 8_500);
+    expect(odds(e, '1X2|REG').HOME).toBe(2.4);
+    expect(e.markets.some((m) => m.key.startsWith('AH|'))).toBe(false);
+    // detail, který stejnou změnu doručí, se nezahazuje
+    const s2 = fresh();
+    s2.loadDetail(fid, rec.detail, T0, T0 - 1_000);
+    s2.apply(TOPIC.markets('ufo:sprt:00'), { data: moved, operation: 'UPDATE', type: 'MARKET' }, T0 + 5_000);
+    s2.apply(TOPIC.detail(fid), { data: moved, operation: 'UPDATE', type: 'MARKET' }, T0 + 5_020);
+    expect(s2.dropSilentDetails(T0 + 9_000)).toEqual([]);
+  });
+});
+
+describe('fortuna websocket strategy: market.{id} subscription + REST detail (local server)', () => {
+  it('subscribes the fixture topic, downloads the detail and emits the full market set', async () => {
+    const rec = await loadFixture<{ fixtureId: string; page: FtnMatchesPage; detail: (FtnMarket & { overview?: boolean })[] }>('fortuna', 'ws-detail-topic.json');
+    const fid = rec.fixtureId;
+    const overview = rec.detail.filter((m) => m.overview && m.outcomes.every((o) => o.displayType === 'OPEN'));
+    const wss = new WebSocketServer({ port: 0 });
+    await new Promise<void>((r) => wss.on('listening', () => r()));
+    const events: string[] = [];
+    wss.on('connection', (c) => {
+      c.send('o');
+      c.on('message', (d) => {
+        const txt = d.toString();
+        if (txt.includes('CONNECT\\n')) c.send('a' + JSON.stringify(['CONNECTED\nversion:1.2\nheart-beat:10000,10000\n\n\u0000']));
+        const sub = /destination:([^\\]+)\\n/.exec(txt);
+        if (txt.includes('SUBSCRIBE') && sub) events.push(`sub ${sub[1]}`);
+      });
+    });
+    const http = {
+      json: async (url: string) => {
+        if (url.includes('/matches')) return { status: 200, body: url.includes('ufo:sprt:00') ? rec.page : { fixtures: [] } };
+        if (url.includes('/overview')) return { status: 200, body: { [fid]: overview } };
+        if (url.includes('miniscoreboards')) return { status: 200, body: [] };
+        if (url.includes(`/fixture/${encodeURIComponent(fid)}/markets`)) {
+          events.push('detail');
+          return { status: 200, body: rec.detail };
+        }
+        throw new Error(`unexpected ${url}`);
+      },
+    };
+    const noop = () => {};
+    const log = { debug: noop, info: noop, warn: noop, error: noop, child: () => log };
+    const ctx = { bookmaker: 'fortuna', http, log } as unknown as AdapterContext;
+    const port = (wss.address() as { port: number }).port;
+    const strategy = new FortunaWsStrategy(ctx, { wsBase: `ws://127.0.0.1:${port}/stomp`, emitThrottleMs: 10, detailGapMs: 10 });
+    const got: RawOdds[] = [];
+    const unsub = await strategy.subscribe({ scope: 'live', sports: ['football'] }, (r) => got.push(r), () => {});
+    for (let i = 0; i < 50 && !events.includes('detail'); i++) await new Promise((r) => setTimeout(r, 20));
+    await new Promise((r) => setTimeout(r, 60));
+    expect(events).toContain(`sub /topic/offer/cs/market.${fid}`);
+    expect(events).toContain('detail');
+    const e = got[got.length - 1].events.find((x) => x.sourceId === fid)!;
+    expect(e.markets.map((m) => m.key)).toEqual(expect.arrayContaining(['AH|REG|-0.5', 'BTTS|REG', 'OU_HOME|REG|0.5']));
+    await unsub();
+    await strategy.dispose();
+    wss.close();
+  });
+});
+
+describe('fortuna live listing: sport without live fixtures', () => {
+  it('HTTP 404 „Structure with id ufo:sprt:0w not found“ is an empty listing, not a failed fetch', async () => {
+    const pages = await loadFixture<FtnMatchesPage[]>('fortuna', 'live-matches.json');
+    const tennis = pages.find((p) => p.fixtures?.some((f) => f.sportId === 'ufo:sprt:0x'))!;
+    const urls: string[] = [];
+    const t: Transport = {
+      kind: 'http',
+      get: async <T,>(url: string) => {
+        urls.push(url);
+        if (url.includes('/live/sport/ufo:sprt:0x/')) return tennis as T;
+        if (url.includes('/live/sport/')) {
+          throw new StrategyError(`HTTP 404 ${url}`, 'http', { status: 404, sample: 'Structure with id ufo:sprt:0w not found' });
+        }
+        if (url.includes('/overview')) return {} as T;
+        return [] as T;
+      },
+    };
+    const { bundle } = await collectLive(new FortunaApi(t), ['football', 'hockey', 'basketball', 'tennis'], null, 0, false);
+    const events = buildEvents(bundle);
+    expect(events.length).toBeGreaterThan(0);
+    expect(new Set(events.map((e) => e.sport))).toEqual(new Set(['tennis']));
+    expect(urls.some((u) => u.includes('/overview'))).toBe(true);
+    // jiná chyba než 404 se dál propaguje
+    const t500: Transport = { kind: 'http', get: async () => { throw new StrategyError('HTTP 500 x', 'http', { status: 500 }); } };
+    await expect(collectLive(new FortunaApi(t500), ['hockey'], null, 0, false)).rejects.toThrow('HTTP 500');
   });
 });

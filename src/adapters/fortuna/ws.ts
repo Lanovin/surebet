@@ -1,5 +1,10 @@
 // Fortuna – level 3: STOMP 1.2 přes SockJS websocket (wss://ws-offer.ifortuna.cz/stomp/{server}/{session}/websocket).
 // Stav = REST snapshot (výpis live + výchozí overview + miniscoreboards) + push zprávy; periodický resync.
+// Po snapshotu se přehrají WS zprávy z doby jeho stahování (jinak by snapshot přepsal novější stav),
+// po výpadku spojení se nic neemituje, dokud nedoběhne nový snapshot, a fetchedAt = čas posledního
+// rámce ze serveru (zprávy nebo heartbeatu á 10 s) – tichý (mrtvý) socket se po silenceMs zahodí.
+// Plné sady trhů (AH, další linie OU, poločasy/třetiny…) pro až maxDetailSubs live zápasů: odběr
+// market.{id} (jako stránka zápasu) + REST detail načtený až po přihlášení topicu (s přehráním zpráv).
 import WebSocket from 'ws';
 import type { HealthResult, RawOdds, Sport } from '../../core/types.js';
 import { SPORTS } from '../../core/types.js';
@@ -57,8 +62,31 @@ interface Options {
   heartbeatEmitMs: number;
   idleCloseMs: number;
   maxClockSubs: number;
+  /** Bez jediného rámce ze serveru (STOMP heartbeat chodí á 10 s) déle než tohle = mrtvé spojení. */
+  silenceMs: number;
+  /** Základ URL websocketu (testy podstrkují lokální server). */
+  wsBase: string;
+  /** Kolika live zápasům odebírat plnou sadu trhů (0 = jen overview). */
+  maxDetailSubs: number;
+  /** Jak často detail zápasu znovu načíst z REST (pojistka k push zprávám). */
+  detailRefreshMs: number;
+  /** Rozestup REST požadavků na detail. */
+  detailGapMs: number;
 }
-const DEFAULTS: Options = { resyncMs: 30_000, emitThrottleMs: 300, heartbeatEmitMs: 5_000, idleCloseMs: 90_000, maxClockSubs: 80 };
+const DEFAULTS: Options = {
+  resyncMs: 30_000,
+  emitThrottleMs: 300,
+  heartbeatEmitMs: 5_000,
+  idleCloseMs: 90_000,
+  maxClockSubs: 80,
+  silenceMs: 20_000,
+  wsBase: WS_BASE,
+  maxDetailSubs: 40,
+  detailRefreshMs: 5 * 60_000,
+  detailGapMs: 400,
+};
+/** O kolik dřív než start snapshotu přehrávat zprávy: výpis zápasů je z CDN (s-maxage=5) až ~5 s starý. */
+export const SNAPSHOT_REPLAY_MARGIN_MS = 8_000;
 
 export class FortunaWsStrategy implements Strategy {
   readonly name = 'websocket';
@@ -81,9 +109,19 @@ export class FortunaWsStrategy implements Strategy {
   private stopped = true;
   /** STOMP session je navázaná (CONNECTED) – jen tehdy má smysl emitovat stav. */
   private online = false;
+  /** Stav je po (re)connectu srovnaný REST snapshotem – do té doby může chybět cokoli z výpadku. */
+  private synced = false;
+  /** Čas posledního rámce ze serveru (zpráva i heartbeat) = do kdy je stav prokazatelně aktuální. */
+  private lastFrameAt = 0;
+  /** Začátek stahování posledního REST snapshotu (kurzy v něm jsou nejméně tak čerstvé). */
+  private snapshotDataAt = 0;
   private api: FortunaApi;
   /** Statistika pro dokumentaci/logy. */
-  readonly stats = { messages: 0, reconnects: 0, snapshots: 0, restRequests: 0 };
+  readonly stats = { messages: 0, reconnects: 0, snapshots: 0, restRequests: 0, details: 0, silentDetails: 0 };
+  /** Kdy byl detail zápasu naposledy načten z REST. */
+  private detailLoadedAt = new Map<string, number>();
+  private detailQueue: string[] = [];
+  private detailWorker?: Promise<void>;
 
   constructor(
     private ctx: AdapterContext,
@@ -99,7 +137,8 @@ export class FortunaWsStrategy implements Strategy {
     if (this.connected) return this.connected;
     const server = String(Math.floor(Math.random() * 1000)).padStart(3, '0');
     const session = Math.random().toString(36).slice(2, 10).padEnd(8, 'x');
-    const url = `${WS_BASE}/${server}/${session}/websocket`;
+    const url = `${this.opts.wsBase}/${server}/${session}/websocket`;
+    this.synced = false;
     this.connected = new Promise<void>((resolve, reject) => {
       const ws = new WebSocket(url, { headers: { origin: SITE, 'user-agent': DEFAULT_UA }, handshakeTimeout: 15_000 });
       this.ws = ws;
@@ -110,6 +149,7 @@ export class FortunaWsStrategy implements Strategy {
       };
       const timeout = setTimeout(() => fail(new StrategyError('websocket connect timeout', 'timeout')), 20_000);
       ws.on('message', (data) => {
+        if (this.ws === ws) this.lastFrameAt = Date.now();
         let parsed: ReturnType<typeof parseSockJs>;
         try {
           parsed = parseSockJs(data.toString());
@@ -142,6 +182,11 @@ export class FortunaWsStrategy implements Strategy {
 
   private onDisconnect(err: Error): void {
     this.online = false;
+    this.synced = false;
+    // zprávy market.{id} z výpadku chybí -> do nového načtení detailů platí jen overview
+    this.store.dropDetail();
+    this.detailLoadedAt.clear();
+    this.detailQueue = [];
     if (!this.ws) return;
     const ws = this.ws;
     this.ws = undefined;
@@ -193,8 +238,58 @@ export class FortunaWsStrategy implements Strategy {
     const dest = f.headers.destination ?? '';
     const beforeFixtures = dest === TOPIC.fixtures ? this.store.liveFixtureIds([...SPORTS]).length : 0;
     if (this.store.apply(dest, body)) {
-      if (dest === TOPIC.fixtures && this.store.liveFixtureIds([...SPORTS]).length !== beforeFixtures) this.syncClockSubs();
+      if (dest === TOPIC.fixtures && this.store.liveFixtureIds([...SPORTS]).length !== beforeFixtures) {
+        this.syncClockSubs();
+        this.syncDetailSubs();
+      }
       this.scheduleEmit();
+    }
+  }
+
+  /** Odběr plných sad trhů (market.{id}) pro live zápasy; nové/zastaralé detaily do fronty REST. */
+  private syncDetailSubs(): void {
+    const prefix = TOPIC.detail('');
+    const wanted = new Set(this.opts.maxDetailSubs > 0 ? this.store.detailCandidates([...SPORTS]).slice(0, this.opts.maxDetailSubs) : []);
+    for (const d of [...this.subs.keys()]) {
+      if (!d.startsWith(prefix) || wanted.has(d.slice(prefix.length))) continue;
+      this.unsubscribe_(d);
+      this.store.dropDetail(d.slice(prefix.length));
+      this.detailLoadedAt.delete(d.slice(prefix.length));
+    }
+    const now = Date.now();
+    for (const id of wanted) {
+      // topic přihlásit před stažením detailu – zprávy z doby stahování se pak přehrají
+      this.subscribe_(TOPIC.detail(id));
+      if (!this.store.hasDetail(id) || now - (this.detailLoadedAt.get(id) ?? 0) > this.opts.detailRefreshMs) this.enqueueDetail(id);
+    }
+  }
+
+  private enqueueDetail(id: string): void {
+    if (!this.detailQueue.includes(id)) this.detailQueue.push(id);
+    if (!this.detailWorker) this.detailWorker = this.runDetailQueue().finally(() => (this.detailWorker = undefined));
+  }
+
+  private async runDetailQueue(): Promise<void> {
+    while (this.detailQueue.length && !this.stopped && this.ws) {
+      const id = this.detailQueue.shift()!;
+      const dest = TOPIC.detail(id);
+      if (!this.subs.has(dest)) continue;
+      const ws = this.ws;
+      const startedAt = Date.now();
+      try {
+        const markets = await this.api.fixtureMarkets(id);
+        this.stats.restRequests++;
+        // spojení mezitím spadlo / odběr zrušen -> zprávy mohou chybět, detail nepoužít
+        if (ws === this.ws && this.online && this.subs.has(dest) && Array.isArray(markets)) {
+          this.store.loadDetail(id, markets, Date.now(), startedAt - 1_000);
+          this.detailLoadedAt.set(id, Date.now());
+          this.stats.details++;
+          this.scheduleEmit();
+        }
+      } catch (e) {
+        this.ctx.log.debug('fortuna ws detail failed', { id, error: (e as Error).message });
+      }
+      await new Promise((r) => setTimeout(r, this.opts.detailGapMs));
     }
   }
 
@@ -225,12 +320,19 @@ export class FortunaWsStrategy implements Strategy {
     if (this.resyncing) return this.resyncing;
     this.resyncing = (async () => {
       const before = this.api.requests;
+      const startedAt = Date.now();
+      const ws = this.ws;
       // výchozí (netypované) overview = přesně ta sada trhů, kterou web zobrazuje a WS aktualizuje
       const { bundle } = await collectLive(this.api, [...SPORTS], null, 0, false);
       this.stats.restRequests += this.api.requests - before;
       this.stats.snapshots++;
-      this.store.loadSnapshot(bundle);
+      // zprávy z doby stahování (a z doby, kterou pokrývá CDN cache výpisu) se po snapshotu přehrají
+      this.store.loadSnapshot(bundle, Date.now(), startedAt - SNAPSHOT_REPLAY_MARGIN_MS);
+      this.snapshotDataAt = bundle.dataAt ?? startedAt;
+      // srovnáno jen tehdy, když spojení během stahování nespadlo (jinak chybí zprávy z výpadku)
+      if (ws && ws === this.ws && this.online) this.synced = true;
       this.syncClockSubs();
+      this.syncDetailSubs();
       this.scheduleEmit();
     })().finally(() => {
       this.resyncing = undefined;
@@ -254,8 +356,23 @@ export class FortunaWsStrategy implements Strategy {
         this.send(JSON.stringify(['\n'])); // STOMP heartbeat klienta
         if (!this.listeners.size && Date.now() - this.lastUse > this.opts.idleCloseMs) void this.stop();
       });
+      every(Math.min(5_000, this.opts.silenceMs / 2), () => {
+        // polootevřené TCP spojení nepošle close – bez rámců (ani heartbeatu) je stav neověřitelný
+        if (this.ws && this.online && Date.now() - this.lastFrameAt > this.opts.silenceMs)
+          this.onDisconnect(new StrategyError(`websocket silent for ${Date.now() - this.lastFrameAt} ms`, 'timeout'));
+      });
       every(1000, () => {
-        if (this.listeners.size && this.online && Date.now() - this.lastEmitAt >= this.opts.heartbeatEmitMs) this.emit(true);
+        // detail, jehož market.{id} nedoručil změnu, kterou overview už má -> zpět na overview + nové načtení
+        const silent = this.store.dropSilentDetails();
+        if (silent.length) {
+          this.stats.silentDetails += silent.length;
+          for (const id of silent) {
+            this.detailLoadedAt.delete(id);
+            this.enqueueDetail(id);
+          }
+          this.scheduleEmit();
+        }
+        if (this.listeners.size && this.online && this.synced && Date.now() - this.lastEmitAt >= this.opts.heartbeatEmitMs) this.emit(true);
       });
     }
     if (!this.store.warm || !this.ws) await this.bootstrap();
@@ -263,8 +380,11 @@ export class FortunaWsStrategy implements Strategy {
   }
 
   private snapshot(sports: Sport[]): RawOdds {
-    const events = buildEvents(this.store.bundle(), sports);
-    return { bookmaker: 'fortuna', strategy: this.name, scope: 'live', fetchedAt: Date.now(), events };
+    const now = Date.now();
+    const events = buildEvents(this.store.bundle(now), sports);
+    // push: stav platí k poslednímu rámci ze serveru (ne k okamžiku emitu – mezi rámci nic neověřujeme)
+    const fetchedAt = Math.min(now, Math.max(this.lastFrameAt, this.snapshotDataAt)) || now;
+    return { bookmaker: 'fortuna', strategy: this.name, scope: 'live', fetchedAt, events };
   }
 
   private scheduleEmit(): void {
@@ -278,7 +398,7 @@ export class FortunaWsStrategy implements Strategy {
   }
 
   private emit(force: boolean): void {
-    if (!this.online || !this.store.warm) return;
+    if (!this.online || !this.synced || !this.store.warm) return;
     if (!force && this.store.version === this.lastEmitVersion) return;
     this.lastEmitVersion = this.store.version;
     this.lastEmitAt = Date.now();
@@ -296,6 +416,8 @@ export class FortunaWsStrategy implements Strategy {
   async fetch(req: FetchRequest): Promise<RawOdds> {
     if (req.scope !== 'live') throw new StrategyError('websocket strategy is live-only', 'other');
     await this.ensureRunning();
+    if (!this.synced) await this.resync();
+    if (!this.synced) throw new StrategyError('websocket state not synced after reconnect', 'other');
     return this.snapshot(req.sports);
   }
 
@@ -329,6 +451,8 @@ export class FortunaWsStrategy implements Strategy {
   async stop(): Promise<void> {
     this.stopped = true;
     this.online = false;
+    this.synced = false;
+    this.detailQueue = [];
     for (const t of this.timers) clearInterval(t);
     this.timers = [];
     clearTimeout(this.emitTimer);

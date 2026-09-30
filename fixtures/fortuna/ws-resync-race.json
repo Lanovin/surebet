@@ -1,0 +1,1258 @@
+{
+ "note": "Skutečné záznamy 30. 9. 2026: REST snapshot (overview v čase requestAtMs, načtený v loadAtMs) + WS zprávy téhož zápasu (čas v ms relativně k požadavku). WS zprávy mezi requestAtMs a loadAtMs snapshot přepíše, pokud se po načtení nepřehrají.",
+ "scenarios": [
+  {
+   "name": "tenis: UPDATE vítěze zápasu během stahování snapshotu",
+   "fixtureId": "ufo:mtch:1wg-2n1",
+   "capturedAt": "2026-09-30T19:31:00.622Z",
+   "page": {
+    "fixtures": [
+     {
+      "id": "ufo:mtch:1wg-2n1",
+      "sportId": "ufo:sprt:0x",
+      "categoryId": "ufo:ctgr:0x-02",
+      "tournamentId": "ufo:tour:0x-0hx",
+      "kind": "LIVE",
+      "name": "Koike E. - Zucchini A.",
+      "sportSeoName": "tenis",
+      "categorySeoName": "itf-zeny",
+      "tournamentSeoName": "z-itf-templeton-dvouhra",
+      "seoName": "koike-e-zucchini-a",
+      "participants": [
+       {
+        "id": "ufo:plyr:0x-00gy7",
+        "name": "Zucchini A.",
+        "type": "AWAY"
+       },
+       {
+        "id": "ufo:plyr:0x-00zgq",
+        "name": "Koike E.",
+        "type": "HOME"
+       }
+      ],
+      "startDatetime": 1790791680000,
+      "marketTypeIds": [
+       "ufo:mtyp:0x-01",
+       "ufo:mtyp:0x-0e",
+       "ufo:mtyp:0x-0g",
+       "ufo:mtyp:0x-1s"
+      ],
+      "hasMarkets": true,
+      "status": "ACTIVE"
+     }
+    ],
+    "tournaments": [
+     {
+      "id": "ufo:tour:0x-0hx",
+      "name": "Ž - ITF Templeton, dvouhra"
+     }
+    ],
+    "categories": [
+     {
+      "id": "ufo:ctgr:0x-02",
+      "name": "ITF Ženy"
+     }
+    ]
+   },
+   "snapshot": {
+    "requestAtMs": 0,
+    "loadAtMs": 404,
+    "markets": {
+     "ufo:mtch:1wg-2n1": [
+      {
+       "id": "ufo:mkt:1wg-2n1-000",
+       "fixtureId": "ufo:mtch:1wg-2n1",
+       "marketTypeId": "ufo:mtyp:0x-01",
+       "kind": "LIVE",
+       "variant": "STANDARD",
+       "specifiers": null,
+       "name": "Vítěz zápasu",
+       "marketTypeName": "Vítěz zápasu",
+       "syntheticGroupKey": "match",
+       "overview": true,
+       "outcomes": [
+        {
+         "id": "ufo:opt:1wg-2n1-000-01",
+         "name": "2",
+         "odds": 4.75,
+         "displayType": "OPEN"
+        },
+        {
+         "id": "ufo:opt:1wg-2n1-000-00",
+         "name": "1",
+         "odds": 1.12,
+         "displayType": "OPEN"
+        }
+       ]
+      },
+      {
+       "id": "ufo:mkt:1wg-2n1-04m",
+       "fixtureId": "ufo:mtch:1wg-2n1",
+       "marketTypeId": "ufo:mtyp:0x-0e",
+       "kind": "LIVE",
+       "variant": "STANDARD",
+       "specifiers": null,
+       "name": "Vítěz 2.setu",
+       "marketTypeName": "Vítěz 2. setu",
+       "syntheticGroupKey": "2nd_set",
+       "overview": true,
+       "outcomes": [
+        {
+         "id": "ufo:opt:1wg-2n1-04m-01",
+         "name": "1",
+         "odds": 1.66,
+         "displayType": "OPEN"
+        },
+        {
+         "id": "ufo:opt:1wg-2n1-04m-00",
+         "name": "2",
+         "odds": 2.06,
+         "displayType": "OPEN"
+        }
+       ]
+      },
+      {
+       "id": "ufo:mkt:1wg-2n1-05u",
+       "fixtureId": "ufo:mtch:1wg-2n1",
+       "marketTypeId": "ufo:mtyp:0x-1s",
+       "kind": "LIVE",
+       "variant": "STANDARD",
+       "specifiers": null,
+       "name": "Vítěz 5. gamu v 2. setu",
+       "marketTypeName": "Vítěz 5. gamu v 2. setu",
+       "syntheticGroupKey": "who_wins_5th_game_in_2nd_set",
+       "overview": true,
+       "outcomes": [
+        {
+         "id": "ufo:opt:1wg-2n1-05u-00",
+         "name": "1",
+         "odds": 1.23,
+         "displayType": "OPEN"
+        },
+        {
+         "id": "ufo:opt:1wg-2n1-05u-01",
+         "name": "2",
+         "odds": 3.4,
+         "displayType": "OPEN"
+        }
+       ]
+      }
+     ]
+    },
+    "scoreboards": [
+     {
+      "type": "tennis",
+      "fixtureId": "ufo:mtch:1wg-2n1",
+      "servingCompetitor": "Away",
+      "columns": {
+       "TotalScore": {
+        "Home": "1",
+        "Away": "0"
+       },
+       "PartialScoreL1": {
+        "Home": "1",
+        "Away": "2"
+       },
+       "PartialScoreL2": {
+        "Home": "40",
+        "Away": "30"
+       }
+      },
+      "overview": {
+       "gameTime": "2. set",
+       "info": [
+        {
+         "order": 1,
+         "home": 6,
+         "away": 2,
+         "finished": true
+        },
+        {
+         "order": 2,
+         "home": 1,
+         "away": 2,
+         "finished": false
+        }
+       ]
+      },
+      "scheduledStartTime": 1790792820000,
+      "mode": "Column"
+     }
+    ]
+   },
+   "messages": [
+    [
+     -15079,
+     "/topic/offer/v2/cs/miniscoreboard",
+     {
+      "id": "ufo:mtch:1wg-2n1",
+      "data": {
+       "type": "tennis",
+       "fixtureId": "ufo:mtch:1wg-2n1",
+       "servingCompetitor": "Away",
+       "columns": {
+        "TotalScore": {
+         "Home": "1",
+         "Away": "0"
+        },
+        "PartialScoreL1": {
+         "Home": "1",
+         "Away": "2"
+        },
+        "PartialScoreL2": {
+         "Home": "30",
+         "Away": "30"
+        }
+       },
+       "overview": {
+        "gameTime": "2. set",
+        "info": [
+         {
+          "order": 1,
+          "home": 6,
+          "away": 2,
+          "finished": true
+         },
+         {
+          "order": 2,
+          "home": 1,
+          "away": 2,
+          "finished": false
+         }
+        ]
+       },
+       "scheduledStartTime": 1790792820000,
+       "mode": "Column"
+      },
+      "created": 1790796645520,
+      "operation": "UPDATE"
+     }
+    ],
+    [
+     -14902,
+     "/topic/offer/cs/sport/ufo:sprt:0x/overview-markets",
+     {
+      "data": {
+       "id": "ufo:mkt:1wg-2n1-05u",
+       "fixtureId": "ufo:mtch:1wg-2n1",
+       "marketTypeId": "ufo:mtyp:0x-1s",
+       "kind": "LIVE",
+       "variant": "STANDARD",
+       "specifiers": null,
+       "name": "Vítěz 5. gamu v 2. setu",
+       "marketTypeName": "Vítěz 5. gamu v 2. setu",
+       "syntheticGroupKey": "who_wins_5th_game_in_2nd_set",
+       "outcomes": [
+        {
+         "id": "ufo:opt:1wg-2n1-05u-00",
+         "name": "1",
+         "odds": 1.23,
+         "displayType": "OPEN"
+        },
+        {
+         "id": "ufo:opt:1wg-2n1-05u-01",
+         "name": "2",
+         "odds": 3.4,
+         "displayType": "OPEN"
+        }
+       ],
+       "overview": true
+      },
+      "id": "ufo:mkt:1wg-2n1-05u",
+      "operation": "UPDATE",
+      "type": "MARKET"
+     }
+    ],
+    [
+     -14901,
+     "/topic/offer/cs/sport/ufo:sprt:0x/overview-markets",
+     {
+      "id": "ufo:mkt:1wg-2n1-05j",
+      "operation": "DELETE",
+      "type": "MARKET"
+     }
+    ],
+    [
+     -10475,
+     "/topic/offer/v2/cs/miniscoreboard",
+     {
+      "id": "ufo:mtch:1wg-2n1",
+      "data": {
+       "type": "tennis",
+       "fixtureId": "ufo:mtch:1wg-2n1",
+       "servingCompetitor": "Away",
+       "columns": {
+        "TotalScore": {
+         "Home": "1",
+         "Away": "0"
+        },
+        "PartialScoreL1": {
+         "Home": "1",
+         "Away": "2"
+        },
+        "PartialScoreL2": {
+         "Home": "30",
+         "Away": "30"
+        }
+       },
+       "overview": {
+        "gameTime": "2. set",
+        "info": [
+         {
+          "order": 1,
+          "home": 6,
+          "away": 2,
+          "finished": true
+         },
+         {
+          "order": 2,
+          "home": 1,
+          "away": 2,
+          "finished": false
+         }
+        ]
+       },
+       "scheduledStartTime": 1790792820000,
+       "mode": "Column"
+      },
+      "created": 1790796650133,
+      "operation": "UPDATE"
+     }
+    ],
+    [
+     217,
+     "/topic/offer/cs/sport/ufo:sprt:0x/overview-markets",
+     {
+      "data": {
+       "id": "ufo:mkt:1wg-2n1-000",
+       "fixtureId": "ufo:mtch:1wg-2n1",
+       "marketTypeId": "ufo:mtyp:0x-01",
+       "kind": "LIVE",
+       "variant": "STANDARD",
+       "specifiers": null,
+       "name": "Vítěz zápasu",
+       "marketTypeName": "Vítěz zápasu",
+       "syntheticGroupKey": "match",
+       "outcomes": [
+        {
+         "id": "ufo:opt:1wg-2n1-000-01",
+         "name": "2",
+         "odds": 5.8,
+         "displayType": "OPEN"
+        },
+        {
+         "id": "ufo:opt:1wg-2n1-000-00",
+         "name": "1",
+         "odds": 1.08,
+         "displayType": "OPEN"
+        }
+       ],
+       "overview": true
+      },
+      "id": "ufo:mkt:1wg-2n1-000",
+      "operation": "UPDATE",
+      "type": "MARKET"
+     }
+    ],
+    [
+     218,
+     "/topic/offer/v2/cs/miniscoreboard",
+     {
+      "id": "ufo:mtch:1wg-2n1",
+      "data": {
+       "type": "tennis",
+       "fixtureId": "ufo:mtch:1wg-2n1",
+       "servingCompetitor": "Away",
+       "columns": {
+        "TotalScore": {
+         "Home": "1",
+         "Away": "0"
+        },
+        "PartialScoreL1": {
+         "Home": "1",
+         "Away": "2"
+        },
+        "PartialScoreL2": {
+         "Home": "40",
+         "Away": "30"
+        }
+       },
+       "overview": {
+        "gameTime": "2. set",
+        "info": [
+         {
+          "order": 1,
+          "home": 6,
+          "away": 2,
+          "finished": true
+         },
+         {
+          "order": 2,
+          "home": 1,
+          "away": 2,
+          "finished": false
+         }
+        ]
+       },
+       "scheduledStartTime": 1790792820000,
+       "mode": "Column"
+      },
+      "created": 1790796660800,
+      "operation": "UPDATE"
+     }
+    ],
+    [
+     346,
+     "/topic/offer/cs/sport/ufo:sprt:0x/overview-markets",
+     {
+      "data": {
+       "id": "ufo:mkt:1wg-2n1-05j",
+       "fixtureId": "ufo:mtch:1wg-2n1",
+       "marketTypeId": "ufo:mtyp:0x-1s",
+       "kind": "LIVE",
+       "variant": "STANDARD",
+       "specifiers": null,
+       "name": "Vítěz 4. gamu v 2. setu",
+       "marketTypeName": "Vítěz 4. gamu v 2. setu",
+       "syntheticGroupKey": "who_wins_4th_game_in_2nd_set",
+       "outcomes": [
+        {
+         "id": "ufo:opt:1wg-2n1-05j-01",
+         "name": "1",
+         "odds": 1.32,
+         "displayType": "OPEN"
+        },
+        {
+         "id": "ufo:opt:1wg-2n1-05j-00",
+         "name": "2",
+         "odds": 2.87,
+         "displayType": "OPEN"
+        }
+       ],
+       "overview": true
+      },
+      "id": "ufo:mkt:1wg-2n1-05j",
+      "operation": "UPDATE",
+      "type": "MARKET"
+     }
+    ],
+    [
+     347,
+     "/topic/offer/cs/sport/ufo:sprt:0x/overview-markets",
+     {
+      "id": "ufo:mkt:1wg-2n1-05u",
+      "operation": "DELETE",
+      "type": "MARKET"
+     }
+    ],
+    [
+     363,
+     "/topic/offer/cs/sport/ufo:sprt:0x/overview-markets",
+     {
+      "data": {
+       "id": "ufo:mkt:1wg-2n1-04m",
+       "fixtureId": "ufo:mtch:1wg-2n1",
+       "marketTypeId": "ufo:mtyp:0x-0e",
+       "kind": "LIVE",
+       "variant": "STANDARD",
+       "specifiers": null,
+       "name": "Vítěz 2.setu",
+       "marketTypeName": "Vítěz 2. setu",
+       "syntheticGroupKey": "2nd_set",
+       "outcomes": [
+        {
+         "id": "ufo:opt:1wg-2n1-04m-01",
+         "name": "1",
+         "odds": 1.44,
+         "displayType": "OPEN"
+        },
+        {
+         "id": "ufo:opt:1wg-2n1-04m-00",
+         "name": "2",
+         "odds": 2.5,
+         "displayType": "OPEN"
+        }
+       ],
+       "overview": true
+      },
+      "id": "ufo:mkt:1wg-2n1-04m",
+      "operation": "UPDATE",
+      "type": "MARKET"
+     }
+    ],
+    [
+     19943,
+     "/topic/offer/v2/cs/miniscoreboard",
+     {
+      "id": "ufo:mtch:1wg-2n1",
+      "data": {
+       "type": "tennis",
+       "fixtureId": "ufo:mtch:1wg-2n1",
+       "servingCompetitor": "Away",
+       "columns": {
+        "TotalScore": {
+         "Home": "1",
+         "Away": "0"
+        },
+        "PartialScoreL1": {
+         "Home": "1",
+         "Away": "2"
+        },
+        "PartialScoreL2": {
+         "Home": "40",
+         "Away": "30"
+        }
+       },
+       "overview": {
+        "gameTime": "2. set",
+        "info": [
+         {
+          "order": 1,
+          "home": 6,
+          "away": 2,
+          "finished": true
+         },
+         {
+          "order": 2,
+          "home": 1,
+          "away": 2,
+          "finished": false
+         }
+        ]
+       },
+       "scheduledStartTime": 1790792820000,
+       "mode": "Column"
+      },
+      "created": 1790796680542,
+      "operation": "UPDATE"
+     }
+    ],
+    [
+     32635,
+     "/topic/offer/v2/cs/miniscoreboard",
+     {
+      "id": "ufo:mtch:1wg-2n1",
+      "data": {
+       "type": "tennis",
+       "fixtureId": "ufo:mtch:1wg-2n1",
+       "servingCompetitor": "Home",
+       "columns": {
+        "TotalScore": {
+         "Home": "1",
+         "Away": "0"
+        },
+        "PartialScoreL1": {
+         "Home": "2",
+         "Away": "2"
+        },
+        "PartialScoreL2": {
+         "Home": "0",
+         "Away": "0"
+        }
+       },
+       "overview": {
+        "gameTime": "2. set",
+        "info": [
+         {
+          "order": 1,
+          "home": 6,
+          "away": 2,
+          "finished": true
+         },
+         {
+          "order": 2,
+          "home": 2,
+          "away": 2,
+          "finished": false
+         }
+        ]
+       },
+       "scheduledStartTime": 1790792820000,
+       "mode": "Column"
+      },
+      "created": 1790796693241,
+      "operation": "UPDATE"
+     }
+    ],
+    [
+     32814,
+     "/topic/offer/cs/sport/ufo:sprt:0x/overview-markets",
+     {
+      "data": {
+       "id": "ufo:mkt:1wg-2n1-000",
+       "fixtureId": "ufo:mtch:1wg-2n1",
+       "marketTypeId": "ufo:mtyp:0x-01",
+       "kind": "LIVE",
+       "variant": "STANDARD",
+       "specifiers": null,
+       "name": "Vítěz zápasu",
+       "marketTypeName": "Vítěz zápasu",
+       "syntheticGroupKey": "match",
+       "outcomes": [
+        {
+         "id": "ufo:opt:1wg-2n1-000-01",
+         "name": "2",
+         "odds": 7.4,
+         "displayType": "OPEN"
+        },
+        {
+         "id": "ufo:opt:1wg-2n1-000-00",
+         "name": "1",
+         "odds": 1.04,
+         "displayType": "OPEN"
+        }
+       ],
+       "overview": true
+      },
+      "id": "ufo:mkt:1wg-2n1-000",
+      "operation": "UPDATE",
+      "type": "MARKET"
+     }
+    ],
+    [
+     32994,
+     "/topic/offer/cs/sport/ufo:sprt:0x/overview-markets",
+     {
+      "data": {
+       "id": "ufo:mkt:1wg-2n1-04m",
+       "fixtureId": "ufo:mtch:1wg-2n1",
+       "marketTypeId": "ufo:mtyp:0x-0e",
+       "kind": "LIVE",
+       "variant": "STANDARD",
+       "specifiers": null,
+       "name": "Vítěz 2.setu",
+       "marketTypeName": "Vítěz 2. setu",
+       "syntheticGroupKey": "2nd_set",
+       "outcomes": [
+        {
+         "id": "ufo:opt:1wg-2n1-04m-01",
+         "name": "1",
+         "odds": 1.26,
+         "displayType": "OPEN"
+        },
+        {
+         "id": "ufo:opt:1wg-2n1-04m-00",
+         "name": "2",
+         "odds": 3.25,
+         "displayType": "OPEN"
+        }
+       ],
+       "overview": true
+      },
+      "id": "ufo:mkt:1wg-2n1-04m",
+      "operation": "UPDATE",
+      "type": "MARKET"
+     }
+    ],
+    [
+     33028,
+     "/topic/offer/cs/sport/ufo:sprt:0x/overview-markets",
+     {
+      "id": "ufo:mkt:1wg-2n1-05j",
+      "operation": "DELETE",
+      "type": "MARKET"
+     }
+    ]
+   ]
+  },
+  {
+   "name": "fotbal: DELETE (suspendace) trhů během stahování snapshotu",
+   "fixtureId": "ufo:mtch:1wg-0oc",
+   "capturedAt": "2026-09-30T19:32:04.327Z",
+   "page": {
+    "fixtures": [
+     {
+      "id": "ufo:mtch:1wg-0oc",
+      "sportId": "ufo:sprt:00",
+      "categoryId": "ufo:ctgr:00-15",
+      "tournamentId": "ufo:tour:00-0te",
+      "kind": "LIVE",
+      "name": "Club Atletico Barinas - Barquisimeto SC",
+      "sportSeoName": "fotbal",
+      "categorySeoName": "venezuela-2",
+      "tournamentSeoName": "2-venezuela",
+      "seoName": "club-atletico-barinas-barquisimeto-sc",
+      "participants": [
+       {
+        "id": "ufo:team:00-0k5y",
+        "name": "Barquisimeto SC",
+        "type": "AWAY"
+       },
+       {
+        "id": "ufo:team:00-0txp",
+        "name": "Club Atletico Barinas",
+        "type": "HOME"
+       }
+      ],
+      "startDatetime": 1790796600000,
+      "marketTypeIds": [
+       "ufo:mtyp:00-00",
+       "ufo:mtyp:00-01",
+       "ufo:mtyp:00-0u"
+      ],
+      "hasMarkets": true,
+      "status": "ACTIVE"
+     }
+    ],
+    "tournaments": [
+     {
+      "id": "ufo:tour:00-0te",
+      "name": "2. Venezuela"
+     }
+    ],
+    "categories": [
+     {
+      "id": "ufo:ctgr:00-15",
+      "name": "Venezuela"
+     }
+    ]
+   },
+   "snapshot": {
+    "requestAtMs": 0,
+    "loadAtMs": 431,
+    "markets": {
+     "ufo:mtch:1wg-0oc": [
+      {
+       "id": "ufo:mkt:1wg-0oc-001",
+       "fixtureId": "ufo:mtch:1wg-0oc",
+       "marketTypeId": "ufo:mtyp:00-00",
+       "kind": "LIVE",
+       "variant": "STANDARD",
+       "specifiers": null,
+       "name": "Výsledek zápasu",
+       "marketTypeName": "Výsledek zápasu",
+       "syntheticGroupKey": "match",
+       "overview": true,
+       "outcomes": [
+        {
+         "id": "ufo:opt:1wg-0oc-001-01",
+         "name": "1",
+         "odds": 1.95,
+         "displayType": "OPEN"
+        },
+        {
+         "id": "ufo:opt:1wg-0oc-001-00",
+         "name": "2",
+         "odds": 3.25,
+         "displayType": "OPEN"
+        },
+        {
+         "id": "ufo:opt:1wg-0oc-001-02",
+         "name": "0",
+         "odds": 3.85,
+         "displayType": "OPEN"
+        }
+       ]
+      },
+      {
+       "id": "ufo:mkt:1wg-0oc-002",
+       "fixtureId": "ufo:mtch:1wg-0oc",
+       "marketTypeId": "ufo:mtyp:00-01",
+       "kind": "LIVE",
+       "variant": "STANDARD",
+       "specifiers": null,
+       "name": "Výsledek zápasu - dvojtip",
+       "marketTypeName": "Výsledek zápasu - dvojtip",
+       "syntheticGroupKey": "match_-_double_chance",
+       "overview": true,
+       "outcomes": [
+        {
+         "id": "ufo:opt:1wg-0oc-002-01",
+         "name": "02",
+         "odds": 1.75,
+         "displayType": "OPEN"
+        },
+        {
+         "id": "ufo:opt:1wg-0oc-002-02",
+         "name": "10",
+         "odds": 1.3,
+         "displayType": "OPEN"
+        },
+        {
+         "id": "ufo:opt:1wg-0oc-002-00",
+         "name": "12",
+         "odds": 1.22,
+         "displayType": "OPEN"
+        }
+       ]
+      },
+      {
+       "id": "ufo:mkt:1wg-0oc-008",
+       "fixtureId": "ufo:mtch:1wg-0oc",
+       "marketTypeId": "ufo:mtyp:00-0u",
+       "kind": "LIVE",
+       "variant": "STANDARD",
+       "specifiers": null,
+       "name": "Počet gólů v zápasu 3.5",
+       "marketTypeName": "Počet gólů v zápasu",
+       "syntheticGroupKey": "total_goals_/_asian_total_goals",
+       "overview": true,
+       "outcomes": [
+        {
+         "id": "ufo:opt:1wg-0oc-008-01",
+         "name": "- 3.5",
+         "odds": 2.35,
+         "displayType": "OPEN"
+        },
+        {
+         "id": "ufo:opt:1wg-0oc-008-00",
+         "name": "+ 3.5",
+         "odds": 1.55,
+         "displayType": "OPEN"
+        }
+       ]
+      }
+     ]
+    },
+    "scoreboards": [
+     {
+      "type": "soccer",
+      "fixtureId": "ufo:mtch:1wg-0oc",
+      "columns": {
+       "TotalScore": {
+        "Home": "1",
+        "Away": "0"
+       }
+      },
+      "redCards": {
+       "Home": 0,
+       "Away": 0
+      },
+      "overview": {
+       "gameTime": "1. pol. - 2m",
+       "info": [
+        {
+         "order": 1,
+         "home": 1,
+         "away": 0,
+         "finished": false
+        }
+       ]
+      },
+      "scheduledStartTime": 1790796600000,
+      "mode": "Column"
+     }
+    ]
+   },
+   "messages": [
+    [
+     100,
+     "/topic/offer/v2/cs/miniscoreboard",
+     {
+      "id": "ufo:mtch:1wg-0oc",
+      "data": {
+       "type": "soccer",
+       "fixtureId": "ufo:mtch:1wg-0oc",
+       "columns": {
+        "TotalScore": {
+         "Home": "1",
+         "Away": "0"
+        }
+       },
+       "redCards": {
+        "Home": 0,
+        "Away": 0
+       },
+       "overview": {
+        "gameTime": "1. pol. - 2m",
+        "info": [
+         {
+          "order": 1,
+          "home": 1,
+          "away": 0,
+          "finished": false
+         }
+        ]
+       },
+       "scheduledStartTime": 1790796600000,
+       "mode": "Column"
+      },
+      "created": 1790796724400,
+      "operation": "UPDATE"
+     }
+    ],
+    [
+     307,
+     "/topic/offer/v2/cs/miniscoreboard",
+     {
+      "id": "ufo:mtch:1wg-0oc",
+      "data": {
+       "type": "soccer",
+       "fixtureId": "ufo:mtch:1wg-0oc",
+       "columns": {
+        "TotalScore": {
+         "Home": "1",
+         "Away": "0"
+        }
+       },
+       "redCards": {
+        "Home": 0,
+        "Away": 0
+       },
+       "overview": {
+        "gameTime": "1. pol. - 2m",
+        "info": [
+         {
+          "order": 1,
+          "home": 1,
+          "away": 0,
+          "finished": false
+         }
+        ]
+       },
+       "scheduledStartTime": 1790796600000,
+       "mode": "Column"
+      },
+      "created": 1790796724588,
+      "operation": "UPDATE"
+     }
+    ],
+    [
+     351,
+     "/topic/offer/cs/sport/ufo:sprt:00/overview-markets",
+     {
+      "id": "ufo:mkt:1wg-0oc-001",
+      "operation": "DELETE",
+      "type": "MARKET"
+     }
+    ],
+    [
+     398,
+     "/topic/offer/cs/sport/ufo:sprt:00/overview-markets",
+     {
+      "id": "ufo:mkt:1wg-0oc-002",
+      "operation": "DELETE",
+      "type": "MARKET"
+     }
+    ],
+    [
+     415,
+     "/topic/offer/cs/sport/ufo:sprt:00/overview-markets",
+     {
+      "id": "ufo:mkt:1wg-0oc-008",
+      "operation": "DELETE",
+      "type": "MARKET"
+     }
+    ],
+    [
+     668,
+     "/topic/offer/cs/sport/ufo:sprt:00/overview-markets",
+     {
+      "data": {
+       "id": "ufo:mkt:1wg-0oc-001",
+       "fixtureId": "ufo:mtch:1wg-0oc",
+       "marketTypeId": "ufo:mtyp:00-00",
+       "kind": "LIVE",
+       "variant": "STANDARD",
+       "specifiers": null,
+       "name": "Výsledek zápasu",
+       "marketTypeName": "Výsledek zápasu",
+       "syntheticGroupKey": "match",
+       "outcomes": [
+        {
+         "id": "ufo:opt:1wg-0oc-001-01",
+         "name": "1",
+         "odds": 2,
+         "displayType": "OPEN"
+        },
+        {
+         "id": "ufo:opt:1wg-0oc-001-00",
+         "name": "2",
+         "odds": 3.4,
+         "displayType": "OPEN"
+        },
+        {
+         "id": "ufo:opt:1wg-0oc-001-02",
+         "name": "0",
+         "odds": 3.45,
+         "displayType": "OPEN"
+        }
+       ],
+       "overview": true
+      },
+      "id": "ufo:mkt:1wg-0oc-001",
+      "operation": "UPDATE",
+      "type": "MARKET"
+     }
+    ],
+    [
+     680,
+     "/topic/offer/cs/sport/ufo:sprt:00/overview-markets",
+     {
+      "data": {
+       "id": "ufo:mkt:1wg-0oc-002",
+       "fixtureId": "ufo:mtch:1wg-0oc",
+       "marketTypeId": "ufo:mtyp:00-01",
+       "kind": "LIVE",
+       "variant": "STANDARD",
+       "specifiers": null,
+       "name": "Výsledek zápasu - dvojtip",
+       "marketTypeName": "Výsledek zápasu - dvojtip",
+       "syntheticGroupKey": "match_-_double_chance",
+       "outcomes": [
+        {
+         "id": "ufo:opt:1wg-0oc-002-01",
+         "name": "02",
+         "odds": 1.7,
+         "displayType": "OPEN"
+        },
+        {
+         "id": "ufo:opt:1wg-0oc-002-02",
+         "name": "10",
+         "odds": 1.27,
+         "displayType": "OPEN"
+        },
+        {
+         "id": "ufo:opt:1wg-0oc-002-00",
+         "name": "12",
+         "odds": 1.25,
+         "displayType": "OPEN"
+        }
+       ],
+       "overview": true
+      },
+      "id": "ufo:mkt:1wg-0oc-002",
+      "operation": "UPDATE",
+      "type": "MARKET"
+     }
+    ],
+    [
+     880,
+     "/topic/offer/cs/sport/ufo:sprt:00/overview-markets",
+     {
+      "data": {
+       "id": "ufo:mkt:1wg-0oc-008",
+       "fixtureId": "ufo:mtch:1wg-0oc",
+       "marketTypeId": "ufo:mtyp:00-0u",
+       "kind": "LIVE",
+       "variant": "STANDARD",
+       "specifiers": null,
+       "name": "Počet gólů v zápasu 3.5",
+       "marketTypeName": "Počet gólů v zápasu",
+       "syntheticGroupKey": "total_goals_/_asian_total_goals",
+       "outcomes": [
+        {
+         "id": "ufo:opt:1wg-0oc-008-01",
+         "name": "- 3.5",
+         "odds": 2.35,
+         "displayType": "OPEN"
+        },
+        {
+         "id": "ufo:opt:1wg-0oc-008-00",
+         "name": "+ 3.5",
+         "odds": 1.55,
+         "displayType": "OPEN"
+        }
+       ],
+       "overview": true
+      },
+      "id": "ufo:mkt:1wg-0oc-008",
+      "operation": "UPDATE",
+      "type": "MARKET"
+     }
+    ],
+    [
+     975,
+     "/topic/offer/cs/fixtures",
+     {
+      "id": "ufo:mtch:1wg-0oc",
+      "data": {
+       "id": "ufo:mtch:1wg-0oc",
+       "sportId": "ufo:sprt:00",
+       "categoryId": "ufo:ctgr:00-15",
+       "tournamentId": "ufo:tour:00-0te",
+       "kind": "LIVE",
+       "name": "Club Atletico Barinas - Barquisimeto SC",
+       "sportSeoName": "fotbal",
+       "categorySeoName": "venezuela-2",
+       "tournamentSeoName": "2-venezuela",
+       "seoName": "club-atletico-barinas-barquisimeto-sc",
+       "participants": [
+        {
+         "id": "ufo:team:00-0txp",
+         "name": "Club Atletico Barinas",
+         "type": "HOME"
+        },
+        {
+         "id": "ufo:team:00-0k5y",
+         "name": "Barquisimeto SC",
+         "type": "AWAY"
+        }
+       ],
+       "startDatetime": 1790796600000,
+       "hasMarkets": true,
+       "status": "ACTIVE"
+      },
+      "type": "FIXTURE",
+      "created": 1790796725278,
+      "operation": "UPDATE"
+     }
+    ],
+    [
+     1214,
+     "/topic/offer/cs/sport/ufo:sprt:00/overview-markets",
+     {
+      "data": {
+       "id": "ufo:mkt:1wg-0oc-001",
+       "fixtureId": "ufo:mtch:1wg-0oc",
+       "marketTypeId": "ufo:mtyp:00-00",
+       "kind": "LIVE",
+       "variant": "STANDARD",
+       "specifiers": null,
+       "name": "Výsledek zápasu",
+       "marketTypeName": "Výsledek zápasu",
+       "syntheticGroupKey": "match",
+       "outcomes": [
+        {
+         "id": "ufo:opt:1wg-0oc-001-01",
+         "name": "1",
+         "odds": 2,
+         "displayType": "OPEN"
+        },
+        {
+         "id": "ufo:opt:1wg-0oc-001-00",
+         "name": "2",
+         "odds": 3.4,
+         "displayType": "OPEN"
+        },
+        {
+         "id": "ufo:opt:1wg-0oc-001-02",
+         "name": "0",
+         "odds": 3.45,
+         "displayType": "OPEN"
+        }
+       ],
+       "overview": true
+      },
+      "id": "ufo:mkt:1wg-0oc-001",
+      "operation": "UPDATE",
+      "type": "MARKET"
+     }
+    ],
+    [
+     1215,
+     "/topic/offer/cs/sport/ufo:sprt:00/overview-markets",
+     {
+      "data": {
+       "id": "ufo:mkt:1wg-0oc-001",
+       "fixtureId": "ufo:mtch:1wg-0oc",
+       "marketTypeId": "ufo:mtyp:00-00",
+       "kind": "LIVE",
+       "variant": "STANDARD",
+       "specifiers": null,
+       "name": "Výsledek zápasu",
+       "marketTypeName": "Výsledek zápasu",
+       "syntheticGroupKey": "match",
+       "outcomes": [
+        {
+         "id": "ufo:opt:1wg-0oc-001-01",
+         "name": "1",
+         "odds": 2,
+         "displayType": "OPEN"
+        },
+        {
+         "id": "ufo:opt:1wg-0oc-001-00",
+         "name": "2",
+         "odds": 3.4,
+         "displayType": "OPEN"
+        },
+        {
+         "id": "ufo:opt:1wg-0oc-001-02",
+         "name": "0",
+         "odds": 3.45,
+         "displayType": "OPEN"
+        }
+       ],
+       "overview": true
+      },
+      "id": "ufo:mkt:1wg-0oc-001",
+      "operation": "UPDATE",
+      "type": "MARKET"
+     }
+    ],
+    [
+     1398,
+     "/topic/offer/cs/sport/ufo:sprt:00/overview-markets",
+     {
+      "data": {
+       "id": "ufo:mkt:1wg-0oc-002",
+       "fixtureId": "ufo:mtch:1wg-0oc",
+       "marketTypeId": "ufo:mtyp:00-01",
+       "kind": "LIVE",
+       "variant": "STANDARD",
+       "specifiers": null,
+       "name": "Výsledek zápasu - dvojtip",
+       "marketTypeName": "Výsledek zápasu - dvojtip",
+       "syntheticGroupKey": "match_-_double_chance",
+       "outcomes": [
+        {
+         "id": "ufo:opt:1wg-0oc-002-01",
+         "name": "02",
+         "odds": 1.7,
+         "displayType": "OPEN"
+        },
+        {
+         "id": "ufo:opt:1wg-0oc-002-02",
+         "name": "10",
+         "odds": 1.27,
+         "displayType": "OPEN"
+        },
+        {
+         "id": "ufo:opt:1wg-0oc-002-00",
+         "name": "12",
+         "odds": 1.25,
+         "displayType": "OPEN"
+        }
+       ],
+       "overview": true
+      },
+      "id": "ufo:mkt:1wg-0oc-002",
+      "operation": "UPDATE",
+      "type": "MARKET"
+     }
+    ],
+    [
+     1494,
+     "/topic/offer/cs/sport/ufo:sprt:00/overview-markets",
+     {
+      "data": {
+       "id": "ufo:mkt:1wg-0oc-002",
+       "fixtureId": "ufo:mtch:1wg-0oc",
+       "marketTypeId": "ufo:mtyp:00-01",
+       "kind": "LIVE",
+       "variant": "STANDARD",
+       "specifiers": null,
+       "name": "Výsledek zápasu - dvojtip",
+       "marketTypeName": "Výsledek zápasu - dvojtip",
+       "syntheticGroupKey": "match_-_double_chance",
+       "outcomes": [
+        {
+         "id": "ufo:opt:1wg-0oc-002-01",
+         "name": "02",
+         "odds": 1.7,
+         "displayType": "OPEN"
+        },
+        {
+         "id": "ufo:opt:1wg-0oc-002-02",
+         "name": "10",
+         "odds": 1.27,
+         "displayType": "OPEN"
+        },
+        {
+         "id": "ufo:opt:1wg-0oc-002-00",
+         "name": "12",
+         "odds": 1.25,
+         "displayType": "OPEN"
+        }
+       ],
+       "overview": true
+      },
+      "id": "ufo:mkt:1wg-0oc-002",
+      "operation": "UPDATE",
+      "type": "MARKET"
+     }
+    ]
+   ]
+  }
+ ]
+}
