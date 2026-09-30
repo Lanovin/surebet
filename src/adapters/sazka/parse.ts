@@ -19,19 +19,28 @@ import type {
 
 export const SITE = 'https://www.allwyn.cz/kurzove-sazky';
 
-/** OpenBet drilldown ID sportu (level 2) → náš sport. Pozor: kód "hockey" je pozemní hokej. */
+/**
+ * OpenBet drilldown ID sportu (level 2) → náš sport. Pozor: kód "hockey" je pozemní hokej (ID 30).
+ * "ufc-mma" = web "Bojové sporty" (UFC, KSW, Oktagon – vše MMA; box má vlastní uzel).
+ */
 export const SPORT_NODES: Partial<Record<Sport, { id: string; code: string }>> = {
   football: { id: '11', code: 'football' },
   tennis: { id: '12', code: 'tennis' },
   basketball: { id: '5', code: 'basketball' },
   hockey: { id: '8', code: 'ice-hockey' },
+  handball: { id: '29', code: 'handball' },
+  volleyball: { id: '42', code: 'volleyball' },
+  baseball: { id: '4', code: 'baseball' },
+  american_football: { id: '3', code: 'american-football' },
+  mma: { id: '9', code: 'ufc-mma' },
+  boxing: { id: '6', code: 'boxing' },
+  darts: { id: '23', code: 'darts' },
+  snooker: { id: '37', code: 'snooker' },
+  table_tennis: { id: '39', code: 'table-tennis' },
 };
-const CODE_TO_SPORT: Record<string, Sport> = {
-  football: 'football',
-  tennis: 'tennis',
-  basketball: 'basketball',
-  'ice-hockey': 'hockey',
-};
+const CODE_TO_SPORT: Record<string, Sport> = Object.fromEntries(
+  Object.entries(SPORT_NODES).map(([sport, n]) => [n.code, sport as Sport]),
+);
 
 // ---------- surové typy (jen pole, která používáme) ----------
 
@@ -101,6 +110,8 @@ export interface ObEvent {
   displayed?: boolean;
   started?: boolean;
   startTime: string;
+  /** Doplňkový text události (MMA: místo/turnaj, jinde většinou null). */
+  blurb?: string | null;
   sortCode?: string;
   liveNow?: boolean;
   resulted?: boolean;
@@ -117,9 +128,18 @@ export interface ObEventsResponse {
 // ---------- mapování trhů ----------
 
 type ScopeRule = MarketScope | ((m: ObMarket) => MarketScope | null);
+
+/** Kontext události pro trhy, jejichž význam závisí na formátu zápasu. */
+export interface MarketContext {
+  /** Šipky: zápas se hraje na sety (trhy na sety / přesný výsledek v setech / periody SET). */
+  setFormat?: boolean;
+}
+
 interface Rule {
   type: MarketType;
   scope: ScopeRule;
+  /** Pravidlo platí jen v tomto kontextu (jinak se trh vynechá). */
+  when?: (c: MarketContext) => boolean;
 }
 
 const nth = (re: RegExp, prefix: 'P' | 'S' | 'Q') => (m: ObMarket): MarketScope | null => {
@@ -140,6 +160,22 @@ const byName = (fallback: MarketScope | null) => (m: ObMarket): MarketScope | nu
   if (/60 minut|základní hrací dob|bez prodl/.test(n)) return 'REG';
   return fallback;
 };
+
+/**
+ * Dvojtip: rozsah stejný jako u 3-cestného výsledku téže části zápasu (ověřeno 1. 10. 2026: DC ceny
+ * odpovídají 1X2 stejného rozsahu s odchylkou ≤ 2 % u 400+ trhů fotbal/hokej/házená). Název
+ * s prodloužením by znamenal rozsah bez remízy → takový trh nechápeme.
+ */
+const dc = (scope: MarketScope) => (m: ObMarket): MarketScope | null =>
+  /do rozhodnut|prodl|including ot/i.test(m.name) ? null : scope;
+
+/** Číslo setu kdekoli v názvu ("3. set: vítěz", "Vítěz 3. setu", "Počet bodů v 3. setu 18.5"). */
+const setAnywhere = nth(/(\d)\.\s*set/i, 'S');
+
+const SET_ORDINALS = ['FIRST', 'SECOND', 'THIRD', 'FOURTH', 'FIFTH'];
+/** Rozvine pravidla pro každé pořadové slovo setu (kódy "…_SECOND_SET…"). */
+const perSet = (ords: string[], f: (o: string) => Record<string, Rule>): Record<string, Rule> =>
+  Object.assign({}, ...ords.map(f));
 
 const RULES: Partial<Record<Sport, Record<string, Rule>>> = {
   football: {
@@ -167,6 +203,9 @@ const RULES: Partial<Record<Sport, Record<string, Rule>>> = {
     'TOTAL_GOALS_OVER/UNDER_1ST_HALF_AWAY': { type: 'OU_AWAY', scope: 'H1' },
     'TOTAL_GOALS_OVER/UNDER_2ND_HALF_HOME': { type: 'OU_HOME', scope: 'H2' },
     'TOTAL_GOALS_OVER/UNDER_2ND_HALF_AWAY': { type: 'OU_AWAY', scope: 'H2' },
+    DOUBLE_CHANCE: { type: 'DC', scope: dc('REG') },
+    DOUBLE_CHANCE_1ST_HALF: { type: 'DC', scope: dc('H1') },
+    DOUBLE_CHANCE_2ND_HALF: { type: 'DC', scope: dc('H2') },
     // MATCH_RESULT_2 = "Mega kurz (3+ ako)" – jen do AKO, vynecháno záměrně
   },
   hockey: {
@@ -205,6 +244,11 @@ const RULES: Partial<Record<Sport, Record<string, Rule>>> = {
     'PERIOD_GOALS_OVER/UNDER_AWAY_TEAM_FIRST_PERIOD': { type: 'OU_AWAY', scope: 'P1' },
     'PERIOD_GOALS_OVER/UNDER_AWAY_TEAM_SECOND_PERIOD': { type: 'OU_AWAY', scope: 'P2' },
     'PERIOD_GOALS_OVER/UNDER_AWAY_TEAM_THIRD_PERIOD': { type: 'OU_AWAY', scope: 'P3' },
+    // "Dvojtip" = 60 minut (ceny sedí na MATCH_RESULT_NO_OVERTIME), třetiny jen góly dané třetiny
+    DOUBLE_CHANCE: { type: 'DC', scope: dc('REG') },
+    DOUBLE_CHANCE_1ST_PERIOD: { type: 'DC', scope: dc('P1') },
+    DOUBLE_CHANCE_2ND_PERIOD: { type: 'DC', scope: dc('P2') },
+    DOUBLE_CHANCE_3RD_PERIOD: { type: 'DC', scope: dc('P3') },
     // BOTH_TEAMS_TO_SCORE (celý zápas) – nejasné, zda vč. prodloužení → vynecháno
   },
   basketball: {
@@ -241,6 +285,92 @@ const RULES: Partial<Record<Sport, Record<string, Rule>>> = {
     SET_WINNER_NTH_SET: { type: 'ML', scope: nth(/^\s*Set\s*(\d)\b/i, 'S') },
     'TOTAL_GAMES_OVER/UNDER_NTH_SET': { type: 'OU', scope: nth(/^\s*Set\s*(\d)\b/i, 'S') },
     GAME_HANDICAP_NTH_SET: { type: 'AH', scope: nth(/^\s*Set\s*(\d)\b/i, 'S') },
+  },
+  // ---- další sporty (šablony a významy ověřeny 30. 9./1. 10. 2026 na reálných datech, cs + en názvy) ----
+  handball: {
+    // herní plán 17.2 a): bez výslovného uvedení platí normální hrací doba (60 min); AH −0.5 ≈ "1",
+    // AH +0.5 ≈ "1X" (ceny sedí na 1X2, ne na DNB) → REG; název s prodloužením by znamenal MATCH
+    MATCH_RESULT: { type: '1X2', scope: 'REG' },
+    DRAW_NO_BET: { type: 'DNB', scope: 'REG' },
+    DOUBLE_CHANCE: { type: 'DC', scope: dc('REG') },
+    // poločasové dvojtipy: stejné kódy jako ve fotbale (u házené v nočním vzorku nebyly, cena i význam = 1X2 poločasu)
+    DOUBLE_CHANCE_1ST_HALF: { type: 'DC', scope: dc('H1') },
+    DOUBLE_CHANCE_2ND_HALF: { type: 'DC', scope: dc('H2') },
+    'TOTAL_GOALS_OVER/UNDER': { type: 'OU', scope: byName('REG') },
+    HANDICAP_2_WAY: { type: 'AH', scope: byName('REG') },
+    'TOTAL_GOALS_OVER/UNDER_HOME': { type: 'OU_HOME', scope: byName('REG') },
+    'TOTAL_GOALS_OVER/UNDER_AWAY': { type: 'OU_AWAY', scope: byName('REG') },
+    MATCH_RESULT_1ST_HALF: { type: '1X2', scope: 'H1' },
+    DRAW_NO_BET_1ST_HALF: { type: 'DNB', scope: 'H1' },
+    'TOTAL_GOALS_OVER/UNDER_1ST_HALF': { type: 'OU', scope: 'H1' },
+  },
+  volleyball: {
+    MATCH_WINNER: { type: 'ML', scope: 'MATCH' }, // "Vítěz zápasu"
+    SET_WINNER_NTH: { type: 'ML', scope: setAnywhere }, // "1. set: vítěz" (výběry jménem)
+    'TOTAL_POINTS_OVER/UNDER': { type: 'OU', scope: 'MATCH' }, // "Body: pod/nad" – body celého zápasu
+    MATCH_WINNER_POINT_HANDICAP: { type: 'AH', scope: 'MATCH' }, // "Body: handicap" (body)
+    MATCH_WINNER_SET_HANDICAP: { type: 'AH_SETS', scope: 'MATCH' }, // "Sety: handicap" (−2.5 = výhra 3:0)
+    'TOTAL_SETS_OVER/UNDER': { type: 'OU_SETS', scope: 'MATCH' }, // "Sety: pod/nad"
+    // po začátku zápasu má každý set vlastní kód (SET_WINNER_SECOND_SET…); číslo setu z názvu ("2.set: …")
+    ...perSet(SET_ORDINALS, (o) => ({
+      [`SET_WINNER_${o}_SET`]: { type: 'ML', scope: setAnywhere },
+      [`SET_WINNER_${o}_SET_HANDICAP`]: { type: 'AH', scope: setAnywhere }, // "2.set: handicap 6.5" (body setu)
+      [`TOTAL_POINTS_OVER/UNDER_${o}_SET`]: { type: 'OU', scope: setAnywhere }, // "3.set: body pod/nad 45.5"
+    })),
+  },
+  baseball: {
+    // "Money Line" / "Run Line" / "Total Runs" vč. extra směn (jen 3-cestný je výslovně "9 Innings Only");
+    // trhy prvních 5 směn a jednotlivých směn nemapujeme (+ pojistka v NAME_BLACKLIST)
+    MONEY_LINE: { type: 'ML', scope: 'MATCH' },
+    HANDICAP_2_WAY: { type: 'AH', scope: 'MATCH' },
+    'TOTAL_RUNS_OVER/UNDER': { type: 'OU', scope: 'MATCH' },
+    'TOTAL_RUNS_OVER/UNDER_HOME': { type: 'OU_HOME', scope: 'MATCH' },
+    'TOTAL_RUNS_OVER/UNDER_AWAY': { type: 'OU_AWAY', scope: 'MATCH' },
+    TOTAL_RUNS_ODD_EVEN: { type: 'OE', scope: 'MATCH' },
+    MATCH_RESULT_3_WAY: { type: '1X2', scope: 'REG' }, // "Výsledek zápasu (9 směn)"
+  },
+  american_football: {
+    // MONEY_LINE ("do rozhodnutí") vynechán: herní plán neříká, co při remíze po prodloužení (NFL);
+    // TOTAL_POINTS_OVER/UNDER(_HOME/_AWAY) bez uvedení rozsahu – herní plán 17.2 a) = normální doba,
+    // zvyklost NFL = vč. prodloužení → nejasné, mapuje se jen s výslovným textem v názvu
+    MATCH_RESULT_NORMAL_TIME: { type: '1X2', scope: 'REG' }, // "Match Winner 3 Way (Excl OT)"
+    HANDICAP_2_WAY: { type: 'AH', scope: byName(null) }, // "Handicap N (včetně prodloužení)"
+    'TOTAL_POINTS_OVER/UNDER': { type: 'OU', scope: byName(null) },
+    MATCH_RESULT_1ST_HALF_3_WAY: { type: '1X2', scope: 'H1' },
+    'TOTAL_POINTS_OVER/UNDER_1ST_HALF': { type: 'OU', scope: 'H1' },
+    'HANDICAP_HALF-TIME_2_WAY': { type: 'AH', scope: 'H1' },
+  },
+  mma: {
+    SB_FIGHT_WINNER_3WAY: { type: '1X2', scope: 'REG' }, // "Fight Winner 3 Way" (bojovník / Remíza / bojovník)
+    FIGHT_WINNER: { type: '1X2', scope: 'REG' },
+    FIGHT_WINNER_2_WAY: { type: 'DNB', scope: 'REG' },
+  },
+  boxing: {
+    FIGHT_WINNER: { type: '1X2', scope: 'REG' }, // "Fight Result" H/D/A
+    // "Fight Winner 2 Way" = remíza vrací vklad: obě strany mají NIŽŠÍ kurz než stejný výsledek ve 3-cestném
+    // trhu (1.04 vs 1.08, 8.5 vs 9.0 …) a normované pravděpodobnosti sedí na DNB z 1X2 (±0.01, 7 zápasů)
+    FIGHT_WINNER_2_WAY: { type: 'DNB', scope: 'REG' },
+  },
+  darts: {
+    MATCH_RESULT_2_WAY: { type: 'ML', scope: 'MATCH' },
+    'LEG_TOTAL_OVER/UNDER': { type: 'OU', scope: 'MATCH' }, // "Total Legs" – legy celého zápasu
+    'TOTAL_SETS_OVER/UNDER': { type: 'OU_SETS', scope: 'MATCH' },
+    // "Zápas handicap" v zápase na sety = handicap na SETY (−2.5 = přesný výsledek 3:0, stejný kurz);
+    // v zápase na legy neověřeno → jen se znaky formátu na sety
+    HANDICAP_2_WAY: { type: 'AH_SETS', scope: 'MATCH', when: (c) => !!c.setFormat },
+  },
+  snooker: {
+    MATCH_RESULT: { type: 'ML', scope: 'MATCH' }, // 2 výběry (HH); 3-cestný formát by mapování odmítlo
+    'TOTAL_FRAMES_OVER/UNDER': { type: 'OU', scope: 'MATCH' },
+    HANDICAP_2_WAY: { type: 'AH', scope: 'MATCH' }, // framy (+0.5 ≈ vítěz)
+  },
+  table_tennis: {
+    MATCH_RESULT: { type: 'ML', scope: 'MATCH' },
+    HANDICAP_2_WAY_MATCH_GAMES: { type: 'AH_SETS', scope: 'MATCH' }, // "Handicap setů"
+    'TOTAL_POINTS_OVER/UNDER': { type: 'OU', scope: 'MATCH' }, // body celého zápasu
+    GAME_X_WINNER: { type: 'ML', scope: setAnywhere }, // "Vítěz 3. setu" / "3. set: vítěz"
+    'TOTAL_POINTS_OVER/UNDER_NTH_GAME': { type: 'OU', scope: setAnywhere }, // "Počet bodů v 3. setu"
+    HANDICAP_2_WAY_NTH_GAME: { type: 'AH', scope: nth(/(\d)\.\s*game/i, 'S') }, // "3. Game Handicap 2-Way -2.5" (body setu)
   },
 };
 
@@ -313,21 +443,57 @@ function sel(key: SelectionKey, o: ObOutcome): RawSelection | null {
 /**
  * Pojistka proti náhradním/odvozeným šablonám se stejným groupCode: názvy, které se nikdy nesmí
  * namapovat na kanonický trh (zbytek zápasu, další gól, "po X minutách", Mega kurz jen do AKO,
- * evropský handicap "s remízou", postup, přesný výsledek, race-to). Žádný dnes mapovaný název je
- * neobsahuje (ověřeno na live i prematch datech 30. 9. 2026).
+ * evropský handicap "s remízou", postup, přesný výsledek, race-to; baseball první 3/5 směn a
+ * jednotlivé směny; volejbal zlatý set). Žádný dnes mapovaný název je neobsahuje (ověřeno na live
+ * i prematch datech 30. 9. a 1. 10. 2026, všech 13 sportů).
  */
-const NAME_BLACKLIST = /zbyt(?:ek|ku|kem)|zbývající|po \d+\s*minut|mega kurz|\bako\b|\d+\.\s*gól|další gól|postup|s remízou|rozstřel|přesný|první dosáhne|kdo dá/i;
+const NAME_BLACKLIST =
+  /zbyt(?:ek|ku|kem)|zbývající|po \d+\s*minut|mega kurz|\bako\b|\d+\.\s*gól|další gól|postup|s remízou|rozstřel|přesný|první dosáhne|kdo dá|prvních \d+ směn|\d+\.\s*směn|zlat\S* set|golden set/i;
 
 /** Má groupCode pro daný sport mapovací pravidlo? (push: zprávy k nemapovaným trhům nevyžadují resync) */
 export function isMappedMarketCode(sport: Sport, code: string | null | undefined): boolean {
   return !!code && !!RULES[sport]?.[code];
 }
 
+/**
+ * Dvojtip: výběr podle subType (1 = 1X, 2 = X2, 3 = 12 – pozor, "2" NENÍ 12) s kontrolou názvu
+ * "<domácí> nebo Remíza" / "Remíza nebo <hosté>" / "<domácí> nebo <hosté>" (1 231 výběrů, 0 rozporů).
+ */
+function doubleChance(o: ObOutcome): SelectionKey | undefined {
+  const n = norm(o.name);
+  const drawFirst = n.startsWith('remiza nebo ');
+  const drawLast = n.endsWith(' nebo remiza');
+  switch (o.subType) {
+    case '1':
+      return drawLast && !drawFirst ? 'HOME_DRAW' : undefined;
+    case '2':
+      return drawFirst && !drawLast ? 'DRAW_AWAY' : undefined;
+    case '3':
+      return !drawFirst && !drawLast && n.includes(' nebo ') ? 'HOME_AWAY' : undefined;
+  }
+  return undefined;
+}
+
+function oddEven(o: ObOutcome): 'ODD' | 'EVEN' | undefined {
+  const n = norm(o.name);
+  if (n === 'lichy') return 'ODD';
+  if (n === 'sudy') return 'EVEN';
+  return undefined;
+}
+
+/** Kontext trhů události (formát zápasu), viz MarketContext. */
+export function marketContext(ev: ObEvent): MarketContext {
+  const setMarket = (ev.markets ?? []).some((m) => /(^|_)SETS?(_|$)/.test(m.groupCode ?? ''));
+  const setPeriod = (ev.commentary?.periods ?? []).some((p) => p.type === 'SET');
+  return { setFormat: setMarket || setPeriod };
+}
+
 /** Převede jeden surový trh na kanonický (nebo null, když ho neumíme přesně namapovat). */
-export function mapMarket(sport: Sport, m: ObMarket, home: string, away: string): RawMarket | null {
+export function mapMarket(sport: Sport, m: ObMarket, home: string, away: string, ctx: MarketContext = {}): RawMarket | null {
   if (m.displayed === false || !m.groupCode) return null;
   const rule = RULES[sport]?.[m.groupCode];
   if (!rule) return null;
+  if (rule.when && !rule.when(ctx)) return null;
   if (NAME_BLACKLIST.test(m.name)) return null;
   const scope = typeof rule.scope === 'function' ? rule.scope(m) : rule.scope;
   if (!scope) return null;
@@ -371,14 +537,23 @@ export function mapMarket(sport: Sport, m: ObMarket, home: string, away: string)
     if (outs.length !== 2 || homeLine === undefined || awayLine === undefined) return null;
     if (Math.abs(homeLine + awayLine) > 1e-9) return null; // linie musí být zrcadlové
     line = homeLine; // z pohledu domácích
-  } else if (t === 'BTTS') {
+  } else if (t === 'BTTS' || t === 'OE') {
     for (const o of outs) {
-      const k = yesNo(o);
+      const k = t === 'BTTS' ? yesNo(o) : oddEven(o);
       if (!k) return null;
       const s = sel(k, o);
       if (s) sels.push(s);
     }
     if (outs.length !== 2) return null;
+  } else if (t === 'DC') {
+    // výběry se překrývají (sám o sobě arb netvoří) → i neúplný dvojtip (Sazka občas skryje výběr) je použitelný
+    for (const o of outs) {
+      const k = doubleChance(o);
+      if (!k) return null;
+      const s = sel(k, o);
+      if (s) sels.push(s);
+    }
+    if (outs.length < 1 || outs.length > 3) return null;
   } else {
     return null;
   }
@@ -400,9 +575,10 @@ export function mapMarket(sport: Sport, m: ObMarket, home: string, away: string)
 // ---------- herní stav ----------
 
 const FB_ORDER = ['FIRST_HALF', 'SECOND_HALF', 'FIRST_HALF_EXTRA_TIME', 'SECOND_HALF_EXTRA_TIME', 'FIRST_OVERTIME', 'SECOND_OVERTIME', 'PENALTIES', 'PENALTIES_ET', 'PENALTY_SHOOTOUT'];
+const HB_ORDER = ['FIRST_HALF', 'SECOND_HALF', 'FIRST_OVERTIME', 'SECOND_OVERTIME', 'PENALTIES', 'PENALTIES_ET', 'PENALTY_SHOOTOUT'];
 const HK_ORDER = ['PERIOD_1', 'PERIOD_2', 'PERIOD_3', 'OVERTIME', 'SHOOTOUT', 'PENALTY_SHOOTOUT'];
 const BB_ORDER = ['QUARTER_1', 'QUARTER_2', 'QUARTER_3', 'QUARTER_4', 'OVERTIME'];
-/** Typy period, které samy o sobě znamenají přestávku. */
+/** Typy period, které samy o sobě znamenají přestávku (HALF_TIME, QUARTER_1_BREAK, OVERTIME_BREAK…). */
 const BREAK_TYPES = /HALF_TIME|BREAK/;
 const FINISHED_TYPES = /^(FULL_TIME|POST_MATCH|POST_GAME)$/;
 
@@ -442,15 +618,74 @@ function sinceUpdate(c: ObClock | undefined, now: number): number {
   return c && RUNNING_STATES.has(c.state ?? '') && Number.isFinite(lu) && now > lu ? (now - lu) / 1000 : 0;
 }
 
-/** Typické délky period (s) pro detekci "perioda vytvořená, ale ještě nezačala". */
-const FULL_PERIOD: Record<string, number[]> = { hockey: [1200, 300], basketball: [600, 720, 300] };
+/**
+ * Sporty s herními hodinami (konfigurace podle webu Sazky – scoreboard config v _main-*.js):
+ *  - `countdown`: offset = zbývající čas periody (hokej, basket, americký fotbal), jinak vzestupně
+ *    v rámci poločasu (fotbal 45', házená 30' – web: periodDuration × index + offset);
+ *  - `bases`: začátek periody v s od začátku zápasu (vzestupné hodiny);
+ *  - `fullPeriod`: délky period pro detekci "perioda založená, ale ještě nezačala" (odpočet);
+ *  - `tiedEndBreak`: konec základní doby za nerozhodného stavu = přestávka před prodloužením
+ *    (hokej, basket, AF); fotbal/házená končí remízou běžně.
+ */
+interface ClockSport {
+  order: string[];
+  lastRegular: string;
+  countdown: boolean;
+  bases?: Record<string, number>;
+  fullPeriod?: number[];
+  tiedEndBreak: boolean;
+}
+const CLOCK_SPORTS: Partial<Record<Sport, ClockSport>> = {
+  football: {
+    order: FB_ORDER,
+    lastRegular: 'SECOND_HALF',
+    countdown: false,
+    bases: { SECOND_HALF: 2700, FIRST_HALF_EXTRA_TIME: 5400, FIRST_OVERTIME: 5400, SECOND_HALF_EXTRA_TIME: 6300, SECOND_OVERTIME: 6300 },
+    tiedEndBreak: false,
+  },
+  handball: {
+    order: HB_ORDER,
+    lastRegular: 'SECOND_HALF',
+    countdown: false,
+    bases: { SECOND_HALF: 1800, FIRST_OVERTIME: 3600, SECOND_OVERTIME: 3900 },
+    tiedEndBreak: false,
+  },
+  hockey: { order: HK_ORDER, lastRegular: 'PERIOD_3', countdown: true, fullPeriod: [1200, 300], tiedEndBreak: true },
+  basketball: { order: BB_ORDER, lastRegular: 'QUARTER_4', countdown: true, fullPeriod: [600, 720, 300], tiedEndBreak: true },
+  american_football: { order: BB_ORDER, lastRegular: 'QUARTER_4', countdown: true, fullPeriod: [900, 600], tiedEndBreak: true },
+};
+
+/**
+ * Sporty bez hodin – periody s pořadovým číslem: sety (volejbal, stolní tenis, šipky na sety),
+ * legy (šipky na legy), framy (snooker), směny (baseball INNINGS + periodIndex nebo INNINGS_n).
+ */
+const INDEXED_TYPES: Partial<Record<Sport, RegExp>> = {
+  volleyball: /^SET$/,
+  table_tennis: /^SET$/,
+  darts: /^(SET|LEG)$/,
+  snooker: /^FRAME$/,
+  baseball: /^INNINGS?(_\d+)?$/,
+  mma: /ROUND/,
+  boxing: /ROUND/,
+};
+/** Sporty, u kterých má smysl skóre jednotlivých period (body setů, legy setů, běhy směn). */
+const PERIOD_SCORE_TYPES = /^(SET|INNINGS?(_\d+)?)$/;
+/** Počet vítězných setů (volejbal; stolní tenis jen z faktu MAX_SETS). */
+const SETS_TO_WIN: Partial<Record<Sport, number>> = { volleyball: 3 };
+
+function periodNo(p: ObPeriod): number | undefined {
+  const m = /^INNINGS?_(\d+)$/.exec(p.type);
+  if (m) return Number(m[1]);
+  return typeof p.periodIndex === 'number' ? p.periodIndex : undefined;
+}
 
 /**
  * Herní stav z event.commentary (OpenBet). Přestávka: poslední začatá perioda je HALF_TIME /
  * *_BREAK, nebo hlavní perioda má status "FINISHED" a další ještě nezačala (logika webu –
  * breakPeriods), nebo odpočet periody stojí na 0, nebo další perioda je založená a stojí na
- * začátku. Hodiny: fotbal offset vzestupně v rámci poločasu, hokej/basket offset = zbývající čas
- * (state "COUNTING_DOWN" = běží).
+ * začátku. Hodiny: fotbal/házená offset vzestupně v rámci poločasu, hokej/basket/AF offset =
+ * zbývající čas (state "COUNTING_DOWN" = běží). Sporty bez hodin: jen skóre, číslo periody a
+ * přestávka pouze z výslovného signálu feedu.
  */
 export function parseState(ev: ObEvent, sport: Sport, now: number): GameState | undefined {
   const c = ev.commentary;
@@ -461,6 +696,7 @@ export function parseState(ev: ObEvent, sport: Sport, now: number): GameState | 
   const score = scoreFromFacts(c.facts, homeId, awayId);
   if (score) st.score = score;
   const periods = (c.periods ?? []).slice();
+  const cfg = CLOCK_SPORTS[sport];
 
   if (sport === 'tennis') {
     const sets = periods.filter((p) => p.type === 'SET').sort((a, b) => (a.periodIndex ?? 0) - (b.periodIndex ?? 0));
@@ -492,8 +728,8 @@ export function parseState(ev: ObEvent, sport: Sport, now: number): GameState | 
         st.statusText += ':FINISHED';
       }
     }
-  } else {
-    const order = sport === 'football' ? FB_ORDER : sport === 'hockey' ? HK_ORDER : BB_ORDER;
+  } else if (cfg) {
+    const { order, lastRegular } = cfg;
     // Aktuální = naposledy začatá perioda (HALF_TIME zůstává v seznamu i po začátku 2. poločasu).
     const known = periods.filter((p) => order.includes(p.type) || BREAK_TYPES.test(p.type));
     known.sort((a, b) => (ts(a.startTime) || 0) - (ts(b.startTime) || 0) || rank(order, a.type) - rank(order, b.type));
@@ -521,10 +757,10 @@ export function parseState(ev: ObEvent, sport: Sport, now: number): GameState | 
       const d = sinceUpdate(c0, now);
       const idx = order.indexOf(cur.type);
       if (offset !== undefined) {
-        if (sport === 'football') {
+        if (!cfg.countdown) {
           // offset bývá relativní k poločasu (reálné zápasy), u některých feedů absolutní
           // (5400 po konci, e-fotbal) → vybereme variantu bližší času od startu periody.
-          const base = cur.type === 'SECOND_HALF' ? 2700 : /EXTRA|OVERTIME/.test(cur.type) ? (cur.type.startsWith('SECOND') ? 6300 : 5400) : 0;
+          const base = cfg.bases?.[cur.type] ?? 0;
           const rel = base + offset + d;
           const abs = offset + d;
           const start = ts(cur.startTime);
@@ -532,37 +768,69 @@ export function parseState(ev: ObEvent, sport: Sport, now: number): GameState | 
           const v = base > 0 && Math.abs(abs - ref) < Math.abs(rel - ref) ? abs : rel;
           st.clockSec = Math.min(4 * 3600, Math.max(0, Math.round(v)));
         } else {
-          // hokej/basket: offset = zbývající čas periody (odpočet)
+          // hokej/basket/AF: offset = zbývající čas periody (odpočet)
           st.periodRemainingSec = Math.min(3600, Math.max(0, Math.round(offset - d)));
         }
       }
-      const lastRegular = sport === 'football' ? 'SECOND_HALF' : sport === 'hockey' ? 'PERIOD_3' : 'QUARTER_4';
       const isShootout = /PENALT|SHOOTOUT/.test(cur.type);
       const isOt = cur.type.startsWith('OVERTIME');
-      // hokej/basket: konec základní doby (nebo prodloužení) za nerozhodného stavu → následuje
+      // hokej/basket/AF: konec základní doby (nebo prodloužení) za nerozhodného stavu → následuje
       // prodloužení/nájezdy = přestávka; s vítězem je to konec zápasu, ne přestávka
-      const tiedEnd = sport !== 'football' && (cur.type === lastRegular || isOt) && !!st.score && st.score[0] === st.score[1];
+      const tiedEnd = cfg.tiedEndBreak && (cur.type === lastRegular || isOt) && !!st.score && st.score[0] === st.score[1];
       let brk = false;
       // a) perioda výslovně FINISHED a další ještě nezačala
       if (cur.status === 'FINISHED' && !isShootout) {
-        if (sport === 'football') brk = cur.type !== lastRegular;
+        if (!cfg.tiedEndBreak) brk = cur.type !== lastRegular;
         else brk = (cur.type !== lastRegular && !isOt) || tiedEnd;
       }
       if (!running && offset !== undefined && !isShootout) {
         // b) odpočet doběhl na 0 (konec třetiny/čtvrtiny), další perioda ještě neexistuje
-        if (sport !== 'football' && offset === 0 && ((cur.type !== lastRegular && !isOt) || tiedEnd)) brk = true;
+        if (cfg.countdown && offset === 0 && ((cur.type !== lastRegular && !isOt) || tiedEnd)) brk = true;
         // c) nová perioda už založená, ale ještě nezačala (hodiny od založení nikdo neposunul:
-        //    fotbal 0:00, hokej/basket plná délka periody)
+        //    fotbal/házená 0:00, hokej/basket/AF plná délka periody)
         const lu = ts(c0?.lastUpdate);
         const st0 = ts(cur.startTime);
         const neverRan = !Number.isFinite(lu) || !Number.isFinite(st0) || Math.abs(lu - st0) < 5000;
-        if (idx > 0 && neverRan && sport === 'football' && offset === 0) brk = true;
-        if (idx > 0 && neverRan && sport !== 'football' && FULL_PERIOD[sport]?.includes(offset)) brk = true;
+        if (idx > 0 && neverRan && !cfg.countdown && offset === 0) brk = true;
+        if (idx > 0 && neverRan && cfg.countdown && cfg.fullPeriod?.includes(offset)) brk = true;
       }
       if (brk && !ev.resulted) {
         st.breakFlag = true;
         st.clockRunning = false;
       }
+    }
+    if (periods.some((p) => FINISHED_TYPES.test(p.type))) st.finished = true;
+  } else {
+    // sety / legy / framy / směny: bez hodin (feed je drží STOPPED na 0), sety bez statusu
+    const re = INDEXED_TYPES[sport];
+    let main = re ? periods.filter((p) => re.test(p.type) && periodNo(p) !== undefined) : [];
+    // šipky: zápas na sety → sety (legy jsou vnořené), jinak legy
+    if (main.some((p) => p.type === 'SET')) main = main.filter((p) => p.type === 'SET');
+    main.sort((a, b) => (periodNo(a) ?? 0) - (periodNo(b) ?? 0) || (ts(a.startTime) || 0) - (ts(b.startTime) || 0));
+    const cur = main[main.length - 1];
+    if (cur && PERIOD_SCORE_TYPES.test(cur.type)) {
+      const ps: [number, number][] = [];
+      for (const p of main) {
+        const sc = scoreFromFacts(p.facts, homeId, awayId);
+        if (sc) ps.push(sc);
+      }
+      if (ps.length) st.periodScores = ps;
+    }
+    // výslovná přestávka: perioda typu *_BREAK / HALF_TIME začatá po aktuální periodě
+    const brkPeriod = periods.filter((p) => BREAK_TYPES.test(p.type)).sort((a, b) => (ts(a.startTime) || 0) - (ts(b.startTime) || 0)).pop();
+    if (cur) {
+      st.period = periodNo(cur);
+      const base = /^INNINGS?/.test(cur.type) ? 'INNINGS' : cur.type;
+      st.statusText = `${base}_${st.period}` + (cur.status ? ':' + cur.status : '');
+      // set výslovně FINISHED a zápas nerozhodnut (počet vítězných setů známe) → přestávka mezi sety
+      const toWin = SETS_TO_WIN[sport] ?? (Math.ceil(Number(c.facts?.find((f) => f.type === 'MAX_SETS')?.value) / 2) || undefined);
+      if (cur.type === 'SET' && cur.status === 'FINISHED' && toWin && st.score && Math.max(...st.score) < toWin && !ev.resulted) {
+        st.breakFlag = true;
+      }
+    }
+    if (brkPeriod && (!cur || (ts(brkPeriod.startTime) || 0) >= (ts(cur.startTime) || 0)) && !ev.resulted) {
+      st.statusText = brkPeriod.type;
+      st.breakFlag = true;
     }
     if (periods.some((p) => FINISHED_TYPES.test(p.type))) st.finished = true;
   }
@@ -591,6 +859,21 @@ export interface ParseOptions {
   sports?: Sport[];
 }
 
+/**
+ * Události, jejichž trhy nemají standardní význam:
+ *  - baseball s uvedenými nadhazovači (herní plán 16.1 f: změna nadhazovačů oproti zadání = kurz 1,00
+ *    pro všechny sázky) – Sazka dnes nadhazovače v zadání neuvádí (jméno/blurb bez nich), kdyby je
+ *    začala uvádět (typicky "Tým (Nadhazovač)"), událost vynecháme;
+ *  - volejbal: zlatý set jako samostatná událost.
+ */
+function eventSupported(ev: ObEvent, sport: Sport, home: string, away: string): boolean {
+  if (sport === 'baseball') {
+    if (/[()]/.test(home + away) || /nadhazov|pitcher/i.test(`${ev.name} ${ev.blurb ?? ''}`)) return false;
+  }
+  if (sport === 'volleyball' && /zlat\S* set|golden set/i.test(`${ev.name} ${home} ${away}`)) return false;
+  return true;
+}
+
 /** Jedna OpenBet událost → RawEvent (nebo null: jiný sport, speciál, e-sport, ...). */
 export function parseEvent(ev: ObEvent, o: ParseOptions): RawEvent | null {
   const sport = eventSport(ev);
@@ -604,6 +887,8 @@ export function parseEvent(ev: ObEvent, o: ParseOptions): RawEvent | null {
   if (o.scope === 'live' ? !live : live || ev.started) return null;
   const startTime = Date.parse(ev.startTime);
   if (!Number.isFinite(startTime)) return null;
+  if (!eventSupported(ev, sport, home, away)) return null;
+  const ctx = marketContext(ev);
   const markets: RawMarket[] = [];
   const seen = new Set<string>();
   // suspendovaná událost (status/active na úrovni události) = všechny trhy zavřené
@@ -611,7 +896,7 @@ export function parseEvent(ev: ObEvent, o: ParseOptions): RawEvent | null {
   // standardní trhy před asijskými (při kolizi klíče vyhrává standardní)
   const src = (ev.markets ?? []).slice().sort((a, b) => Number((a.groupCode ?? '').includes('ASIAN')) - Number((b.groupCode ?? '').includes('ASIAN')));
   for (const m of src) {
-    const rm = mapMarket(sport, m, home, away);
+    const rm = mapMarket(sport, m, home, away, ctx);
     if (!rm || seen.has(rm.key)) continue;
     seen.add(rm.key);
     if (!eventOpen) rm.open = false;

@@ -46,6 +46,20 @@ export function detailUrl(ids: string[], bust = false): string {
   return `${API_BASE}/orchestrations/sazkaEventsDrilldownDetail?eventIds=${ids.join(',')}${bust ? `&_=${Date.now()}` : ''}`;
 }
 
+/**
+ * Prematch listing: fotbal zvlášť (vlastní parametry kvůli DNB), ostatní sporty jedním požadavkem
+ * přes `drilldownTagIds=a,b,c` (ověřeno 1. 10. 2026: stejné události i trhy jako listingy po sportech,
+ * 674/674 událostí). 13 sportů = 2 listingy místo 4 dřív pro 4 sporty.
+ */
+export function prematchListingGroups(sports: Sport[]): Sport[][] {
+  const known = sports.filter((s) => SPORT_NODES[s]);
+  const rest = known.filter((s) => s !== 'football');
+  const out: Sport[][] = [];
+  if (known.includes('football')) out.push(['football']);
+  if (rest.length) out.push(rest);
+  return out;
+}
+
 export const HEALTH_URL = `${API_BASE}/content-service/q/sazka-sports?eventState=LIVE_EVENT`;
 
 /** Abstrakce transportu: Node fetch (ctx.http) nebo fetch uvnitř stránky (ctx.browser). */

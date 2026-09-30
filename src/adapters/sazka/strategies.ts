@@ -7,9 +7,9 @@ import type { AdapterContext, FetchRequest, Strategy, StrategyLevel } from '../t
 import { StrategyError } from '../types.js';
 import { DEFAULT_UA } from '../http.js';
 import type { ObEvent } from './parse.js';
-import { mergeListingAndDetail, parseEvents } from './parse.js';
+import { eventSport, mergeListingAndDetail, parseEvents } from './parse.js';
 import type { CallStats, Transport } from './api.js';
-import { chunk, detailUrl, getEvents, HEALTH_URL, HTTP_HEADERS, listingUrl, ORIGIN, WS_URL } from './api.js';
+import { chunk, detailUrl, getEvents, HEALTH_URL, HTTP_HEADERS, listingUrl, ORIGIN, prematchListingGroups, WS_URL } from './api.js';
 import type { PushMessage } from './push.js';
 import { applyMessage, decodeMessage, encodeConnect, encodePing, encodeSubscribe, encodeUnsubscribe } from './push.js';
 
@@ -30,9 +30,21 @@ export interface SazkaOptions {
   prematchCacheBust?: boolean;
 }
 
+/** Sporty s velkou nabídkou – při výběru detailů jdou až po vedlejších sportech. */
+const MAIN_SPORTS = new Set<Sport>(['football', 'tennis', 'basketball', 'hockey']);
+/**
+ * Sporty s řídkou nabídkou, kterým detail přidává trhy (DC, DNB, poločasy, týmové totaly, 1X2 amerického fotbalu…):
+ * delší okno pro detail (hodiny dopředu). NFL se hraje jednou týdně → celý týden (16 zápasů).
+ */
+const WIDE_DETAIL_HOURS: Partial<Record<Sport, number>> = { handball: 72, baseball: 72, volleyball: 72, american_football: 168 };
+/** MMA a box: v detailu nic, co by listing nenesl (1X2 / "Vítěz zápasu"). */
+const NO_DETAIL_SPORTS = new Set<Sport>(['mma', 'boxing']);
+
 const DEFAULTS: Required<SazkaOptions> = {
   detailHorizonHours: 24,
-  maxDetailEvents: 160,
+  // 13 sportů (1. 10. 2026 v noci: 387 zápasů do 24 h, z toho tenis 244, vedlejší sporty 62) → 240 = 6 požadavků
+  // (2 listingy + 6 detailů = 8 požadavků, stejně jako dřív pro 4 sporty: 4 listingy + 4 detaily)
+  maxDetailEvents: 240,
   detailBatch: 40,
   liveDetail: true,
   prematchCacheBust: true,
@@ -63,19 +75,25 @@ export class SazkaCore {
         return listing;
       }
     }
-    // prematch: jeden listing na sport (fotbal ~150 kB gzip, 1–3 s)
+    // prematch: fotbal zvlášť (~150 kB gzip, 1–3 s), ostatní sporty jedním listingem (~230 kB gzip, ~4 s)
     const bust = this.o.prematchCacheBust;
-    const lists = await Promise.all(sports.map((s) => getEvents(t, listingUrl([s], 'prematch', bust), 45_000, stats)));
+    const groups = prematchListingGroups(sports);
+    const lists = await Promise.all(groups.map((g) => getEvents(t, listingUrl(g, 'prematch', bust), 45_000, stats)));
     const listing = lists.flat().filter((e) => !e.liveNow && !e.started);
     if (this.o.detailHorizonHours <= 0 || this.o.maxDetailEvents <= 0) return listing;
     const now = Date.now();
-    const horizon = now + this.o.detailHorizonHours * 3600_000;
+    // Výběr detailů (limit maxDetailEvents): vedlejší sporty mají přednost – při ~250 tenisových zápasech do 24 h by je
+    // nejbližších N vytlačilo, a DC/DNB/poločasy/týmové totaly jsou jen v detailu. Sporty, kterým detail přidává trhy
+    // a mají řídkou nabídku (házená, baseball, AF, volejbal), se berou 72 h (AF 7 dní) dopředu; MMA a box detail nepotřebují
+    // (vše mapované je v listingu).
+    const priority = (e: ObEvent) => (MAIN_SPORTS.has(eventSport(e) as Sport) ? 1 : 0);
+    const horizonOf = (e: ObEvent) => now + (WIDE_DETAIL_HOURS[eventSport(e) as Sport] ?? this.o.detailHorizonHours) * 3600_000;
     const pick = listing
       .filter((e) => {
         const st = Date.parse(e.startTime);
-        return st > now && st <= horizon && e.sortCode === 'MTCH';
+        return st > now && st <= horizonOf(e) && e.sortCode === 'MTCH' && !NO_DETAIL_SPORTS.has(eventSport(e) as Sport);
       })
-      .sort((a, b) => Date.parse(a.startTime) - Date.parse(b.startTime))
+      .sort((a, b) => priority(a) - priority(b) || Date.parse(a.startTime) - Date.parse(b.startTime))
       .slice(0, this.o.maxDetailEvents)
       .map((e) => e.id);
     if (!pick.length) return listing;
