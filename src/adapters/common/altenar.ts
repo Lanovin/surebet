@@ -17,9 +17,23 @@ import { isVirtualName, uofDef, uofSelection } from './uof.js';
 
 export const ALTENAR_API = 'https://sb2frontend-altenar2.biahosted.com/api/widget/';
 
-/** Altenar sportId -> kanonický sport (e-sporty 145–148 se ignorují). */
-export const ALTENAR_SPORT_IDS: Partial<Record<Sport, number>> = { football: 66, tennis: 68, basketball: 67, hockey: 70 };
-const ID_TO_SPORT: Record<number, Sport> = { 66: 'football', 68: 'tennis', 67: 'basketball', 70: 'hockey' };
+/** Kanonický sport -> Altenar sportId (GetSportMenu; e-sporty 145–148 se ignorují). */
+export const ALTENAR_SPORT_IDS: Partial<Record<Sport, number>> = {
+  football: 66,
+  tennis: 68,
+  basketball: 67,
+  hockey: 70,
+  handball: 73,
+  volleyball: 69,
+  american_football: 75,
+  baseball: 76,
+  boxing: 71,
+  mma: 84,
+  snooker: 81,
+  table_tennis: 77,
+  darts: 78,
+};
+const ID_TO_SPORT: Record<number, Sport> = Object.fromEntries(Object.entries(ALTENAR_SPORT_IDS).map(([s, id]) => [id, s as Sport]));
 
 // ---------- surové typy ----------
 
@@ -131,12 +145,20 @@ export function sitePrice(price: unknown, rounding: AltenarSite['rounding']): nu
 
 // ---------- trhy ----------
 
-const OT = /prodl|nájezd|rozhodnut/i;
-/** trhy, které nikdy nejsou „celý zápas / perioda“: další gól, zbytek zápasu, intervaly, závody … */
-const FOREIGN = /\d+\.\s*gól|další gól|zbytek|zbývající|minut|interval|závod|kdo (dá|vstřelí)|první gól|poslední gól/i;
-const PERIOD_IN_NAME = /(\d)\.\s*(poloč|třetin|čtvrtin|set)/i;
+/** prodloužení / nájezdy / extra směny (baseball) – trh zahrnuje víc než základní dobu */
+const OT = /prodl|nájezd|rozhodnut|extra směn/i;
+/**
+ * trhy, které nikdy nejsou „celý zápas / perioda“: další gól, zbytek zápasu, intervaly, závody,
+ * jednotlivé směny / framy / legy / kola, „směny 1 až 5“, zlatý set …
+ */
+const FOREIGN =
+  /\d+\.\s*gól|další gól|zbytek|zbývající|minut|interval|závod|kdo (dá|vstřelí)|první gól|poslední gól|\d+\.\s*(směn|fram|leg\b|legu|kol[oa]?\b)|směny \d|až \d|zlatý set|golden set/i;
+// „1. třetina“, „Výsledek 2. třetiny“, ale i „1 třetina - dvojitá šance“ (hokejový dvojtip bez tečky)
+const PERIOD_IN_NAME = /(\d+)(?:\.\s*|\s+)(poloč|třetin|čtvrtin|set)/i;
 const PERIOD_KIND: Record<'PERIOD' | 'QUARTER' | 'SET', RegExp> = { PERIOD: /třetin/i, QUARTER: /čtvrtin/i, SET: /set/i };
 const SCOPE_PREFIX = { PERIOD: ['P', 3], QUARTER: ['Q', 4], SET: ['S', 5] } as const;
+/** Sporty, kde celozápasový (MATCH) trh musí výslovně zahrnovat prodloužení / extra směny. */
+const MATCH_NEEDS_OT = new Set<Sport>(['hockey', 'basketball', 'american_football', 'baseball', 'handball']);
 
 /** Linie x.0 / x.5 (čtvrtinové linie jsou dělené sázky – kanonický model je nemá). */
 function halfLine(raw: string | undefined): number | undefined {
@@ -177,8 +199,9 @@ function scopeOf(sport: Sport, def: NonNullable<ReturnType<typeof uofDef>>, name
   // celý zápas: název nesmí mluvit o periodě
   if (per) return undefined;
   if (def.scope === 'REG') return OT.test(name) ? undefined : { scope: 'REG' };
-  // MATCH: hokej/basket jen trhy výslovně „vč. prodloužení (a nájezdů)“, tenis celý zápas
-  if ((sport === 'hockey' || sport === 'basketball') && !OT.test(name)) return undefined;
+  // MATCH: týmové sporty jen trhy výslovně „vč. prodloužení (a nájezdů) / extra směny“,
+  // tenis, stolní tenis, volejbal, šipky, snooker celý zápas
+  if (MATCH_NEEDS_OT.has(sport) && !OT.test(name)) return undefined;
   return { scope: 'MATCH' };
 }
 
@@ -199,6 +222,7 @@ export function mapAltenarMarket(sport: Sport, m: AltMarket, odds: Map<number, A
   if (!def) return [];
   const name = (m.name ?? '').trim();
   if (FOREIGN.test(name)) return [];
+  if (def.name && !def.name.test(name)) return []; // jiná jednotka, než UOF id v tomhle sportu znamená
   const sc = scopeOf(sport, def, name);
   if (!sc) return [];
   const hasLine = def.specs.includes('hcp') || def.specs.includes('total');
@@ -256,12 +280,17 @@ function collect(sport: Sport, marketIds: Iterable<number>, markets: Map<number,
 
 const BREAK_RE = /^poločas$|přestávk|pauza|^konec \d|po \d\. (třetin|čtvrtin|set)|break|half ?time|intermission/i;
 const ORDINALS: Record<string, number> = { první: 1, druhá: 2, třetí: 3 };
+/**
+ * Sporty bez herního času (liveTime je jen „2. set“ / „3. směna“; u amerického fotbalu, MMA a boxu
+ * nemáme živý vzorek, takže minutu z liveTime radši nečteme – mohla by být v periodě, ne od začátku).
+ */
+const UNTIMED = new Set<Sport>(['tennis', 'table_tennis', 'volleyball', 'darts', 'snooker', 'baseball', 'american_football', 'mma', 'boxing']);
 
 /**
  * Stav z live události: `ls` (text: „1. poločas“, „Poločas“, „2. třetina“, „První přestávka“,
- * „Přestávka“, „3. čtvrtina“, „1. set“), `score` (tenis: sety), `currentSetScore` (gemy),
- * `pointScore`, `timer` (fotbal: playtime ms k okamžiku timeUtc; basket: odpočet čtvrtiny
- * isTimerCountDown), jinak aspoň `liveTime` („24'“).
+ * „Přestávka“, „3. čtvrtina“, „1. set“, „2. směna“), `score` (tenis, stolní tenis, volejbal,
+ * šipky: sety), `currentSetScore` (gemy), `pointScore` (body), `timer` (fotbal: playtime ms
+ * k okamžiku timeUtc; basket: odpočet čtvrtiny isTimerCountDown), jinak aspoň `liveTime` („24'“).
  */
 export function altenarState(e: AltEvent, sport: Sport, now: number): GameState {
   const st: GameState = {};
@@ -271,7 +300,8 @@ export function altenarState(e: AltEvent, sport: Sport, now: number): GameState 
     Array.isArray(v) && v.length === 2 && v.every((x) => Number.isInteger(x) && x >= 0) ? [v[0], v[1]] : undefined;
   const score = pair(e.score);
   if (score) st.score = score;
-  const per = /(\d)\.\s*(poločas|třetin|čtvrtin|set|perioda|prodl)/i.exec(text);
+  // „2. poločas“, „3. čtvrtina“, „4. set“ (i stolní tenis, volejbal, šipky), „10. směna“ (baseball)
+  const per = /(\d+)\.\s*(poločas|třetin|čtvrtin|set|perioda|prodl|směn)/i.exec(text);
   const ord = /^(první|druhá|třetí)\s+přestávka/i.exec(text);
   if (per) st.period = Number(per[1]);
   else if (ord) st.period = ORDINALS[ord[1].toLowerCase()];
@@ -280,6 +310,10 @@ export function altenarState(e: AltEvent, sport: Sport, now: number): GameState 
     const games = pair(e.currentSetScore);
     if (games) st.games = games;
     if (Array.isArray(e.pointScore) && e.pointScore.length === 2) st.points = `${e.pointScore[0]}:${e.pointScore[1]}`;
+  } else if (sport === 'table_tennis' || sport === 'volleyball') {
+    // score = sety, pointScore = body v aktuálním setu. Některé ligy stolního tenisu mají body v currentSetScore
+    // a pointScore 0:0 (Hruska – Dolezal: 8:2 vs. 0:0) → při neprázdném currentSetScore se body neberou (nejasné)
+    if (!pair(e.currentSetScore) && Array.isArray(e.pointScore) && e.pointScore.length === 2) st.points = `${e.pointScore[0]}:${e.pointScore[1]}`;
   }
   if (BREAK_RE.test(text) || (sport === 'football' && e.timer?.matchPhase === 3)) st.breakFlag = true;
   if (/konec zápasu|ukončen|skončen|^konec$|finished|ended/i.test(text)) st.finished = true;
@@ -291,7 +325,7 @@ export function altenarState(e: AltEvent, sport: Sport, now: number): GameState 
     if (t.isTimerCountDown) st.periodRemainingSec = Math.max(0, Math.min(3600, Math.round((t.playtime - drift) / 1000)));
     else st.clockSec = Math.max(0, Math.min(4 * 3600, Math.round((t.playtime + drift) / 1000)));
     st.clockRunning = running;
-  } else if (sport !== 'tennis') {
+  } else if (!UNTIMED.has(sport)) {
     // „19'“ = běží 19. minuta; na hranici periody (konec třetiny/poločasu) ukazuje web celou minutu
     const min = /^(\d+)'/.exec(e.liveTime ?? '')?.[1];
     if (min) st.clockSec = Math.min(4 * 3600, Number(min) * 60);

@@ -16,8 +16,8 @@ import {
 
 export interface AltenarOptions {
   /**
-   * Prematch: kolik nejbližších zápasů doplnit detailem (AH, BTTS, DNB, poločasy, třetiny, čtvrtiny,
-   * sety, další linie). Každý = 1 požadavek (~15 kB gzip). 0 = jen listing (4 požadavky).
+   * Prematch: kolik nejbližších zápasů doplnit detailem (AH, BTTS, DNB, dvojtip, poločasy, třetiny,
+   * čtvrtiny, sety, další linie). Každý = 1 požadavek (~15 kB gzip). 0 = jen listingy (1 na sport).
    */
   detailLimit: number;
   /** Detail jen pro zápasy začínající do tolika hodin. */
@@ -25,6 +25,24 @@ export interface AltenarOptions {
 }
 
 export const ALTENAR_DEFAULTS: AltenarOptions = { detailLimit: 50, detailHorizonHours: 24 };
+
+/**
+ * Sporty, u kterých detail přidá namapované trhy nad rámec listingu. MMA a box mají i v detailu jen
+ * vítěze, stolní tenis skoro nic navíc – a jeho zápasy každou půlhodinu by jinak vyčerpaly limit
+ * detailů (nejbližších 50) na úkor fotbalu/hokeje.
+ */
+export const ALTENAR_DETAIL_SPORTS: ReadonlySet<Sport> = new Set<Sport>([
+  'football',
+  'tennis',
+  'basketball',
+  'hockey',
+  'handball',
+  'volleyball',
+  'american_football',
+  'baseball',
+  'darts',
+  'snooker',
+]);
 
 /** Společné parametry všech volání (stejné jako posílá web). */
 export const altenarQuery = (integration: string): string =>
@@ -39,6 +57,8 @@ export const altenarUrls = (integration: string) => {
     live: (sport: Sport) => `${ALTENAR_API}GetLiveEvents?${q}&eventCount=0&sportId=${ALTENAR_SPORT_IDS[sport]}`,
     /** detail zápasu: všechny trhy a linie */
     detail: (eventId: number | string) => `${ALTENAR_API}GetEventDetails?${q}&eventId=${eventId}&showNonBoosts=false`,
+    /** live přehled: `liveSports` = počty živých zápasů po sportech (+ zápasy 1. sportu, ty nepoužíváme) */
+    liveOverview: `${ALTENAR_API}GetLiveOverview?${q}&sportId=0`,
     health: `${ALTENAR_API}GetSportInfo?${q}`,
   };
 };
@@ -65,8 +85,17 @@ export function parseAltenarRaw(raw: AltenarRaw, site: AltenarSite, scope: FeedS
   return mergeAltenarDetails([...byId.values()], details, site);
 }
 
+/**
+ * Live: jak dlouho platí seznam sportů s živými zápasy (GetLiveOverview). Polling po 1 s stahuje
+ * GetLiveEvents jen pro tyto sporty (typicky 3–6 požadavků místo 13); sport, ve kterém právě začal
+ * první zápas, se tak objeví nejpozději po tomto intervalu.
+ */
+export const LIVE_SPORTS_TTL_MS = 15_000;
+
 export class AltenarCore {
   readonly urls: ReturnType<typeof altenarUrls>;
+  /** poslední live přehled: Altenar sportId s živými zápasy (undefined = přehled selhal → všechny sporty) */
+  private liveSports?: { at: number; ids?: Set<number> };
 
   constructor(
     private readonly ctx: AdapterContext,
@@ -103,17 +132,42 @@ export class AltenarCore {
     return j as T;
   }
 
+  /** Altenar sportId, ve kterých se právě hraje (cache LIVE_SPORTS_TTL_MS); undefined = nevíme → všechny. */
+  private async liveSportIds(raw: AltenarRaw): Promise<Set<number> | undefined> {
+    const now = Date.now();
+    if (this.liveSports && now - this.liveSports.at < LIVE_SPORTS_TTL_MS) return this.liveSports.ids;
+    // vlastní počítadlo: stáří přehledu nesmí ovlivnit fetchedAt (kurzy z něj nebereme)
+    const tmp: AltenarRaw = { lists: [], details: [], requests: 0, bytes: 0 };
+    let ids: Set<number> | undefined;
+    try {
+      const r = await this.get<{ liveSports: { id: number; count?: number }[] }>(this.urls.liveOverview, 10_000, tmp, 'liveSports');
+      ids = new Set(r.liveSports.filter((x) => (x.count ?? 1) > 0).map((x) => x.id));
+    } catch (e) {
+      this.ctx.log.debug('live overview failed', { error: (e as Error).message });
+    } finally {
+      raw.requests += tmp.requests;
+      raw.bytes += tmp.bytes;
+    }
+    this.liveSports = { at: now, ids };
+    return ids;
+  }
+
   async fetchRaw(req: FetchRequest): Promise<AltenarRaw> {
-    const sports = req.sports.filter((s) => ALTENAR_SPORT_IDS[s] !== undefined);
     const raw: AltenarRaw = { lists: [], details: [], requests: 0, bytes: 0 };
+    let sports = req.sports.filter((s) => ALTENAR_SPORT_IDS[s] !== undefined);
+    if (req.scope === 'live') {
+      const live = await this.liveSportIds(raw);
+      if (live) sports = sports.filter((s) => live.has(ALTENAR_SPORT_IDS[s]!));
+    }
     const listUrl = req.scope === 'live' ? this.urls.live : this.urls.events;
-    // 4 malé požadavky paralelně (CDN je cachuje 3 s)
+    // jeden malý požadavek na sport, paralelně (CDN je cachuje 3 s)
     const bodies = await Promise.all(sports.map((s) => this.get<AltListResponse>(listUrl(s), req.scope === 'live' ? 10_000 : 30_000, raw, 'events')));
     bodies.forEach((body, i) => raw.lists.push({ sport: sports[i], url: listUrl(sports[i]), body }));
     if (req.scope === 'prematch' && this.opts.detailLimit > 0) {
       const now = Date.now();
       const horizon = now + this.opts.detailHorizonHours * 3600_000;
       const pick = raw.lists
+        .filter((l) => ALTENAR_DETAIL_SPORTS.has(l.sport))
         .flatMap((l) => parseAltenarList(l.body, this.site, { scope: 'prematch', now, sports: [l.sport] }).map((e) => ({ e, sport: l.sport })))
         .filter(({ e }) => e.startTime <= horizon)
         .sort((a, b) => a.e.startTime - b.e.startTime)

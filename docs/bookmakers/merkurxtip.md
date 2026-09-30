@@ -23,12 +23,25 @@ L3 proto neexistuje.
 
 | | požadavky | data raw | latence |
 |---|---|---|---|
-| prematch (4× GetEvents + 50× GetEventDetails nejbližších zápasů do 24 h) | 54 | ~3,7 MB (gzip/br ~0,4 MB) | ~5 s |
-| live (4× GetLiveEvents paralelně) | 4 | ~30 kB | 0,1–0,5 s |
+| prematch (4× GetEvents + 50× GetEventDetails nejbližších zápasů do 24 h; od 1. 10. 13× GetEvents → 63) | 54 → 63 | ~3,7 MB (gzip/br ~0,4 MB) | ~5 s |
+| live (4× GetLiveEvents paralelně; od 1. 10. 1× GetLiveOverview / 15 s + GetLiveEvents jen pro sporty s živými zápasy) | 4 → 3–6 | ~30 kB | 0,1–0,5 s |
 | browser-fetch live | 4 | ~30 kB | ~1,8 s (+ ~3 s první načtení stránky) |
 
 Prematch: ~1 380 zápasů (fotbal 730 ~ 5 týdnů dopředu, tenis ~370, basket ~140, hokej ~140),
 ~3 400 trhů. Live (večer): ~15 zápasů.
+
+### Nové sporty a dvojtip (1. 10. 2026, 00:10 CEST)
+
+Házená, volejbal, americký fotbal, baseball, box, MMA, snooker, stolní tenis a šipky + dvojtip (`DC`) u fotbalu a hokeje – mapování, pasti a
+počty požadavků v **[altenar.md](altenar.md)** (sekce „Dvojtip a další sporty“). Prematch 1 890 událostí (fotbal 784, tenis 333, hokej 201, basket 148,
+**stolní tenis 169**, házená 62, MMA 59, box 49, šipky 27, AF 20, volejbal 17, baseball 13, snooker 8), 5 660 trhů, 9,9 s. Specifika MerkurXtipu:
+
+* kurzy se **ořezávají** (`floor`) na 2 místa jako u všech sportů (volejbal API 1.909 → 1.90, baseball 1.476 → 1.47);
+* stolní tenis má v listingu navíc **handicap na body (237) a počet bodů (238)** u většiny zápasů (158 / 136 ze 161), v detailu i handicap na sety (187);
+  volejbal v detailu 188 (sety), 202 (set), 238 (body), 310 (body v setu);
+* dvojtip má u fotbalu v záznamu **jiné názvy výsledků** („Neprohra Zlín“ = 1X, „Nebude remíza“ = 12, „Neprohra Slavia Praha“ = X2) – mapuje se podle UOF id výsledku 9/10/11;
+* americký fotbal jen 20 zápasů (Kingsbet 76), bez amerických univerzit; box/MMA shodně s Kingsbetem (jen 186 → `DNB|REG`);
+* live: v době ověření fotbal nehrál; stolní tenis a volejbal ano (včetně `První přestávka` mezi sety a ligy, které dávají body setu do `currentSetScore`).
 
 ## Endpointy
 
@@ -46,8 +59,9 @@ Základ `https://sb2frontend-altenar2.biahosted.com/api/widget/`, společné par
 | menu sportů/lig | `GetSportMenu?…` |
 | health | `GetInfo?…` |
 
-Sport ID: fotbal `66`, tenis `68`, basket `67`, hokej `70` (e-sporty 145–148 ignorujeme).
-`sportId=0` ani seznam ID nefungují (400 / prázdné). `GetUpcoming` vrací jen ~7 dní,
+Sport ID: fotbal `66`, tenis `68`, basket `67`, hokej `70`, házená `73`, volejbal `69`, americký fotbal `75`, baseball `76`, box `71`, MMA `84`, snooker `81`,
+stolní tenis `77`, šipky `78` (e-sporty 145–148 ignorujeme).
+U `GetEvents`/`GetLiveEvents` nefungují `sportId=0` ani seznam ID (400 / prázdné); `GetLiveOverview` s `sportId=0` ano. `GetUpcoming` vrací jen ~7 dní,
 `GetEventsByChamp` jen první ligu ze seznamu – proto `GetEvents` po sportech.
 
 **Cache:** odpovědi jdou přes Google CDN s `cache-control: public,max-age=3` a hlavičkou `Age`

@@ -5,11 +5,26 @@
 import type { GameState, RawEvent, RawMarket, Sport } from '../../core/types.js';
 import { isVirtualName, MarketCollector, uofDef, uofMarketKey, uofSelection, validOdds } from '../common/uof.js';
 
+/** Kanonický sport -> betx SportId (offer/v3/sports; 425/449 „BETX (Super)šance“ = speciály – ignorují se). */
+export const SPORT_IDS: Partial<Record<Sport, number>> = {
+  football: 388,
+  tennis: 389,
+  basketball: 391,
+  hockey: 398,
+  handball: 392,
+  volleyball: 397,
+  american_football: 404,
+  baseball: 394,
+  boxing: 414,
+  mma: 455,
+  snooker: 406,
+  table_tennis: 417,
+  darts: 401,
+};
 /** betx SportId -> kanonický sport. */
-export const BETX_SPORTS: Record<number, Sport> = { 388: 'football', 389: 'tennis', 391: 'basketball', 398: 'hockey' };
-export const SPORT_IDS: Partial<Record<Sport, number>> = { football: 388, tennis: 389, basketball: 391, hockey: 398 };
-/** betx SportId -> Sportradar sport (jen pro složení UofKey z push dat). */
-const SR_SPORT: Record<number, number> = { 388: 1, 389: 5, 391: 2, 398: 4 };
+export const BETX_SPORTS: Record<number, Sport> = Object.fromEntries(Object.entries(SPORT_IDS).map(([s, id]) => [id, s as Sport]));
+/** betx SportId -> Sportradar sport (jen pro složení UofKey z push dat; ověřeno z UofKey „sr:sport:N“). */
+const SR_SPORT: Record<number, number> = { 388: 1, 389: 5, 391: 2, 398: 4, 392: 6, 397: 23, 404: 16, 394: 3, 414: 10, 455: 117, 406: 19, 417: 20, 401: 22 };
 
 export interface BetxOdd {
   Name?: string;
@@ -161,6 +176,8 @@ export function parseBetxMatches(matches: BetxMatch[], o: { live: boolean }): Ra
     if (isVirtualName(competition, home, away)) continue;
     const startTime = Date.parse(m.MatchStartTime);
     if (!Number.isFinite(startTime)) continue;
+    // „Začne brzy“ (LB_*_NOTSTARTED, LiveStatusString NotStarted): zápas ještě nezačal, byť je v live listingu
+    if (o.live && (/^notstarted$/i.test(m.LiveStatusString ?? '') || /_NOTSTARTED$/i.test(m.LiveMatchTimeOrigName ?? ''))) continue;
     // IsLiveMatchAvailable=false: web zápas v live skryje (vsadit nejde)
     const blocked =
       !!m.IsBlocked ||
@@ -277,6 +294,9 @@ export const PUSH_BET_TYPES: Record<string, PushBetType> = {
   '389|7_10': { market: 186, outcomes: WIN }, // tenis vítěz zápasu
   '389|7_922': { market: 187, spec: 'hcp', outcomes: HCP }, // tenis handicap gemy
   '389|8_83': { market: 189, spec: 'total', outcomes: OU_LONG }, // tenis počet gemů
+  '417|7_102': { market: 186, outcomes: WIN }, // stolní tenis vítěz zápasu (live BasicOffer)
+  '397|7_102': { market: 186, outcomes: WIN }, // volejbal vítěz zápasu (live BasicOffer, UofKey 23/186)
+  '394|7_37': { market: 251, outcomes: WIN }, // baseball vítěz vč. extra směn (live BasicOffer)
 };
 
 const normName = (s: string | undefined): string => (s ?? '').trim().toLowerCase();
@@ -447,7 +467,8 @@ export function betxState(m: BetxMatch, sport: Sport): GameState {
   const isBreak =
     status === 'paused' || /PAUSE|HALFTIME|HALF_TIME|BREAK|INTERMISSION|AWAITING/.test(orig) || /přestávk|poločasová/i.test(text);
   if (isBreak && !finished) st.breakFlag = true;
-  const pm = /_(\d+)(?:P|Q|SET|H)$/.exec(orig) ?? /(\d+)\.\s*(?:poločas|třetina|čtvrtina|set)/i.exec(text);
+  // LB_BASEBALL_3IT / _3IB = horní / dolní polovina 3. směny
+  const pm = /_(\d+)(?:P|Q|SET|H|IT|IB)$/.exec(orig) ?? /(\d+)\.\s*(?:poločas|třetina|čtvrtina|set|směna)/i.exec(text);
   if (pm) st.period = Number(pm[1]);
   else if (!finished && periodScores.length) st.period = periodScores.length;
   if (sport === 'tennis') {

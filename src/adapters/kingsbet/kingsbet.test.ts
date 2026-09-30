@@ -167,11 +167,15 @@ describe('kingsbet / live 30. 9. – náhradní trhy, pozastavené zápasy, odpo
     // Skotsko U21 3:1: listing má místo zavřeného 1X2 trh „5. gól“ (1 1.3704 / Nikdo 5.5 / 2 4.3334)
     const sk = byName('Skotsko U21');
     expect(sk.state).toMatchObject({ score: [3, 1], period: 1 });
-    expect(sk.markets.map((m) => m.key)).toEqual(['OU|REG|5.5']);
+    // dvojtip (typeId 10) zůstává: 1X a 12 suspendované (cena 1, oddStatus 7) → jen X2
+    expect(sk.markets.map((m) => m.key)).toEqual(['DC|REG', 'OU|REG|5.5']);
+    expect(odds(sk, 'DC|REG')).toEqual({ DRAW_AWAY: 12 });
     // Portugalsko U21 – Gibraltar U21 0:0: „1. gól“ (2 @ 9) dřív vypadal jako výhra Gibraltaru za 9
     expect(byName('Portugalsko U21').markets.find((m) => m.key === '1X2|REG')).toBeUndefined();
     // skutečné 1X2 („Výsledek zápasu“) zůstává
     expect(odds(byName('Lyon'), '1X2|REG')).toEqual({ HOME: 1.58, DRAW: 4, AWAY: 5 });
+    // live dvojtip „Výsledek zápasu – dvojtip“: 9 = 1X, 10 = 12, 11 = X2 (API 1.1334 → web 1.13)
+    expect(odds(byName('Lyon'), 'DC|REG')).toEqual({ HOME_DRAW: 1.13, HOME_AWAY: 1.2, DRAW_AWAY: 2.25 });
     // nikde žádný výběr "Nikdo" ani trh z „N. gól“
     for (const e of events) for (const m of e.markets) expect(m.rawName ?? '').not.toMatch(/gól$/);
   });

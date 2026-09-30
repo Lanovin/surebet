@@ -41,22 +41,41 @@ const LIVE_POLL_MS = 6_000;
 export interface BetxOptions {
   /**
    * Prematch průchody listingem: každý BetTypeKey přidá k BasicOffer (1X2 / vítěz) hlavní linii
-   * daného typu. 1. průchod jde přes celou nabídku, další jen do `horizonHours`.
+   * daného typu ('' = jen BasicOffer). 1. průchod sportu jde přes celou nabídku, další jen do
+   * `horizonHours`. Sporty se stejným typem a horizontem sdílí průchod (SportIds=a,b,…) – stránkuje
+   * se po 100 zápasech přes všechny, takže malé sporty nestojí požadavek navíc.
    */
   prematchBetTypes?: Partial<Record<Sport, string[]>>;
   horizonHours?: number;
+  /** Kratší horizont (hodiny) pro vybrané BetTypeKey – dvojtip jen pro nejbližší zápasy. */
+  betTypeHorizonHours?: Record<string, number>;
   /** Live listing: BetTypeKey průchody nad BasicOffer podle sportu (typ = 1 požadavek, sporty se stejným typem sdílí průchod). */
   liveBetTypes?: Partial<Record<Sport, string[]>>;
 }
 
 export const DEFAULT_OPTIONS: Required<BetxOptions> = {
   prematchBetTypes: {
-    football: ['60', '4'], // počet gólů, handicap (2-cestný)
-    hockey: ['2', '60'], // vítěz vč. prodl. a nájezdů, počet gólů
+    football: ['60', '4', '3'], // počet gólů, handicap (2-cestný), dvojtip (UOF 10)
+    hockey: ['2', '60', '3'], // vítěz vč. prodl. a nájezdů, počet gólů, dvojtip
     tennis: ['911', '910'], // počet gemů, handicap gemy
     basketball: ['1004', '1003'], // počet bodů, handicap (vč. prodl.); BasicOffer = vítěz vč. prodl.
+    // další sporty: listing dává prakticky jen BasicOffer (AF 1003/1004, baseball 519/552 v listingu
+    // nic nevrací, ačkoli je detail zápasu má) → jeden společný průchod bez BetTypeKey
+    // házená: BasicOffer 1X2 (UOF 1); '47' sázka bez remízy (11), '60' počet gólů (18), '4' handicap (16) – vše 60 min
+    // (dvojtip a poločasy má jen detail zápasu: listing pro 42/504 nic nevrací)
+    handball: ['47', '60', '4'],
+    volleyball: ['502'], // BasicOffer vítěz (186) + vítěz 1. setu (202)
+    american_football: [''], // vítěz vč. prodl. (219)
+    baseball: [''], // vítěz vč. extra směn (251)
+    mma: [''], // vítěz (186 → DNB)
+    boxing: [''],
+    snooker: [''],
+    table_tennis: [''],
+    darts: [''],
   },
   horizonHours: 72,
+  // dvojtip: fotbal+hokej do 72 h by bylo ~6 stránek navíc, do 24 h 1–3
+  betTypeHorizonHours: { '3': 24 },
   // live BasicOffer: fotbal/hokej/basket 1X2 základní doby (UOF 1), tenis vítěz (186)
   liveBetTypes: {
     football: ['5_-1'], // počet gólů (UOF 18)
@@ -65,9 +84,30 @@ export const DEFAULT_OPTIONS: Required<BetxOptions> = {
   },
 };
 
-export const flatUrl = (sportId: number, betType: string, offset: number, from: string, to?: string): string =>
-  `${API}offer/v3/matches/flat?Offset=${offset}&Limit=${PAGE}&DateFrom=${from}&SportIds=${sportId}&BetTypeKey=${encodeURIComponent(betType)}` +
+export const flatUrl = (sportIds: number | number[], betType: string, offset: number, from: string, to?: string): string =>
+  `${API}offer/v3/matches/flat?Offset=${offset}&Limit=${PAGE}&DateFrom=${from}&SportIds=${[sportIds].flat().join(',')}` +
+  (betType ? `&BetTypeKey=${encodeURIComponent(betType)}` : '') +
   (to ? `&DateTo=${to}` : '');
+
+/**
+ * Prematch průchody: (BetTypeKey, horizont) -> sporty. 1. typ sportu přes celou nabídku, další do
+ * `horizonHours` (nebo `betTypeHorizonHours[bt]`); sporty se stejným typem a horizontem v jednom průchodu.
+ */
+export function prematchPasses(sports: Sport[], o: Pick<Required<BetxOptions>, 'prematchBetTypes' | 'horizonHours' | 'betTypeHorizonHours'>): { sportIds: number[]; bt: string; hours?: number }[] {
+  const out = new Map<string, { sportIds: number[]; bt: string; hours?: number }>();
+  for (const s of sports) {
+    const id = SPORT_IDS[s];
+    if (id === undefined) continue;
+    (o.prematchBetTypes[s] ?? []).forEach((bt, i) => {
+      const hours = o.betTypeHorizonHours[bt] ?? (i === 0 ? undefined : o.horizonHours);
+      const k = `${bt}|${hours ?? ''}`;
+      const p = out.get(k) ?? { sportIds: [], bt, ...(hours !== undefined ? { hours } : {}) };
+      if (!p.sportIds.includes(id)) p.sportIds.push(id);
+      out.set(k, p);
+    });
+  }
+  return [...out.values()];
+}
 /**
  * Live listing. Server ho cachuje ~11 s a klíčem cache je jen hodnota SportIds (BetTypeKey ani pořadí
  * parametrů se nepočítá – dotaz s BetTypeKey by dostal nacachovaný základní listing). Každý průchod
@@ -141,22 +181,18 @@ abstract class BetxBase implements Strategy {
     }
     const now = new Date();
     const from = now.toISOString();
-    const to = new Date(now.getTime() + this.opts.horizonHours * 3600_000).toISOString();
-    const passes: { sportId: number; bt: string; to?: string }[] = [];
-    for (const s of req.sports) {
-      const sportId = SPORT_IDS[s];
-      if (sportId === undefined) continue;
-      const keys = this.opts.prematchBetTypes[s] ?? [];
-      keys.forEach((bt, i) => passes.push({ sportId, bt, to: i === 0 ? undefined : to }));
-    }
+    const passes = prematchPasses(req.sports, this.opts).map((p) => ({
+      ...p,
+      to: p.hours === undefined ? undefined : new Date(now.getTime() + p.hours * 3600_000).toISOString(),
+    }));
     // 1. stránka každého průchodu -> Count -> zbylé stránky
-    const first = await get(passes.map((p) => flatUrl(p.sportId, p.bt, 0, from, p.to)));
+    const first = await get(passes.map((p) => flatUrl(p.sportIds, p.bt, 0, from, p.to)));
     const rest: string[] = [];
     first.forEach((r, i) => {
       const body = parseJson<BetxFlatResponse>(r, false);
       raw.flat.push({ url: r.url, body });
       const p = passes[i];
-      for (let off = PAGE; off < body.Count; off += PAGE) rest.push(flatUrl(p.sportId, p.bt, off, from, p.to));
+      for (let off = PAGE; off < body.Count; off += PAGE) rest.push(flatUrl(p.sportIds, p.bt, off, from, p.to));
     });
     for (const r of await get(rest)) raw.flat.push({ url: r.url, body: parseJson<BetxFlatResponse>(r, false) });
     return raw;
@@ -303,7 +339,8 @@ export interface BetxPushOptions {
   /**
    * BetTypeKey registrované k BasicOffer podle sportu. Server drží na jednom spojení jen jeden sport
    * a jeden registrovaný typ (další RegisterMatches / RegisterSportBetType ho nahradí) -> každý typ
-   * = jedno SignalR spojení (jako jedna záložka webu). Sport bez typů = jedno spojení jen s BasicOffer.
+   * = jedno SignalR spojení (jako jedna záložka webu). Sport s prázdným seznamem = jedno spojení jen
+   * s BasicOffer; sport, který tu chybí, push nemá (žádné spojení).
    */
   pushBetTypes?: Partial<Record<Sport, string[]>>;
   /** Obnova listingu (statická data zápasů, nové zápasy); každý 4. i s průchody (kontrola mapování). */
@@ -321,6 +358,11 @@ export const PUSH_DEFAULTS: Required<BetxPushOptions> = {
     hockey: ['5_-1', '7_106'], // počet gólů (zákl. doba), vítěz vč. prodl. a nájezdů
     basketball: ['7_37'], // vítěz vč. prodloužení
     tennis: ['7_922'], // handicap gemy (+ BasicOffer vítěz)
+    // jen BasicOffer (typ ověřený proti UofKey live listingu 30. 9.); ostatní nové sporty push nemá
+    // (BasicOffer v live neověřen) – jsou jen v L2 listingu (betx-api)
+    table_tennis: [], // vítěz 7_102 (186)
+    volleyball: [], // vítěz 7_102 (186)
+    baseball: [], // vítěz vč. extra směn 7_37 (251)
   },
   relistMs: 30_000,
   emitThrottleMs: 250,
@@ -370,18 +412,21 @@ export class BetxPushStrategy extends BetxBase {
     const log = this.ctx.log.child('push');
     const o = this.push;
     const sports = req.sports.filter((s) => SPORT_IDS[s] !== undefined);
-    const conns: HubConn[] = sports.flatMap((sport) =>
-      (o.pushBetTypes[sport]?.length ? o.pushBetTypes[sport]! : [undefined]).map((bt) => ({
-        sport,
-        sid: SPORT_IDS[sport]!,
-        bt,
-        open: false,
-        live: true,
-        lastMsgAt: 0,
-        attempt: 0,
-        items: new Map(),
-      })),
-    );
+    // spojení jen pro sporty v pushBetTypes (ostatní push nemá – statická data z listingu se pro ně nevydávají)
+    const conns: HubConn[] = sports
+      .filter((sport) => o.pushBetTypes[sport] !== undefined)
+      .flatMap((sport) =>
+        (o.pushBetTypes[sport]!.length ? o.pushBetTypes[sport]! : [undefined]).map((bt) => ({
+          sport,
+          sid: SPORT_IDS[sport]!,
+          bt,
+          open: false,
+          live: true,
+          lastMsgAt: 0,
+          attempt: 0,
+          items: new Map(),
+        })),
+      );
     /** Statická data zápasů z listingu (+ kdy byl zápas v listingu naposled). */
     const info = new Map<number, { m: BetxMatch; seenAt: number }>();
     const badBt = new Set<string>();

@@ -15,8 +15,8 @@ trhů, pasti v live datech, cache). Tady jen to, co je specifické pro Kingsbet.
 
 | level | název | scope | požadavky / fetch | data | latence |
 |---|---|---|---|---|---|
-| 2 | `altenar-api` | prematch | 4 listingy + ≤ 50 detailů (nejbližší zápasy do 24 h) | ~3 MB JSON (~0,8 MB gzip) | ~6 s |
-| 2 | `altenar-api` | live | 4 (jeden na sport), polling po 1 s | ~30–250 kB JSON | 0,2–0,5 s |
+| 2 | `altenar-api` | prematch | 13 listingů (1 na sport) + ≤ 50 detailů (nejbližší zápasy do 24 h) | ~3 MB JSON (~0,8 MB gzip) | ~6 s |
+| 2 | `altenar-api` | live | `GetLiveOverview` za 15 s + `GetLiveEvents` jen pro sporty s živými zápasy (typicky 3–6), polling po 1 s | ~30–250 kB JSON | 0,2–0,5 s |
 | 5 | `altenar-browser` | obojí | stejné URL přes `fetch()` v Chromiu (stránka `robots.txt`) | stejné | live ~0,1 s, prematch ~1,5 s (+ start prohlížeče) |
 
 **Kurzy:** web i tiket počítají s cenou zaokrouhlenou na 2 místa (API 2.8572 → web 2.86, vklad 100 →
@@ -24,7 +24,8 @@ výhra 286.00; 1.875 → 1.88) → `rounding: 'round'` v `index.ts`.
 
 Naměřeno 28. 9. 2026 ~23:00 (málo live): prematch 847 událostí (fotbal 410, tenis 250, basket 105,
 hokej 82), ~2 200 trhů; live 17 událostí. 30. 9. 2026 21:20: live 117 událostí (fotbal 59, tenis 27,
-basket 18, hokej 13).
+basket 18, hokej 13). 1. 10. 2026 00:10: prematch 1 237 událostí (13 sportů: fotbal 449, tenis 248, basket 132, hokej 119,
+americký fotbal 76, MMA 59, box 49, stolní tenis 37, házená 28, baseball 13, volejbal 11, šipky 8, snooker 8), 3 945 trhů, 9,6 s.
 
 ## Endpointy
 
@@ -46,7 +47,8 @@ culture=cs-CZ&timezoneOffset=-120&integration=kingsbet&deviceType=1&numFormat=en
 | `widget/GetSportMenu?…&period=0` | strom sport → kategorie → soutěž (počty vč. outrightů) |
 | `widget/GetLiveOverview?…&sportId=X`, `widget/GetLivenow` | to, co polluje web na live stránce (jen 1 sport) |
 
-sportId: fotbal 66, tenis 68, basket 67, lední hokej 70 (e-sporty jsou samostatné sporty 145–148 → ignorují se).
+sportId: fotbal 66, tenis 68, basket 67, lední hokej 70, házená 73, volejbal 69, americký fotbal 75, baseball 76, box 71, MMA 84, snooker 81, stolní tenis 77, šipky 78
+(e-sporty jsou samostatné sporty 145–148 → ignorují se). Plné mapování nových sportů a dvojtipu: sekce „Dvojtip a další sporty“ v **[altenar.md](altenar.md)**.
 
 ### Formát listingu (normalizované entity)
 
@@ -75,12 +77,12 @@ Sdílená tabulka `src/adapters/common/uof.ts` (používá ji i betx a MerkurXti
 
 | sport | typeId → klíč |
 |---|---|
-| fotbal | 1 → `1X2\|REG`, 18 → `OU\|REG`, (10 dvojtip vynechán) |
-| hokej | 1 → `1X2\|REG`, 16 → `AH\|REG`, 18 → `OU\|REG`, 406 → `ML\|MATCH`, 410 → `AH\|MATCH`, 412 → `OU\|MATCH` |
+| fotbal | 1 → `1X2\|REG`, 10 → `DC\|REG` (dvojtip), 18 → `OU\|REG` |
+| hokej | 1 → `1X2\|REG`, 10 → `DC\|REG`, 16 → `AH\|REG`, 18 → `OU\|REG`, 406 → `ML\|MATCH`, 410 → `AH\|MATCH`, 412 → `OU\|MATCH` |
 | basket | 219 → `ML\|MATCH`, 223 → `AH\|MATCH`, 225 → `OU\|MATCH` (vše „vč. prodl.“) |
 | tenis | 186 → `ML\|MATCH`, 187 → `AH\|MATCH` (gemy), 188 → `AH_SETS\|MATCH`, 189 → `OU\|MATCH` (gemy) |
 
-Z detailu navíc: 11 DNB, 29 BTTS, 16 AH, 19/20 týmové totaly, 26 OE; poločasy 60/64/66/68/69/70/74/75 (H1),
+Z detailu navíc: 11 DNB, dvojtip 63/85 (fotbal H1/H2), 529 (hokej P1–P3), 29 BTTS, 16 AH, 19/20 týmové totaly, 26 OE; poločasy 60/64/66/68/69/70/74/75 (H1),
 83/86/88/90/91/92/94/95 (H2, u basketu vynecháno); hokej 443/446/452/459/460/462 (P1–P3);
 basket 1 (`1X2|REG`), 227/228/229, čtvrtiny 235/236/302/303/304 (Q1–Q4); tenis 190/191/198, sety 202/203/204.
 Evropský handicap (14, 65, 87), kombinace, hráčské trhy a BetBuilder kopie (`isBB`) se vynechávají.

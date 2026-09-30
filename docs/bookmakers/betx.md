@@ -16,9 +16,9 @@ https://evonaapicz.betx.bet/api/terminal`; `GET …/terminal/configuration/clien
 
 | level | název | scope | požadavky | stáří dat | poznámka |
 |---|---|---|---|---|---|
-| 2 | `betx-api` | prematch | ~22–23 / sken (stránky po 100 zápasech) | – | ~7 MB JSON (server **nekomprimuje**), ~4 s |
-| 2 | `betx-api` | live (záloha) | 4 / 6 s (základ + 3 průchody) | 0–11 s (cache serveru) | |
-| 3 | `betx-push` | live | 5 WebSocketů + listing 1 / 30 s (+4 průchody / 2 min) | ~0,1–0,5 s | **primární pro LIVE** (runner s `preferPush` ho bere první) |
+| 2 | `betx-api` | prematch | ~33 / sken (stránky po 100 zápasech; před 1. 10. 2026 ~25 pro 4 sporty) | – | ~9 MB JSON (server **nekomprimuje**), ~5 s |
+| 2 | `betx-api` | live (záloha) | 4 / 6 s (základ pro všech 13 sportů + 3 průchody) | 0–11 s (cache serveru) | nové sporty jsou v základním listingu zdarma |
+| 3 | `betx-push` | live | 8 WebSocketů (+ volejbal, baseball, stolní tenis) + listing 1 / 30 s (+4 průchody / 2 min) | ~0,1–0,5 s | **primární pro LIVE** (runner s `preferPush` ho bere první) |
 | 5 | `betx-browser` | obojí | stejné URL jako L2 přes `fetch()` v Chromiu | jako L2 | |
 
 L5 stránka stojí na `https://bet-x.cz/assets/config.json` (CORS povoluje jen origin `https://bet-x.cz`),
@@ -43,7 +43,9 @@ názvy – **pozor**, server upřednostní `Accept-Language` (Node `fetch` bez n
 | `offer/v3/sportsmenu/live` | healthCheck (~0,3 kB), počty live zápasů podle sportu |
 | `signalr` (hub `notificationv3`) | live push – viz níže (L3) |
 
-SportId: fotbal 388, tenis 389, basket 391, hokej 398 (425 „BETX Superšance“ = speciály – ignoruje se).
+SportId: fotbal 388, tenis 389, basket 391, hokej 398, házená 392, volejbal 397, americký fotbal 404, baseball 394, box 414, MMA 455, snooker 406,
+stolní tenis 417, šipky 401 (`offer/v3/sports`; 425 „BETX Superšance“ a 449 „BETX Šance“ = speciály – ignorují se; další sporty webu – badminton 418,
+florbal 408, futsal 396, kriket 412, rugby 390, motorsport 400, australský fotbal 395 – nejsou v `SPORTS`).
 Konfigurace webu: `https://evonaapicz.betx.bet/api/terminal/configuration/initialization/CZEWeb`
 (`OfferBonusPercent 0`, `OfferLiveBonusPercent 0`, `MinShowingOdds 1.0`, `OddsRepresentation decimal`,
 `ExtendedLiveConfig` = live typy sázek, které web nabízí v přehledu pro každý sport).
@@ -65,6 +67,8 @@ Ověřené live klíče (UofKey v listingu 30. 9.): hokej `8_1140` → 412 (tota
 gemy), `8_83` → 189 (počet gemů). Linie všech těchto trhů platí na **celý zápas** (už dané góly/body/gemy
 se počítají), handicap z pohledu domácích (`Sbv` = `hcp` v UofKey).
 
+Nové sporty (1. 10. 2026) a dvojtip – viz sekce „Dvojtip a další sporty“ níže.
+
 **Nemapovat** (na webu vypadají jako 1/x/2 nebo 1/2): `6_4` „Vyhraje zbytek zápasu [2:0]“, `6_13` „Další
 gól [3]“, `4_-1` evropský „Handicap góly [0:3]“, basket `7_34` handicap bez prodloužení vs. `7_38` vč.
 prodloužení, `6_1372`/`7_1366` 2. poločas vč. prodloužení, `7_64` „Kdo dá bod N“, kombinace `8_1523` ….
@@ -83,6 +87,55 @@ Kurzy: `Odd` (max. 2 desetinná místa pod 10, nad 10 max. 1 – web zobrazuje `
 otevřené. `Active: false` s kurzem → `open: false`. Nabídka `Active`/`IsEnabled`, zápas `IsBlocked`,
 v live `LiveIsBlocked`/`LiveIsDisabled`/`LiveBettingEnabled=false`/`IsLiveMatchAvailable=false` →
 trh `open: false` (web sám z toho používá jen `odd.active` – jsme přísnější).
+
+## Dvojtip a další sporty (ověřeno 1. 10. 2026 ~00:10 CEST)
+
+Fixtures: `fixtures/betx/betx-prematch-newsports-2026-10-01.json` (listing průchody + plné nabídky `match/offers` pro test mapování),
+live volejbal/stolní tenis v `betx-live-uofkeys.json`.
+
+**Co vrací listing (`matches/flat`) – a co ne.** Listing vrací `BasicOffer` (typ dané sportem: fotbal/hokej/házená `1` 1X2, ostatní `20` „Víťez zápasu“) + hlavní linii
+jednoho `BetTypeKey`, **ale jen pro typy, které má sport v konfiguraci přehledu**. Ověřeno (vrací data × nevrací nic):
+
+| sport | BasicOffer | `BetTypeKey` přes listing | listing nevrací (jen `match/offers`, 1 požadavek na zápas – nepoužito) |
+|---|---|---|---|
+| fotbal, hokej | 1X2 (UOF 1) | `3` **Dvojtip** (UOF 10 → `DC\|REG`; výsledky 9 = 1X, 11 = X2, 10 = 12, v listingu v tomto pořadí), fotbal `60`, `4`, hokej `2`, `60` | – |
+| házená 392 | 1X2 (1) | `47` sázka bez remízy (11), `60` počet gólů (18), `4` handicap (16), `598`/`599` týmové totaly | `42` / `504` (poločas: 1X2 60/83 **+ dvojtip 63/85**), dvojtip zápasu (10) **v nabídce není** |
+| volejbal 397 | vítěz (186) | `502` vítěz 1. setu (202) | `519` handicap body (237), `552` počet bodů (238), sety, ostatní sety |
+| americký fotbal 404 | vítěz vč. prodl. (219) | – | `1003`/`1004` handicap/total (223/225), poločasy, čtvrtiny, týmové totaly |
+| baseball 394 | vítěz vč. extra směn (251) | – | `519`/`552` run line/total (256/258), týmové totaly |
+| box 414, MMA 455 | vítěz (186) → `DNB\|REG` | – | `5` **1X2 s remízou** (UOF 1 → `1X2\|REG`), způsob výhry |
+| snooker 406, šipky 401, stolní tenis 417 | vítěz (186) → `ML\|MATCH` | – | (u stolního tenisu a šipek žádná další nabídka) |
+
+UOF id jsou stejná jako u Altenaru (`common/uof.ts`), u BetXu ale **bez kontroly názvu** (UofKey nese jen id + specifikátory): platí jen tabulka podle sportu; proto se
+mapují jen id, která jsme viděli v datech BetXu (názvy `Description` jsou obecné: „Handicap body“ u baseballu = run line vč. extra směn, „Počet bodů“ u baseballu = běhy).
+Ověřené párování výsledků: `Name` „více“ = UOF 12 (OVER), „méně“ = 13; „lichý“ = 70, „sudý“ = 72; „1X“ = 9, „12“ = 10, „X2“ = 11.
+
+**Požadavky prematch (skutečně naměřeno `try-adapter`, 1. 10. 00:25):** **33 požadavků, 9,1 MB, ~5 s** (před změnou ~25 / 7 MB pro 4 sporty).
+Průchody se stejným typem a horizontem sdílejí `SportIds=a,b,…` (`prematchPasses()`), stránkuje se po 100 zápasech přes všechny sporty:
+
+| průchod | sporty | horizont | stránek |
+|---|---|---|---|
+| `60` | fotbal | celá nabídka | 10 |
+| `4` | fotbal + házená | 72 h | 4 |
+| `3` (dvojtip) | fotbal + hokej | **24 h** (`betTypeHorizonHours`) | 2 (v noci, přes den 3–4) |
+| `911`, `910` | tenis | vše / 72 h | 2 + 1 |
+| `1004`, `1003` | basket | vše / 72 h | 2 + 1 |
+| `2` | hokej | vše | 3 |
+| `60` | hokej + házená | 72 h | 3 (samotný hokej 2) |
+| `47` | házená | vše | 1 |
+| `502` | volejbal | vše | 1 |
+| (bez BetTypeKey) | AF, baseball, box, MMA, snooker, stolní tenis, šipky | vše | 2 |
+
+Přírůstek +8 požadavků: dvojtip +2, házená +2 (`47`, větší stránkování `60`), volejbal +1, „jen BasicOffer“ sporty +2, zbytek stránkování. Live: **0 navíc**
+(základní live listing už bere všech 13 `SportIds`; push +3 spojení). HTTP klient BetX (`minIntervalMs 500`, `maxConcurrent 1`) 403 nevyvolal.
+
+**Live.** `matches/live` vrací u nových sportů jen `BasicOffer` (volejbal `7_102` → UofKey `23/186` „Vítěz zápasu“, stolní tenis `7_102` → `20/186`, baseball `7_37` → `3/251`).
+Push (`PUSH_DEFAULTS.pushBetTypes`) má proto spojení jen s `BasicOffer` pro volejbal, stolní tenis a baseball (tabulka `PUSH_BET_TYPES` se kontroluje proti UofKey
+z listingu); házená, AF, box, MMA, snooker a šipky **push nemají** (v noci se nehrály, `BasicOffer` typ pro live neověřen) → v LIVE je umí jen L2 `betx-api`/`betx-browser`, ale runner při `preferPush` polling s pushem nemíchá, takže **dokud push běží, tyto sporty
+z BetXu v LIVE nejsou** (jejich BasicOffer `BetTypeKey` pro push se doplní, až bude živý vzorek). Stavy: volejbal `LB_VOLLEYBALL_1SET` (`1. set`, `LiveSetScore` = body po setech,
+`LiveMatchScore` = sety), baseball `LB_BASEBALL_3IB` / `3IT` (dolní / horní půlka 3. směny → `period` 3; `LiveSetScore` = běhy po směnách), stolní tenis `LB_TABLE_TENNIS_4SET`.
+**Před začátkem** je zápas v live listingu s `LiveStatusString: NotStarted`, `LiveMatchTimeState: „Začne brzy“` (`LB_*_NOTSTARTED`) a **živými** kurzy – parser takové zápasy
+v live vynechává (nezačaly).
 
 ## Serverová cache live listingu (důležité)
 
@@ -171,6 +224,9 @@ fotbal `1P`, `2P`, `PAUSED`, `OT`, `1P_OT`, `2P_OT`, `PEN`, `ENDED`, `INTERRUPTE
 `*_AFTER_OT`, `RETIRED`, `WALKOVER`, `LiveMatchState 2`; `period` z kódu (`_2P`, `_3Q`, `_2SET`), jinak
 počet dílčích skóre; `clockSec` = `LiveMatchTime` × 60 pro fotbal, hokej i basket (herní čas od začátku).
 Tenisová přestávka mezi sety feed nehlásí (`přerušeno` = přerušení, ne přestávka).
+Nové sporty (vzorky 1. 10.): volejbal `LB_VOLLEYBALL_1SET`/`2SET` (`LiveSetScore` = body po setech, `LiveMatchScore` = sety, bez `LiveMatchTime`), baseball `LB_BASEBALL_3IT` / `3IB`
+(`period` z čísla směny, `LiveSetScore` = běhy po směnách), stolní tenis `LB_TABLE_TENNIS_4SET`, `…_NOTSTARTED` („Začne brzy“ – vynecháno). Kódy přestávek mezi sety volejbalu ani
+živé stavy házené / AF / MMA / boxu / šipek / snookeru jsme neviděli; obecné vzory (`*PAUSE*`, `_NP`/`_NSET`, „přestávk*“) platí i pro ně.
 
 ## Identita událostí a začátek
 

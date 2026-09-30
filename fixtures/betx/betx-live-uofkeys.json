@@ -1,6 +1,6 @@
 {
  "recordedAt": "2026-09-30T19:50:00.000Z",
- "note": "live listing (základ + BetTypeKey průchody), jen nabídky typů z PUSH_BET_TYPES",
+ "note": "live listing (základ + BetTypeKey průchody), jen nabídky typů z PUSH_BET_TYPES | +1. 10. 2026 00:00: stolní tenis (417, BasicOffer 7_102 → 186) a baseball (394, 7_37 → 251) z live listingu | +1. 10. 2026 00:20: volejbal (397, BasicOffer 7_102 → 186) a stolní tenis před začátkem (NOTSTARTED)",
  "matches": [
   {
    "Id": 73840448,
@@ -1803,6 +1803,299 @@
      ]
     }
    ]
+  },
+  {
+   "Id": 75060844,
+   "TeamHome": "Houston Astros",
+   "TeamAway": "Chicago White Sox",
+   "MatchStartTime": "2026-09-30T21:00:00Z",
+   "SportId": 394,
+   "CategoryName": "USA",
+   "LeagueName": "MLB - Playoff",
+   "EventType": 1,
+   "IsBlocked": false,
+   "IsLive": true,
+   "IsLiveMatchAvailable": true,
+   "LiveMatchState": 1,
+   "LiveMatchTimeState": "2. směna",
+   "LiveMatchTimeOrigName": "LB_BASEBALL_2IT",
+   "LiveMatchScore": "1 : 4",
+   "LiveSetScore": "1 : 4 - 0 : 0",
+   "LiveStatusString": "2IT",
+   "LiveUpdateTimestamp": "2026-09-30T21:53:28.47Z",
+   "LiveMatchStartTime": "2026-09-30T21:00:00Z",
+   "LiveIsBlocked": false,
+   "LiveIsDisabled": false,
+   "LiveBettingEnabled": true,
+   "BasicOffer": {
+    "Id": 469120185,
+    "Description": "Který tým vyhraje zápas (včetně prodloužení)",
+    "BetTypeKey": "7_37",
+    "Sbv": null,
+    "Active": true,
+    "IsEnabled": true,
+    "Odds": [
+     {
+      "Name": "1",
+      "OrigName": "1",
+      "Odd": 3.35,
+      "Active": true,
+      "UofKey": "uof:1/sr:sport:3/251/4"
+     },
+     {
+      "Name": "2",
+      "OrigName": "2",
+      "Odd": 1.32,
+      "Active": true,
+      "UofKey": "uof:1/sr:sport:3/251/5"
+     }
+    ]
+   },
+   "Offers": []
+  },
+  {
+   "Id": 75139008,
+   "TeamHome": "Machelski, Michal",
+   "TeamAway": "Mucha, Grzegorz",
+   "MatchStartTime": "2026-09-30T21:45:00Z",
+   "SportId": 417,
+   "CategoryName": "Mezinárodní",
+   "LeagueName": "TT Elite Series",
+   "EventType": 1,
+   "IsBlocked": false,
+   "IsLive": true,
+   "IsLiveMatchAvailable": true,
+   "LiveMatchState": 1,
+   "LiveMatchTimeState": "2.set",
+   "LiveMatchTimeOrigName": "LB_TABLE_TENNIS_2SET",
+   "LiveMatchScore": "0 : 1",
+   "LiveSetScore": "7 : 11 - 7 : 8",
+   "LiveStatusString": "2set",
+   "LiveUpdateTimestamp": "2026-09-30T21:53:24.272Z",
+   "LiveMatchStartTime": "2026-09-30T21:45:00Z",
+   "LiveIsBlocked": false,
+   "LiveIsDisabled": false,
+   "LiveBettingEnabled": true,
+   "BasicOffer": {
+    "Id": 469123135,
+    "Description": "Vítěz zápasu",
+    "BetTypeKey": "7_102",
+    "Sbv": null,
+    "Active": true,
+    "IsEnabled": true,
+    "Odds": [
+     {
+      "Name": "1",
+      "OrigName": "1",
+      "Odd": 4.05,
+      "Active": true,
+      "UofKey": "uof:1/sr:sport:20/186/4"
+     },
+     {
+      "Name": "2",
+      "OrigName": "2",
+      "Odd": 1.18,
+      "Active": true,
+      "UofKey": "uof:1/sr:sport:20/186/5"
+     }
+    ]
+   },
+   "Offers": []
+  },
+  {
+   "Id": 75139010,
+   "TeamHome": "Solilo, Dominik",
+   "TeamAway": "Staszczyk, Konrad",
+   "MatchStartTime": "2026-09-30T21:50:00Z",
+   "SportId": 417,
+   "CategoryName": "Mezinárodní",
+   "LeagueName": "TT Elite Series",
+   "EventType": 1,
+   "IsBlocked": false,
+   "IsLive": true,
+   "IsLiveMatchAvailable": true,
+   "LiveMatchState": 1,
+   "LiveMatchTimeState": "1.set",
+   "LiveMatchTimeOrigName": "LB_TABLE_TENNIS_1SET",
+   "LiveMatchScore": "0 : 0",
+   "LiveSetScore": "6 : 9",
+   "LiveStatusString": "1set",
+   "LiveUpdateTimestamp": "2026-09-30T21:53:18.97Z",
+   "LiveMatchStartTime": "2026-09-30T21:50:00Z",
+   "LiveIsBlocked": false,
+   "LiveIsDisabled": false,
+   "LiveBettingEnabled": true,
+   "BasicOffer": {
+    "Id": 469123383,
+    "Description": "Vítěz zápasu",
+    "BetTypeKey": "7_102",
+    "Sbv": null,
+    "Active": true,
+    "IsEnabled": true,
+    "Odds": [
+     {
+      "Name": "1",
+      "OrigName": "1",
+      "Odd": 3.5,
+      "Active": true,
+      "UofKey": "uof:1/sr:sport:20/186/4"
+     },
+     {
+      "Name": "2",
+      "OrigName": "2",
+      "Odd": 1.25,
+      "Active": true,
+      "UofKey": "uof:1/sr:sport:20/186/5"
+     }
+    ]
+   },
+   "Offers": []
+  },
+  {
+   "Id": 73266126,
+   "TeamHome": "Renasce Voleibol Sorocaba",
+   "TeamAway": "AA Sao Caetano",
+   "MatchStartTime": "2026-09-30T22:00:00Z",
+   "SportId": 397,
+   "CategoryName": "Brazílie",
+   "LeagueName": "Campeonato Paulista, Women",
+   "EventType": 1,
+   "IsBlocked": false,
+   "IsLive": true,
+   "IsLiveMatchAvailable": true,
+   "LiveMatchState": 1,
+   "LiveMatchTimeState": "1. set",
+   "LiveMatchTimeOrigName": "LB_VOLLEYBALL_1SET",
+   "LiveMatchScore": "0 : 0",
+   "LiveSetScore": "11 : 16",
+   "LiveStatusString": "1set",
+   "LiveUpdateTimestamp": "2026-09-30T22:12:51.933Z",
+   "LiveMatchStartTime": "2026-09-30T22:00:00Z",
+   "LiveIsBlocked": false,
+   "LiveIsDisabled": false,
+   "LiveBettingEnabled": true,
+   "BasicOffer": {
+    "Id": 469123932,
+    "Description": "Vítěz zápasu",
+    "BetTypeKey": "7_102",
+    "Sbv": null,
+    "Active": true,
+    "IsEnabled": true,
+    "Odds": [
+     {
+      "Name": "1",
+      "OrigName": "1",
+      "Odd": 3.5,
+      "Active": true,
+      "UofKey": "uof:1/sr:sport:23/186/4"
+     },
+     {
+      "Name": "2",
+      "OrigName": "2",
+      "Odd": 1.25,
+      "Active": true,
+      "UofKey": "uof:1/sr:sport:23/186/5"
+     }
+    ]
+   },
+   "Offers": []
+  },
+  {
+   "Id": 72066036,
+   "TeamHome": "Bebedouro U21",
+   "TeamAway": "Volei Mania Itaqua",
+   "MatchStartTime": "2026-09-30T21:45:00Z",
+   "SportId": 397,
+   "CategoryName": "Brazílie",
+   "LeagueName": "U21 Paulista",
+   "EventType": 1,
+   "IsBlocked": false,
+   "IsLive": true,
+   "IsLiveMatchAvailable": true,
+   "LiveMatchState": 1,
+   "LiveMatchTimeState": "2. set",
+   "LiveMatchTimeOrigName": "LB_VOLLEYBALL_2SET",
+   "LiveMatchScore": "0 : 1",
+   "LiveSetScore": "17 : 25 - 3 : 3",
+   "LiveStatusString": "2set",
+   "LiveUpdateTimestamp": "2026-09-30T22:12:51.934Z",
+   "LiveMatchStartTime": "2026-09-30T21:45:00Z",
+   "LiveIsBlocked": false,
+   "LiveIsDisabled": false,
+   "LiveBettingEnabled": true,
+   "BasicOffer": {
+    "Id": 469124115,
+    "Description": "Vítěz zápasu",
+    "BetTypeKey": "7_102",
+    "Sbv": null,
+    "Active": true,
+    "IsEnabled": true,
+    "Odds": [
+     {
+      "Name": "1",
+      "OrigName": "1",
+      "Odd": 9.25,
+      "Active": true,
+      "UofKey": "uof:1/sr:sport:23/186/4"
+     },
+     {
+      "Name": "2",
+      "OrigName": "2",
+      "Odd": 1.02,
+      "Active": true,
+      "UofKey": "uof:1/sr:sport:23/186/5"
+     }
+    ]
+   },
+   "Offers": []
+  },
+  {
+   "Id": 75139020,
+   "TeamHome": "Tkaczyk, Henryk",
+   "TeamAway": "Lewczuk, Miroslaw",
+   "MatchStartTime": "2026-09-30T22:10:00Z",
+   "SportId": 417,
+   "CategoryName": "Mezinárodní",
+   "LeagueName": "TT Elite Series",
+   "EventType": 1,
+   "IsBlocked": false,
+   "IsLive": true,
+   "IsLiveMatchAvailable": true,
+   "LiveMatchState": 1,
+   "LiveMatchTimeState": "Začne brzy",
+   "LiveMatchTimeOrigName": "LB_TABLE_TENNIS_NOTSTARTED",
+   "LiveMatchScore": " : ",
+   "LiveStatusString": "NotStarted",
+   "LiveUpdateTimestamp": "2026-09-30T22:10:02.027Z",
+   "LiveMatchStartTime": "2026-09-30T22:10:00Z",
+   "LiveIsBlocked": false,
+   "LiveIsDisabled": false,
+   "LiveBettingEnabled": true,
+   "BasicOffer": {
+    "Id": 469124577,
+    "Description": "Vítěz zápasu",
+    "BetTypeKey": "7_102",
+    "Sbv": null,
+    "Active": true,
+    "IsEnabled": true,
+    "Odds": [
+     {
+      "Name": "1",
+      "OrigName": "1",
+      "Odd": 1.52,
+      "Active": true,
+      "UofKey": "uof:1/sr:sport:20/186/4"
+     },
+     {
+      "Name": "2",
+      "OrigName": "2",
+      "Odd": 2.3,
+      "Active": true,
+      "UofKey": "uof:1/sr:sport:20/186/5"
+     }
+    ]
+   },
+   "Offers": []
   }
  ]
 }
