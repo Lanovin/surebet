@@ -4,8 +4,8 @@
 import { useEffect, useMemo, useState } from 'react';
 import { arbMargin, computeStakes, computeStakesFixed } from '@core/arb';
 import { pushToast } from '@/lib/live';
-import { formatDuration, formatKc, formatKc2, formatPct } from '@/lib/format';
-import { BookmakerChip } from './Badges';
+import { bkName, formatDuration, formatKc, formatKc2, formatPct } from '@/lib/format';
+import { BookmakerName } from './Badges';
 import { Icon } from './Icon';
 
 export interface CalcLeg {
@@ -27,9 +27,26 @@ export interface CalcLeg {
 }
 
 const PRESETS = [1000, 5000, 10000, 20000];
+
+export interface CalcPlan {
+  stakes: number[];
+  total: number;
+  minProfit: number;
+}
 const UNITS = [1, 5, 10, 50, 100];
 
-export function StakeCalculator({ legs, total: total0, unit: unit0 }: { legs: CalcLeg[]; total: number; unit: number }) {
+export function StakeCalculator({
+  legs,
+  total: total0,
+  unit: unit0,
+  onPlan,
+}: {
+  legs: CalcLeg[];
+  total: number;
+  unit: number;
+  /** aktuální vklady (pro uložení sázky do přehledu) */
+  onPlan?: (p: CalcPlan | null) => void;
+}) {
   const [total, setTotal] = useState(total0);
   const [unit, setUnit] = useState(unit0);
   const [fixed, setFixed] = useState<{ index: number; stake: number } | null>(null);
@@ -47,6 +64,10 @@ export function StakeCalculator({ legs, total: total0, unit: unit0 }: { legs: Ca
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [odds.join(','), total, unit, fixed?.index, fixed?.stake, valid]);
   const margin = valid ? arbMargin(odds) * 100 : null;
+  useEffect(() => {
+    onPlan?.(plan ? { stakes: plan.stakes, total: plan.total, minProfit: plan.minProfit } : null);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [plan]);
 
   const copy = async (v: number) => {
     try {
@@ -103,39 +124,35 @@ export function StakeCalculator({ legs, total: total0, unit: unit0 }: { legs: Ca
           const stake = plan?.stakes[i] ?? 0;
           const isFixed = fixed?.index === i;
           return (
-            <li key={l.key} className="rounded-lg border border-line bg-surface-2 px-3 py-2.5">
+            <li key={l.key} className="rounded-lg border border-line bg-surface-2 px-4 py-3">
               <div className="flex items-start gap-3">
                 <span className="step" aria-hidden>
                   {i + 1}
                 </span>
                 <div className="min-w-0 flex-1">
                   <div className="flex flex-wrap items-center gap-2">
-                    {l.bookmaker && <BookmakerChip bk={l.bookmaker} />}
-                    {l.url && (
-                      <a href={l.url} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1 text-xs text-accent hover:underline">
-                        otevřít zápas <Icon name="external" size={12} />
-                      </a>
-                    )}
-                    {l.confirmedAgoMs != null && <span className="text-[11px] text-muted">kurz ověřen před {formatDuration(l.confirmedAgoMs)}</span>}
+                    {l.bookmaker ? <BookmakerName bk={l.bookmaker} size="lg" /> : <span className="text-sm text-muted">libovolná sázkovka</span>}
+                    {l.confirmedAgoMs != null && <span className="text-xs text-muted">kurz ověřen před {formatDuration(l.confirmedAgoMs)}</span>}
                   </div>
-                  <div className="mt-0.5 font-medium">{l.title}</div>
-                  {l.sub && <div className="text-xs text-muted">{l.sub}</div>}
+                  <div className="mt-1.5 text-xs uppercase tracking-wide text-muted">vsaď na</div>
+                  <div className="text-lg font-semibold leading-snug">{l.title}</div>
+                  {l.sub && <div className="text-sm text-muted">{l.sub}</div>}
                   {l.hint && (
-                    <div className="mt-0.5 flex items-center gap-1 text-xs" style={{ color: 'var(--warning)' }}>
-                      <Icon name="swap" size={12} /> {l.hint}
+                    <div className="mt-0.5 flex items-center gap-1 text-sm" style={{ color: 'var(--warning)' }}>
+                      <Icon name="swap" size={13} /> {l.hint}
                     </div>
                   )}
                 </div>
                 <div className="text-right">
-                  <div className="text-[11px] text-muted">kurz</div>
-                  <div className="num text-lg font-semibold leading-tight">{fmtOdds(l.shownOdds ?? l.odds)}</div>
-                  {l.shownOdds !== undefined && l.odds > 1 && l.shownOdds !== l.odds && <div className="num text-[11px] text-muted">po poplatku {l.odds.toFixed(3)}</div>}
+                  <div className="text-xs text-muted">kurz</div>
+                  <div className="num text-2xl font-bold leading-tight">{fmtOdds(l.shownOdds ?? l.odds)}</div>
+                  {l.shownOdds !== undefined && l.odds > 1 && l.shownOdds !== l.odds && <div className="num text-xs text-muted">po poplatku {l.odds.toFixed(3)}</div>}
                 </div>
               </div>
-              <div className="mt-2 flex flex-wrap items-center gap-2 pl-9">
-                <span className="text-sm text-ink-2">Vsaď</span>
+              <div className="mt-3 flex flex-wrap items-center gap-2 pl-9">
+                <span className="text-ink-2">Vklad</span>
                 <input
-                  className="input w-28 text-right text-base font-semibold"
+                  className="input w-32 text-right text-lg font-bold"
                   type="number"
                   min={0}
                   value={stake}
@@ -143,18 +160,23 @@ export function StakeCalculator({ legs, total: total0, unit: unit0 }: { legs: Ca
                   aria-label={`Vklad na výběr ${i + 1}`}
                   title="Přepsáním vkladu se ostatní nohy dopočítají"
                 />
-                <span className="text-sm text-ink-2">Kč</span>
+                <span className="text-ink-2">Kč</span>
                 <button className="btn px-2 py-1" onClick={() => void copy(stake)} title="Zkopírovat vklad" aria-label="Zkopírovat vklad">
                   <Icon name="copy" size={14} />
                 </button>
                 {isFixed && (
-                  <span className="inline-flex items-center gap-1 rounded bg-surface-3 px-1.5 py-0.5 text-[11px] text-ink-2" title="Vklad zadaný ručně – ostatní nohy se dopočítaly">
+                  <span className="inline-flex items-center gap-1 rounded bg-surface-3 px-1.5 py-0.5 text-xs text-ink-2" title="Vklad zadaný ručně – ostatní nohy se dopočítaly">
                     <Icon name="lock" size={11} /> pevný
                   </span>
                 )}
-                <span className="ml-auto text-xs text-muted">
+                <span className="text-sm text-muted">
                   výplata <b className="num text-ink">{plan ? formatKc2(plan.payouts[i]) : '–'}</b>
                 </span>
+                {l.url && (
+                  <a href={l.url} target="_blank" rel="noreferrer" className="btn btn-primary ml-auto py-1.5" title="Otevře zápas přímo u sázkovky">
+                    Otevřít {l.bookmaker ? `u ${bkName(l.bookmaker)}` : 'zápas'} <Icon name="external" size={14} />
+                  </a>
+                )}
               </div>
             </li>
           );
@@ -181,8 +203,9 @@ export function StakeCalculator({ legs, total: total0, unit: unit0 }: { legs: Ca
             </div>
           )}
           {!plan.positive && (
-            <div className="text-sm" style={{ color: 'var(--critical)' }}>
-              {margin !== null && margin <= 0 ? '⚠ Kurzy netvoří arbitráž – v některém výsledku proděláš.' : '⚠ Zaokrouhlení nevychází do zisku – zkus menší zaokrouhlení nebo jiný vklad.'}
+            <div className="flex items-center gap-1.5 text-sm" style={{ color: 'var(--critical)' }}>
+              <Icon name="warn" size={14} />
+              {margin !== null && margin <= 0 ? 'Kurzy netvoří arbitráž – v některém výsledku proděláš.' : 'Zaokrouhlení nevychází do zisku – zkus menší zaokrouhlení nebo jiný vklad.'}
             </div>
           )}
           <div className="flex items-center gap-2 text-xs text-muted">
@@ -207,7 +230,7 @@ function Summary({ label, value, tone, sub }: { label: string; value: string; to
   return (
     <div className="rounded-md bg-surface-2 px-2.5 py-2">
       <div className="text-[11px] text-muted">{label}</div>
-      <div className="num text-base font-semibold" style={tone ? { color: tone === 'good' ? 'var(--good-text)' : 'var(--critical)' } : undefined}>
+      <div className="num text-lg font-bold" style={tone ? { color: tone === 'good' ? 'var(--good-text)' : 'var(--critical)' } : undefined}>
         {value}
       </div>
       {sub && <div className="num text-[11px] text-muted">{sub}</div>}

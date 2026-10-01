@@ -39,7 +39,7 @@ export function HealthPanel({ compact }: { compact?: boolean }) {
                       <div key={s.scope} className="whitespace-nowrap" title={s.lastError ?? ''}>
                         <span className="text-muted">{s.scope === 'prematch' ? 'pre' : 'live'}:</span> {s.active ?? '–'}
                         {s.activeLevel !== null && <span className="text-muted"> L{s.activeLevel} {LEVEL[s.activeLevel] ?? ''}</span>}
-                        {s.push && <span className="text-muted"> ⇅</span>}
+                        {s.push && <span className="text-muted"> push</span>}
                       </div>
                     ))}
                   </td>

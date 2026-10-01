@@ -3,9 +3,18 @@ import { useEffect, useMemo, useState } from 'react';
 import type { BookmakerId, Mode, Sport } from '@core/types';
 import { BOOKMAKERS, MODES, SPORTS } from '@core/types';
 import { useLive, type ArbRow } from '@/lib/live';
-import { SPORT_LABEL, clockLabel, formatCountdown, formatDuration, formatKc, bkName } from '@/lib/format';
-import { BookmakerChip, ModeBadge } from './Badges';
+import { SPORT_LABEL, clockLabel, describeLeg, formatCountdown, formatDuration, formatKc, bkName, marketKind } from '@/lib/format';
+import { BookmakerChip, BookmakerName, ModeBadge } from './Badges';
+import { Icon } from './Icon';
 import { useNow } from './useNow';
+
+/** Detail arbu (kalkulačka, kde a co vsadit) v nové záložce – dá se přetáhnout na druhý monitor. */
+export function arbHref(id: string): string {
+  return `/arb/${id}`;
+}
+export function openArb(id: string): void {
+  window.open(arbHref(id), `arb-${id}`);
+}
 
 type SortKey = 'margin' | 'lifetime' | 'age';
 
@@ -31,7 +40,7 @@ function loadFilters(): Filters {
   }
 }
 
-export function ArbTable({ onOpen, selectedId }: { onOpen: (id: string) => void; selectedId: string | null }) {
+export function ArbTable() {
   const arbs = useLive((s) => s.arbs);
   const [f, setF] = useState<Filters>(DEFAULT_FILTERS);
   const now = useNow(500);
@@ -119,25 +128,24 @@ export function ArbTable({ onOpen, selectedId }: { onOpen: (id: string) => void;
           <thead>
             <tr>
               <th>Režim</th>
-              <th>Sport</th>
               <th>Zápas</th>
-              <th>Trh</th>
+              <th>Na co se sází</th>
+              <th>Kde a co vsadit</th>
               <th className="text-right">Marže</th>
+              <th className="text-right">Zisk</th>
               <th className="text-right">Stáří</th>
               <th className="text-right" title="Medián predikované životnosti a P(přežije > 10 s)">
                 Predikce
               </th>
-              <th>Sázkovky</th>
-              <th className="text-right">Zisk</th>
             </tr>
           </thead>
           <tbody>
             {rows.map((a) => (
-              <Row key={a.id} a={a} now={now} selected={a.id === selectedId} onOpen={onOpen} />
+              <Row key={a.id} a={a} now={now} />
             ))}
             {!rows.length && (
               <tr>
-                <td colSpan={9} className="py-10 text-center text-muted">
+                <td colSpan={8} className="py-10 text-center text-muted">
                   {arbs.size ? 'Žádný arb neodpovídá filtrům.' : 'Zatím žádné aktivní arby – jakmile se objeví, naskočí sem živě.'}
                 </td>
               </tr>
@@ -149,22 +157,25 @@ export function ArbTable({ onOpen, selectedId }: { onOpen: (id: string) => void;
   );
 }
 
-function Row({ a, now, selected, onOpen }: { a: ArbRow; now: number; selected: boolean; onOpen: (id: string) => void }) {
+function Row({ a, now }: { a: ArbRow; now: number }) {
   const isNew = a.status === 'active' && now - a.addedAt < 3200;
   const arrowFresh = a.marginDir && now - a.marginDirAt < 5000;
-  const cls = [a.status === 'ended' ? 'row-ended' : '', isNew ? 'row-new' : '', a.muted && a.status === 'active' ? 'row-muted' : '', selected ? 'bg-surface-2' : '', 'cursor-pointer hover:bg-surface-2']
+  const cls = [a.status === 'ended' ? 'row-ended' : '', isNew ? 'row-new' : '', a.muted && a.status === 'active' ? 'row-muted' : '', 'cursor-pointer hover:bg-surface-2']
     .filter(Boolean)
     .join(' ');
   const st = a.state;
   const age = (a.status === 'ended' ? (a.endedAt ?? now) : now) - a.firstSeen;
+  const mk = marketKind(a.market, a.sport);
   return (
-    <tr className={cls} onClick={() => onOpen(a.id)}>
-      <td>
+    <tr className={cls} onClick={() => openArb(a.id)} title="Otevřít detail s kalkulačkou v nové záložce">
+      <td className="align-top">
         <ModeBadge mode={a.mode} />
+        <div className="mt-1 text-xs text-muted">{SPORT_LABEL[a.sport]}</div>
       </td>
-      <td className="text-ink-2">{SPORT_LABEL[a.sport]}</td>
-      <td className="max-w-[340px]">
-        <div className="truncate font-medium">{a.eventName}</div>
+      <td className="max-w-[300px] align-top">
+        <a href={arbHref(a.id)} target={`arb-${a.id}`} onClick={(e) => e.stopPropagation()} className="block truncate text-[15px] font-semibold hover:underline">
+          {a.eventName}
+        </a>
         <div className="truncate text-xs text-muted">
           {a.competition}
           {st?.score && ` · ${st.score[0]}:${st.score[1]}`}
@@ -173,17 +184,49 @@ function Row({ a, now, selected, onOpen }: { a: ArbRow; now: number; selected: b
           {a.mode === 'PREMATCH' && ` · výkop za ${formatCountdown(Math.round((a.startTime - now) / 1000))}`}
         </div>
       </td>
-      <td className="whitespace-nowrap text-ink-2">{a.marketLabel}</td>
-      <td className="whitespace-nowrap text-right num font-semibold">
+      <td className="align-top">
+        <span className="market-tag text-[15px]">{mk.kind}</span>
+        {(mk.detail || mk.scope) && (
+          <div className="mt-1 text-xs text-ink-2">
+            {mk.scope && <b className="text-ink">{mk.scope} · </b>}
+            {mk.detail}
+          </div>
+        )}
+      </td>
+      <td className="align-top">
+        <div className="space-y-1">
+          {a.legs.map((l) => {
+            const d = describeLeg(l.market ?? a.market, l.marketSelection ?? l.selection, a, l.swapped);
+            return (
+              <div key={l.selection} className="flex items-center gap-2 whitespace-nowrap">
+                <BookmakerName bk={l.bookmaker} />
+                <span className="text-muted">
+                  <Icon name="arrowRight" size={13} />
+                </span>
+                <span className="font-medium" title={l.market && l.market !== a.market ? `sází se na trh ${l.marketLabel}` : undefined}>
+                  {d.title}
+                  {l.market && l.market !== a.market && <span className="text-muted"> *</span>}
+                </span>
+                <span className="num ml-auto pl-2 text-[15px] font-bold">{l.odds.toFixed(2)}</span>
+              </div>
+            );
+          })}
+        </div>
+      </td>
+      <td className="whitespace-nowrap text-right align-top num text-[15px] font-semibold">
         {arrowFresh && (
-          <span className="mr-1" style={{ color: a.marginDir === 'up' ? 'var(--good)' : 'var(--critical)' }} aria-label={a.marginDir === 'up' ? 'marže roste' : 'marže klesá'}>
-            {a.marginDir === 'up' ? '▲' : '▼'}
+          <span className="mr-1 inline-flex align-middle" style={{ color: a.marginDir === 'up' ? 'var(--good)' : 'var(--critical)' }} aria-label={a.marginDir === 'up' ? 'marže roste' : 'marže klesá'}>
+            <Icon name={a.marginDir === 'up' ? 'up' : 'down'} size={13} />
           </span>
         )}
         {a.margin.toFixed(2)} %
       </td>
-      <td className="text-right num text-ink-2">{formatDuration(age)}</td>
-      <td className="whitespace-nowrap text-right num">
+      <td className="whitespace-nowrap text-right align-top num font-semibold" style={{ color: a.positive ? 'var(--good-text)' : 'var(--muted)' }}>
+        {a.positive ? '+' : ''}
+        {formatKc(a.minProfit)}
+      </td>
+      <td className="text-right align-top num text-ink-2">{formatDuration(age)}</td>
+      <td className="whitespace-nowrap text-right align-top num">
         {a.prediction ? (
           <span title={`segment ${a.prediction.segment} · n=${a.prediction.n}`}>
             {formatDuration(a.prediction.medianMs)}
@@ -193,33 +236,15 @@ function Row({ a, now, selected, onOpen }: { a: ArbRow; now: number; selected: b
           <span className="text-muted">málo dat</span>
         )}
         {a.risky && (
-          <span className="ml-1" style={{ color: 'var(--warning)' }} title="Predikovaná životnost přesahuje zbývající čas přestávky">
-            ⚠
+          <span className="ml-1 inline-flex align-middle" style={{ color: 'var(--warning)' }} title="Predikovaná životnost přesahuje zbývající čas přestávky">
+            <Icon name="warn" size={14} />
           </span>
         )}
         {a.muted && a.status === 'active' && (
-          <span className="ml-1 text-muted" title="Nízká pravděpodobnost, že arb vydrží reakční dobu + přijetí sázky">
-            🔇
+          <span className="ml-1 inline-flex align-middle text-muted" title="Ztlumeno: nízká pravděpodobnost, že arb vydrží reakční dobu + přijetí sázky">
+            <Icon name="mute" size={14} />
           </span>
         )}
-      </td>
-      <td>
-        <div className="flex flex-wrap gap-1">
-          {a.legs.map((l) => (
-            <span key={l.selection} className="inline-flex items-center gap-1 rounded bg-surface-2 px-1.5 py-0.5 text-xs">
-              <span className="text-muted" title={l.market && l.market !== a.market ? `sází se na trh ${l.marketLabel}` : undefined}>
-                {l.selectionLabel}
-                {l.market && l.market !== a.market && '*'}
-              </span>
-              <span className="num font-semibold">{l.odds.toFixed(2)}</span>
-              <BookmakerChip bk={l.bookmaker} small />
-            </span>
-          ))}
-        </div>
-      </td>
-      <td className="whitespace-nowrap text-right num" style={{ color: a.positive ? 'var(--good-text)' : 'var(--muted)' }}>
-        {a.positive ? '+' : ''}
-        {formatKc(a.minProfit)}
       </td>
     </tr>
   );
@@ -231,7 +256,7 @@ function SportFilter({ hidden, counts, onChange }: { hidden: Sport[]; counts: Pa
   return (
     <details className="relative">
       <summary className="btn cursor-pointer list-none py-1 text-sm">
-        Sporty: {hidden.length ? `${shown} z ${SPORTS.length}` : 'všechny'} ▾
+        Sporty: {hidden.length ? `${shown} z ${SPORTS.length}` : 'všechny'} <Icon name="chevDown" size={14} />
       </summary>
       <div className="card absolute left-0 z-30 mt-1 w-56 space-y-0.5 p-2 shadow-xl">
         <div className="mb-1 flex gap-2 text-xs">

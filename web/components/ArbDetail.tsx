@@ -1,51 +1,76 @@
 'use client';
-import { useEffect, useMemo, useState } from 'react';
+// Detail arbu na celé stránce (/arb/[id], otevírá se v nové záložce): kde, na co a kolik vsadit,
+// kalkulačka, uložení sázky do přehledu, herní stav, vývoj marže a predikce.
+import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import type { BookmakerId } from '@core/types';
-import { computeStakes } from '@core/arb';
-import { useLive, pushToast } from '@/lib/live';
-import { api, bkName, clockLabel, describeLeg, endReasonLabel, formatDuration, formatTime, formatCountdown, PAUSE_LABEL, SPORT_LABEL } from '@/lib/format';
-import { ModeBadge, modeColor } from './Badges';
+import type { ArbDTO } from '@shared/protocol';
+import { useLive, pushToast, type ArbRow } from '@/lib/live';
+import { api, bkName, clockLabel, describeLeg, endReasonLabel, formatDuration, formatKc2, formatTime, formatCountdown, marketKind, PAUSE_LABEL, SPORT_LABEL } from '@/lib/format';
+import { BookmakerName, ModeBadge, modeColor } from './Badges';
 import { LineChart } from './LineChart';
-import { StakeCalculator, type CalcLeg } from './StakeCalculator';
+import { StakeCalculator, type CalcLeg, type CalcPlan } from './StakeCalculator';
 import { Icon } from './Icon';
 import { useNow } from './useNow';
 
 type ActionKind = 'placed' | 'missed' | 'rejected' | 'odds_changed';
 
-export function ArbDetail({ id, onClose }: { id: string; onClose: () => void }) {
-  const a = useLive((s) => s.arbs.get(id));
+export function ArbDetail({ id }: { id: string }) {
+  const live = useLive((s) => s.arbs.get(id));
+  const ready = useLive((s) => s.ready);
   const settings = useLive((s) => s.settings);
   const now = useNow(250);
   const clockOffset = useLive((s) => s.clockOffset);
   const [history, setHistory] = useState<{ ts: number; margin: number }[]>([]);
   const [form, setForm] = useState<ActionKind | null>(null);
-  const [lastA, setLastA] = useState(a);
+  const [lastA, setLastA] = useState<ArbRow | undefined>(live);
+  const [fromApi, setFromApi] = useState<ArbRow | null>(null);
+  const [gone, setGone] = useState<string | null>(null);
+  const [plan, setPlan] = useState<CalcPlan | null>(null);
+  const [saved, setSaved] = useState(false);
 
   useEffect(() => {
-    if (a) setLastA(a);
-  }, [a]);
-  const arb = a ?? lastA;
+    if (live) setLastA(live);
+  }, [live]);
 
   useEffect(() => {
     setHistory([]);
     setForm(null);
-    void api<{ ticks: { ts: number; margin: number }[] }>(`/arbs/${id}`)
-      .then((r) => setHistory(r.ticks))
-      .catch(() => {});
+    void api<{ arb: { event_name: string; end_reason: string | null }; active: ArbDTO | null; ticks: { ts: number; margin: number }[] }>(`/arbs/${id}`)
+      .then((r) => {
+        setHistory(r.ticks);
+        if (r.active) setFromApi({ ...r.active, status: 'active', addedAt: Date.now(), marginDir: null, marginDirAt: 0, ticks: [] });
+        else setGone(`${r.arb.event_name} – ${endReasonLabel(r.arb.end_reason ?? undefined)}`);
+      })
+      .catch(() => setGone('arb nenalezen'));
   }, [id]);
+
+  const arb = live ?? lastA ?? fromApi ?? undefined;
+
+  useEffect(() => {
+    if (arb) document.title = `${arb.margin.toFixed(2)} % · ${arb.eventName}${arb.status === 'ended' ? ' (zanikl)' : ''}`;
+  }, [arb?.margin, arb?.eventName, arb?.status]);
+
+  if (!arb) {
+    return (
+      <div className="card mx-auto mt-10 max-w-xl p-6 text-center">
+        {!ready && !gone ? (
+          <div className="text-muted">Načítám arb…</div>
+        ) : (
+          <>
+            <div className="text-lg font-semibold">Arb už není aktivní</div>
+            {gone && <div className="mt-1 text-ink-2">{gone}</div>}
+            <Link href="/" className="btn mt-4">
+              Zpět na přehled arbů
+            </Link>
+          </>
+        )}
+      </div>
+    );
+  }
 
   const bankroll = settings?.bankroll ?? 10000;
   const unit = settings?.roundingUnit ?? 1;
-  const odds = arb?.legs.map((l) => l.effOdds) ?? [];
-  // výchozí plán pro formulář „Vsadil“ (kalkulačka si drží vlastní úpravy)
-  const plan = useMemo(
-    () => (odds.length ? computeStakes(odds, bankroll, unit) : null),
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [odds.join(','), bankroll, unit],
-  );
-
-  if (!arb) return null;
   const serverNow = now + clockOffset;
   const calcLegs: CalcLeg[] = arb.legs.map((l) => {
     const d = describeLeg(l.market ?? arb.market, l.marketSelection ?? l.selection, arb, l.swapped);
@@ -67,145 +92,172 @@ export function ArbDetail({ id, onClose }: { id: string; onClose: () => void }) 
     b: arb.legs.map((l) => l.bookmaker).join(','),
     l: calcLegs.map((l) => l.title).join('|'),
     t: String(bankroll),
+    e: arb.eventName,
   })}`;
   const ticks = mergeTicks(history, arb.ticks);
   const st = arb.state;
   const ended = arb.status === 'ended';
   const age = (ended ? (arb.endedAt ?? now) : now) - arb.firstSeen;
   const threshold = settings?.modes[arb.mode].minMarginPct;
+  const mk = marketKind(arb.market, arb.sport);
 
   return (
-    <aside className="card fixed bottom-4 right-4 top-16 z-20 flex w-[560px] max-w-[95vw] flex-col overflow-hidden shadow-2xl">
-      <div className="flex items-start gap-3 border-b border-line px-4 py-3">
+    <div className="space-y-4">
+      {/* hlavička: zápas, na co se sází, marže */}
+      <header className="card flex flex-wrap items-start gap-4 px-5 py-4">
         <div className="min-w-0 flex-1">
-          <div className="flex items-center gap-2">
+          <div className="flex flex-wrap items-center gap-2">
             <ModeBadge mode={arb.mode} />
-            <span className="text-xs text-muted">
+            <span className="text-sm text-muted">
               {SPORT_LABEL[arb.sport]} · {arb.competition}
             </span>
-            {arb.isSim && <span className="rounded bg-surface-3 px-1 text-[10px] text-ink-2">SIM</span>}
+            {arb.isSim && <span className="rounded bg-surface-3 px-1.5 text-[11px] text-ink-2">TESTOVACÍ DATA</span>}
           </div>
-          <h2 className="mt-1 text-lg font-semibold leading-snug break-words">{arb.eventName}</h2>
-          <div className="text-ink-2">{arb.marketLabel}</div>
+          <h1 className="mt-1 text-2xl font-bold leading-snug break-words">{arb.eventName}</h1>
+          <div className="mt-2 flex flex-wrap items-center gap-2">
+            <span className="market-tag text-lg">{mk.kind}</span>
+            {mk.scope && <span className="market-tag text-lg">{mk.scope}</span>}
+            {mk.detail && <span className="text-ink-2">{mk.detail}</span>}
+          </div>
         </div>
         <div className="text-right">
-          <div className="num text-2xl font-semibold" title="Marže arbu = jistý výnos z celkového vkladu">
+          <div className="num text-4xl font-bold" style={{ color: ended ? 'var(--muted)' : 'var(--good-text)' }} title="Marže arbu = jistý výnos z celkového vkladu">
             {arb.margin.toFixed(2)} %
           </div>
           <div className="text-xs text-muted num">
-            max {arb.maxMargin.toFixed(2)} · při detekci {arb.marginAtDetection.toFixed(2)}
+            max {arb.maxMargin.toFixed(2)} · při detekci {arb.marginAtDetection.toFixed(2)} · stáří {formatDuration(age)}
           </div>
-          <div className="text-xs text-muted num">stáří {formatDuration(age)}</div>
         </div>
-        <button className="btn px-2" onClick={onClose} aria-label="Zavřít">
-          ✕
-        </button>
-      </div>
+      </header>
 
-      <div className="flex-1 space-y-4 overflow-y-auto px-4 py-3">
-        {ended && (
-          <div className="rounded-md bg-surface-2 px-3 py-2 text-sm">
-            Arb zanikl: <b>{endReasonLabel(arb.endReason)}</b> po {formatDuration((arb.endedAt ?? now) - arb.firstSeen)}
-          </div>
-        )}
+      {ended && (
+        <div className="card flex items-center gap-2 px-4 py-3" style={{ borderLeft: '4px solid var(--critical)' }}>
+          <Icon name="stop" size={16} />
+          Arb zanikl: <b>{endReasonLabel(arb.endReason)}</b> po {formatDuration((arb.endedAt ?? now) - arb.firstSeen)} – kurzy níže už nemusí platit.
+        </div>
+      )}
 
-        {/* herní stav */}
-        <section className="grid grid-cols-3 gap-2 text-sm">
-          {arb.mode !== 'PREMATCH' && (
-            <>
-              <Stat label="Skóre" value={st?.score ? `${st.score[0]} : ${st.score[1]}` : '–'} />
-              <Stat label="Perioda" value={st?.period ? `${st.period}.${st.statusText ? ` (${st.statusText})` : ''}` : (st?.statusText ?? '–')} />
-              <Stat
-                label={arb.sport === 'tennis' ? 'Gemy' : 'Čas'}
-                value={arb.sport === 'tennis' ? (st?.games ? `${st.games[0]}:${st.games[1]} ${st.points ?? ''}` : '–') : (clockLabel(st) ?? '–')}
-              />
-            </>
-          )}
-          {arb.mode === 'PAUSED' && arb.pause && (
-            <div className="col-span-3 rounded-md px-3 py-2" style={{ background: 'var(--surface-2)', borderLeft: `3px solid ${modeColor('PAUSED')}` }}>
-              Přestávka: <b>{PAUSE_LABEL[arb.pause.type] ?? arb.pause.type}</b> · uplynulo {formatDuration(now - arb.pause.startedAt)} z ~
-              {formatDuration(arb.pause.expectedSec * 1000)} · zbývá{' '}
-              <b className="num">{formatDuration(Math.max(0, arb.pause.expectedSec * 1000 - (now - arb.pause.startedAt)))}</b>
-              <span className="text-muted"> ({arb.pause.source === 'feed' ? 'z feedu' : 'odhad z hodin'})</span>
-              {arb.risky && <div style={{ color: 'var(--warning)' }}>⚠ Riziko: predikovaná životnost arbu přesahuje zbývající čas přestávky.</div>}
-            </div>
-          )}
-          {arb.mode === 'PREMATCH' && (
-            <div className="col-span-3 text-ink-2">
-              Výkop {new Date(arb.startTime).toLocaleString('cs-CZ')} · za {formatCountdown(Math.round((arb.startTime - now) / 1000))}
-            </div>
-          )}
-        </section>
-
-        {/* kalkulačka vkladů */}
-        <section>
-          <div className="mb-2 flex items-center gap-2">
-            <h3 className="text-sm font-medium">Kde, na co a kolik vsadit</h3>
-            <Link href={calcHref} className="ml-auto inline-flex items-center gap-1 text-xs text-accent hover:underline" title="Otevřít kurzy v samostatné kalkulačce">
-              <Icon name="calc" size={13} /> otevřít v kalkulačce
+      <div className="grid grid-cols-1 gap-4 xl:grid-cols-[minmax(0,1fr)_420px]">
+        {/* kde, na co a kolik vsadit */}
+        <section className="card space-y-4 p-4">
+          <div className="flex flex-wrap items-center gap-2">
+            <h2 className="text-lg font-semibold">Kde, na co a kolik vsadit</h2>
+            <span className="text-sm text-muted">
+              {arb.legs.map((l) => bkName(l.bookmaker)).join(' + ')}
+            </span>
+            <Link href={calcHref} target="_blank" className="ml-auto inline-flex items-center gap-1 text-sm text-accent hover:underline" title="Otevřít kurzy v samostatné kalkulačce (nová záložka)">
+              <Icon name="calc" size={14} /> samostatná kalkulačka
             </Link>
           </div>
-          <StakeCalculator legs={calcLegs} total={bankroll} unit={unit} />
-        </section>
+          <StakeCalculator legs={calcLegs} total={bankroll} unit={unit} onPlan={setPlan} />
 
-        {/* vývoj marže */}
-        <section>
-          <h3 className="mb-1 text-sm font-medium text-ink-2">Vývoj marže</h3>
-          <LineChart
-            ariaLabel="Vývoj marže arbu v čase"
-            height={170}
-            series={[{ key: 'm', label: 'marže', color: modeColor(arb.mode), points: [...ticks.map((t) => ({ x: t.ts, y: t.margin })), ...(ended ? [] : [{ x: now, y: arb.margin }])], step: true }]}
-            xFormat={(x) => formatTime(x)}
-            yFormat={(y) => `${y.toFixed(2)} %`}
-            refY={threshold !== undefined ? { y: threshold, label: `práh ${threshold} %` } : undefined}
-          />
-        </section>
-
-        {/* predikce */}
-        <section className="text-sm">
-          <h3 className="mb-1 font-medium text-ink-2">Predikce životnosti</h3>
-          {arb.prediction ? (
-            <div className="grid grid-cols-4 gap-2">
-              <Stat label="Medián" value={formatDuration(arb.prediction.medianMs)} />
-              <Stat label="P25–P75" value={`${formatDuration(arb.prediction.p25Ms)} – ${formatDuration(arb.prediction.p75Ms)}`} />
-              <Stat label={`P(> ${formatDuration(arb.prediction.neededMs)})`} value={arb.prediction.pNeeded === null ? '–' : `${(arb.prediction.pNeeded * 100).toFixed(0)} %`} />
-              <Stat label="Vzorků" value={`${arb.prediction.n} (${arb.prediction.source === 'model' ? 'model' : 'KM'})`} />
-              {([5, 10, 30, 60] as const).map((t) => (
-                <Stat key={t} label={`P(> ${t} s)`} value={`${(arb.prediction!.pOver[t] * 100).toFixed(0)} %`} />
-              ))}
-              <div className="col-span-4 text-xs text-muted">
-                segment {arb.prediction.segment} · potřebná doba = reakce + max. zpoždění přijetí sázkovek
-                {arb.muted && ' · ztlumeno (nízká šance, že arb vydrží)'}
+          <div className="border-t border-line pt-3">
+            {form ? (
+              <ActionForm
+                arb={arb}
+                kind={form}
+                legs={calcLegs}
+                plan={plan}
+                onDone={(ok) => {
+                  setForm(null);
+                  if (ok && form === 'placed') setSaved(true);
+                }}
+              />
+            ) : (
+              <div className="flex flex-wrap items-center gap-2">
+                <button className="btn btn-primary px-4 py-2 text-base" onClick={() => setForm('placed')}>
+                  <Icon name="check" /> Vsadil jsem – uložit sázku
+                </button>
+                <button className="btn" onClick={() => void sendAction({ arbId: arb.id, action: 'missed', shownAt: arb.addedAt, marginAtClick: arb.margin })}>
+                  Nestihl
+                </button>
+                <button className="btn" onClick={() => setForm('rejected')}>
+                  Odmítnuto…
+                </button>
+                <button className="btn" onClick={() => setForm('odds_changed')}>
+                  Změna kurzu…
+                </button>
+                {saved && (
+                  <Link href="/sazky" target="_blank" className="ml-auto inline-flex items-center gap-1 text-sm text-accent hover:underline">
+                    <Icon name="wallet" size={14} /> uloženo – Přehled sázek
+                  </Link>
+                )}
               </div>
-            </div>
-          ) : (
-            <div className="text-muted">Zatím málo ukončených arbů pro predikci.</div>
-          )}
-        </section>
-      </div>
-
-      {/* akce */}
-      <div className="border-t border-line px-4 py-3">
-        {form ? (
-          <ActionForm arbId={arb.id} kind={form} legs={arb.legs.map((l) => l.bookmaker)} total={plan?.total ?? 0} shownAt={arb.addedAt} margin={arb.margin} onDone={() => setForm(null)} />
-        ) : (
-          <div className="flex flex-wrap gap-2">
-            <button className="btn btn-primary" onClick={() => setForm('placed')}>
-              ✓ Vsadil
-            </button>
-            <button className="btn" onClick={() => void sendAction(arb.id, { action: 'missed', shownAt: arb.addedAt, marginAtClick: arb.margin })}>
-              Nestihl
-            </button>
-            <button className="btn" onClick={() => setForm('rejected')}>
-              Odmítnuto…
-            </button>
-            <button className="btn" onClick={() => setForm('odds_changed')}>
-              Změna kurzu…
-            </button>
+            )}
           </div>
-        )}
+        </section>
+
+        <div className="space-y-4">
+          {/* herní stav */}
+          <section className="card space-y-2 p-4 text-sm">
+            <h3 className="font-semibold text-ink-2">Zápas</h3>
+            {arb.mode !== 'PREMATCH' && (
+              <div className="grid grid-cols-3 gap-2">
+                <Stat label="Skóre" value={st?.score ? `${st.score[0]} : ${st.score[1]}` : '–'} />
+                <Stat label="Perioda" value={st?.period ? `${st.period}.${st.statusText ? ` (${st.statusText})` : ''}` : (st?.statusText ?? '–')} />
+                <Stat
+                  label={arb.sport === 'tennis' ? 'Gemy' : 'Čas'}
+                  value={arb.sport === 'tennis' ? (st?.games ? `${st.games[0]}:${st.games[1]} ${st.points ?? ''}` : '–') : (clockLabel(st) ?? '–')}
+                />
+              </div>
+            )}
+            {arb.mode === 'PAUSED' && arb.pause && (
+              <div className="rounded-md px-3 py-2" style={{ background: 'var(--surface-2)', borderLeft: `3px solid ${modeColor('PAUSED')}` }}>
+                Přestávka: <b>{PAUSE_LABEL[arb.pause.type] ?? arb.pause.type}</b> · uplynulo {formatDuration(now - arb.pause.startedAt)} z ~
+                {formatDuration(arb.pause.expectedSec * 1000)} · zbývá{' '}
+                <b className="num">{formatDuration(Math.max(0, arb.pause.expectedSec * 1000 - (now - arb.pause.startedAt)))}</b>
+                <span className="text-muted"> ({arb.pause.source === 'feed' ? 'z feedu' : 'odhad z hodin'})</span>
+                {arb.risky && (
+                  <div className="mt-1 flex items-center gap-1" style={{ color: 'var(--warning)' }}>
+                    <Icon name="warn" size={14} /> Riziko: predikovaná životnost arbu přesahuje zbývající čas přestávky.
+                  </div>
+                )}
+              </div>
+            )}
+            {arb.mode === 'PREMATCH' && (
+              <div className="text-ink-2">
+                Výkop {new Date(arb.startTime).toLocaleString('cs-CZ')} · za {formatCountdown(Math.round((arb.startTime - now) / 1000))}
+              </div>
+            )}
+          </section>
+
+          {/* vývoj marže */}
+          <section className="card p-4">
+            <h3 className="mb-1 text-sm font-semibold text-ink-2">Vývoj marže</h3>
+            <LineChart
+              ariaLabel="Vývoj marže arbu v čase"
+              height={170}
+              series={[{ key: 'm', label: 'marže', color: modeColor(arb.mode), points: [...ticks.map((t) => ({ x: t.ts, y: t.margin })), ...(ended ? [] : [{ x: now, y: arb.margin }])], step: true }]}
+              xFormat={(x) => formatTime(x)}
+              yFormat={(y) => `${y.toFixed(2)} %`}
+              refY={threshold !== undefined ? { y: threshold, label: `práh ${threshold} %` } : undefined}
+            />
+          </section>
+
+          {/* predikce */}
+          <section className="card p-4 text-sm">
+            <h3 className="mb-1 font-semibold text-ink-2">Predikce životnosti</h3>
+            {arb.prediction ? (
+              <div className="grid grid-cols-4 gap-2">
+                <Stat label="Medián" value={formatDuration(arb.prediction.medianMs)} />
+                <Stat label="P25–P75" value={`${formatDuration(arb.prediction.p25Ms)} – ${formatDuration(arb.prediction.p75Ms)}`} />
+                <Stat label={`P(> ${formatDuration(arb.prediction.neededMs)})`} value={arb.prediction.pNeeded === null ? '–' : `${(arb.prediction.pNeeded * 100).toFixed(0)} %`} />
+                <Stat label="Vzorků" value={`${arb.prediction.n} (${arb.prediction.source === 'model' ? 'model' : 'KM'})`} />
+                {([5, 10, 30, 60] as const).map((t) => (
+                  <Stat key={t} label={`P(> ${t} s)`} value={`${(arb.prediction!.pOver[t] * 100).toFixed(0)} %`} />
+                ))}
+                <div className="col-span-4 text-xs text-muted">
+                  segment {arb.prediction.segment} · potřebná doba = reakce + max. zpoždění přijetí sázkovek
+                  {arb.muted && ' · ztlumeno (nízká šance, že arb vydrží)'}
+                </div>
+              </div>
+            ) : (
+              <div className="text-muted">Zatím málo ukončených arbů pro predikci.</div>
+            )}
+          </section>
+        </div>
       </div>
-    </aside>
+    </div>
   );
 }
 
@@ -224,81 +276,117 @@ function mergeTicks(a: { ts: number; margin: number }[], b: { ts: number; margin
   return [...m.entries()].sort((x, y) => x[0] - y[0]).map(([ts, margin]) => ({ ts, margin }));
 }
 
-async function sendAction(arbId: string, body: Record<string, unknown>) {
+async function sendAction(body: Record<string, unknown>): Promise<boolean> {
   try {
-    await api('/actions', { method: 'POST', body: JSON.stringify({ arbId, ...body }) });
-    pushToast('Akce uložena', 'good');
+    await api('/actions', { method: 'POST', body: JSON.stringify(body) });
+    pushToast(body.action === 'placed' ? 'Sázka uložena do Přehledu sázek' : 'Akce uložena', 'good');
+    return true;
   } catch (e) {
     pushToast(`Uložení selhalo: ${(e as Error).message}`, 'bad');
+    return false;
   }
 }
 
-function ActionForm({
-  arbId,
-  kind,
-  legs,
-  total,
-  shownAt,
-  margin,
-  onDone,
-}: {
-  arbId: string;
-  kind: ActionKind;
-  legs: BookmakerId[];
-  total: number;
-  shownAt: number;
-  margin: number;
-  onDone: () => void;
-}) {
-  const [stake, setStake] = useState(total);
-  const [bk, setBk] = useState<BookmakerId>(legs[0]);
+interface LegInput {
+  stake: string;
+  odds: string;
+}
+
+function ActionForm({ arb, kind, legs, plan, onDone }: { arb: ArbRow; kind: ActionKind; legs: CalcLeg[]; plan: CalcPlan | null; onDone: (ok: boolean) => void }) {
+  const books = arb.legs.map((l) => l.bookmaker);
+  const [bk, setBk] = useState<BookmakerId>(books[0]);
+  const [inputs, setInputs] = useState<LegInput[]>(() => legs.map((l, i) => ({ stake: String(plan?.stakes[i] ?? 0), odds: String(l.shownOdds ?? l.odds) })));
   const [odds, setOdds] = useState<string>('');
   const [acc, setAcc] = useState<string>('');
   const [note, setNote] = useState('');
+  const num = (s: string) => Number(s.replace(',', '.'));
+  const total = inputs.reduce((s, x) => s + (num(x.stake) || 0), 0);
+  const profits = inputs.map((x) => (num(x.stake) || 0) * (num(x.odds) || 0) - total);
+  const upd = (i: number, p: Partial<LegInput>) => setInputs((xs) => xs.map((x, j) => (j === i ? { ...x, ...p } : x)));
+
   const submit = async () => {
-    const body: Record<string, unknown> = { action: kind, shownAt, marginAtClick: margin, note: note || undefined };
+    const body: Record<string, unknown> = { arbId: arb.id, action: kind, shownAt: arb.addedAt, marginAtClick: arb.margin, note: note || undefined };
     if (kind === 'placed') {
-      body.stake = stake;
+      body.stake = total;
+      body.legs = arb.legs.map((l, i) => ({ bookmaker: l.bookmaker, title: legs[i]?.title, stake: num(inputs[i].stake) || 0, actualOdds: num(inputs[i].odds) || undefined }));
+      body.eventName = arb.eventName;
+      body.marketKey = arb.market;
+      body.sport = arb.sport;
       if (acc) body.acceptanceMs = Math.round(Number(acc) * 1000);
-      if (odds) {
-        body.actualOdds = Number(odds);
-        body.bookmaker = bk;
-      }
     } else {
       body.bookmaker = bk;
       if (kind === 'odds_changed' && odds) body.actualOdds = Number(odds);
     }
-    await sendAction(arbId, body);
-    onDone();
+    onDone(await sendAction(body));
   };
+
+  if (kind === 'placed')
+    return (
+      <div className="space-y-3">
+        <div className="text-sm text-ink-2">Zkontroluj, kolik a za jaký kurz jsi skutečně vsadil (předvyplněno z kalkulačky):</div>
+        <div className="space-y-2">
+          {legs.map((l, i) => (
+            <div key={l.key} className="flex flex-wrap items-center gap-2 rounded-md bg-surface-2 px-3 py-2">
+              {l.bookmaker && <BookmakerName bk={l.bookmaker} />}
+              <span className="min-w-0 flex-1 font-medium">{l.title}</span>
+              <label className="flex items-center gap-1 text-sm text-muted">
+                vklad
+                <input className="input w-24 text-right" inputMode="decimal" value={inputs[i].stake} onChange={(e) => upd(i, { stake: e.target.value })} />
+                Kč
+              </label>
+              <label className="flex items-center gap-1 text-sm text-muted">
+                kurz
+                <input className="input w-20 text-right" inputMode="decimal" value={inputs[i].odds} onChange={(e) => upd(i, { odds: e.target.value })} />
+              </label>
+            </div>
+          ))}
+        </div>
+        <div className="flex flex-wrap items-end gap-3 text-sm">
+          <div>
+            <div className="text-xs text-muted">Vsazeno celkem</div>
+            <div className="num text-lg font-bold">{formatKc2(total)}</div>
+          </div>
+          <div>
+            <div className="text-xs text-muted">Jistý zisk</div>
+            <div className="num text-lg font-bold" style={{ color: Math.min(...profits) >= 0 ? 'var(--good-text)' : 'var(--critical)' }}>
+              {Math.min(...profits) > 0 ? '+' : ''}
+              {formatKc2(Math.min(...profits))}
+            </div>
+          </div>
+          <label className="flex flex-col gap-0.5">
+            <span className="text-xs text-muted">Přijetí trvalo (s)</span>
+            <input className="input w-20" type="number" step={0.5} value={acc} onChange={(e) => setAcc(e.target.value)} />
+          </label>
+          <label className="flex min-w-40 flex-1 flex-col gap-0.5">
+            <span className="text-xs text-muted">Poznámka</span>
+            <input className="input" value={note} onChange={(e) => setNote(e.target.value)} />
+          </label>
+          <button className="btn btn-primary px-4 py-2" disabled={total <= 0} onClick={() => void submit()}>
+            Uložit do přehledu sázek
+          </button>
+          <button className="btn py-2" onClick={() => onDone(false)}>
+            Zpět
+          </button>
+        </div>
+      </div>
+    );
+
   return (
     <div className="flex flex-wrap items-end gap-2 text-sm">
-      {kind === 'placed' && (
-        <label className="flex flex-col gap-0.5">
-          <span className="text-xs text-muted">Skutečný vklad celkem</span>
-          <input className="input w-28" type="number" value={stake} onChange={(e) => setStake(Number(e.target.value))} />
-        </label>
-      )}
       <label className="flex flex-col gap-0.5">
         <span className="text-xs text-muted">{kind === 'rejected' ? 'Odmítla sázkovka' : 'Sázkovka'}</span>
         <select className="input" value={bk} onChange={(e) => setBk(e.target.value as BookmakerId)}>
-          {legs.map((b) => (
+          {books.map((b) => (
             <option key={b} value={b}>
               {bkName(b)}
             </option>
           ))}
         </select>
       </label>
-      {(kind === 'placed' || kind === 'odds_changed') && (
+      {kind === 'odds_changed' && (
         <label className="flex flex-col gap-0.5">
-          <span className="text-xs text-muted">{kind === 'placed' ? 'Skutečný kurz (volit.)' : 'Nový kurz'}</span>
+          <span className="text-xs text-muted">Nový kurz</span>
           <input className="input w-20" type="number" step={0.01} value={odds} onChange={(e) => setOdds(e.target.value)} />
-        </label>
-      )}
-      {kind === 'placed' && (
-        <label className="flex flex-col gap-0.5">
-          <span className="text-xs text-muted">Přijetí trvalo (s)</span>
-          <input className="input w-20" type="number" step={0.5} value={acc} onChange={(e) => setAcc(e.target.value)} />
         </label>
       )}
       <label className="flex flex-1 flex-col gap-0.5">
@@ -308,7 +396,7 @@ function ActionForm({
       <button className="btn btn-primary" onClick={() => void submit()}>
         Uložit
       </button>
-      <button className="btn" onClick={onDone}>
+      <button className="btn" onClick={() => onDone(false)}>
         Zpět
       </button>
     </div>

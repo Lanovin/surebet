@@ -18,7 +18,7 @@ export function LatencyBadge() {
       <span className="num">{l.last ?? '–'} ms</span>
       <span className="text-muted"> · e2e </span>
       <span className="num">{l.e2e ?? '–'} ms</span>
-      {!ok && <span className="ml-1 text-critical">⚠ nad 200 ms</span>}
+      {!ok && <span className="ml-1 text-critical">nad 200 ms</span>}
     </div>
   );
 }

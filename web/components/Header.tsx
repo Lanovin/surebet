@@ -15,6 +15,7 @@ interface NavItem {
 const NAV: NavItem[] = [
   { href: '/', label: 'Arby', icon: 'bolt', hint: 'Živý přehled arbitráží' },
   { href: '/kalkulacka', label: 'Kalkulačka', icon: 'calc', hint: 'Ruční výpočet vkladů ze zadaných kurzů' },
+  { href: '/sazky', label: 'Sázky', icon: 'wallet', hint: 'Přehled uložených sázek a kolik jsem v plusu / mínusu' },
   { href: '/stats', label: 'Statistiky', icon: 'chart', hint: 'Historie arbů, životnost, výsledky sázek' },
   { href: '/unmatched', label: 'Párování', icon: 'link', hint: 'Zápasy, které se nepodařilo automaticky spárovat' },
   { href: '/health', label: 'Sázkovky', icon: 'pulse', hint: 'Stav stahování kurzů ze sázkovek' },

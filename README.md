@@ -33,14 +33,18 @@ bash scripts/stop-local.sh           # zastavit služby (infra běží dál; scr
 
 | Menu | Obsah |
 |---|---|
-| **Arby** | živý přehled (odznak = počet aktivních, z toho live); klik otevře detail s kalkulačkou „kde, na co a kolik vsadit“ |
-| **Kalkulačka** | ruční výpočet vkladů pro 2–3 výsledky (poplatek sázkovky, zaokrouhlení, pevný vklad jedné nohy); z detailu arbu se otevírá předvyplněná |
+| **Arby** | živý přehled (odznak = počet aktivních, z toho live); u každého arbu velký štítek „na co se sází“ (Výhra, Počet gólů, Handicap…) a řádek na každou sázkovku: sázkovka → výběr → kurz. Klik otevře detail v **nové záložce** (`/arb/<id>`, dá se dát na druhý monitor) |
+| **Kalkulačka** | ruční výpočet vkladů pro 2–3 výsledky (poplatek sázkovky, zaokrouhlení, pevný vklad jedné nohy); z detailu arbu se otevírá předvyplněná; „Vsadil jsem“ uloží ruční sázku do přehledu |
+| **Sázky** | přehled uložených sázek: vsazeno, očekávaný jistý zisk, po zápase výběr „vyhrála noha X / vráceno / ručně“ → skutečný zisk/ztráta a průběžný součet +/- |
 | **Statistiky** | historie arbů, životnost, důvody zániku |
 | **Párování** | zápasy, které se nepodařilo spárovat automaticky |
 | **Sázkovky** | stav stahování (tečka = některá sázkovka má problém) |
 | **Nastavení** | prahy, vklady, sázkovky, upozornění |
 
-V kalkulačce se u každé nohy ukazuje přesný výběr (např. „Více než 2.5“, „2 · Slavia“), odkaz na zápas,
+Detail arbu: tlačítko **Vsadil jsem – uložit sázku** předvyplní skutečné vklady a kurzy z kalkulačky
+(dají se opravit) a uloží je do **Sázky**. Záložky s detailem nepípají – upozornění hraje jen přehled.
+
+V kalkulačce se u každé nohy ukazuje přesný výběr (např. „Více než 2.5 gólů“, „2 · vyhraje Slavia“), tlačítko „Otevřít u <sázkovky>“,
 stáří kurzu a upozornění, když sázkovka uvádí týmy v opačném pořadí. Přepsáním vkladu u jedné nohy
 (např. sázkovka přijala méně) se ostatní dopočítají.
 

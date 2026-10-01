@@ -12,6 +12,7 @@ import { SettingsStore } from '../../infra/settingsStore.js';
 import { migrate } from '../../db/migrate.js';
 import { confirmUnmatched, listUnmatched, rejectUnmatched } from '../matching/review.js';
 import { computeStats } from './stats.js';
+import { betLegSchema, deleteBet, listBets, settleBet } from './bets.js';
 import type { ArbDTO, ArbEventMessage, ClientMessage, HealthDTO, HealthLogDTO, ServerMessage } from '../../shared/protocol.js';
 
 const log = createLogger('gateway');
@@ -82,7 +83,8 @@ async function main(): Promise<void> {
   });
 
   const actionSchema = z.object({
-    arbId: z.string().uuid(),
+    // bez arbId jen ruční sázka z kalkulačky (action = placed, popis v eventName)
+    arbId: z.string().uuid().optional(),
     action: z.enum(['placed', 'missed', 'rejected', 'odds_changed']),
     bookmaker: z.enum(BOOKMAKERS).optional(),
     stake: z.number().positive().optional(),
@@ -91,33 +93,70 @@ async function main(): Promise<void> {
     marginAtClick: z.number().optional(),
     shownAt: z.number().optional(),
     note: z.string().max(500).optional(),
-    legs: z.array(z.object({ bookmaker: z.enum(BOOKMAKERS), stake: z.number().optional(), actualOdds: z.number().optional() })).optional(),
+    legs: z.array(betLegSchema).max(4).optional(),
+    eventName: z.string().max(200).optional(),
+    marketKey: z.string().max(80).optional(),
+    sport: z.string().max(40).optional(),
   });
 
   route('POST', '/api/actions', async (_r, _p, body) => {
     const a = actionSchema.parse(body);
-    const arb = await db().query<{ first_seen: Date; mode: string; margin_at_detection: number }>('SELECT first_seen, mode, margin_at_detection FROM arbs WHERE id = $1', [a.arbId]);
-    if (!arb.rows[0]) throw new HttpError(404, 'arb not found');
     const now = Date.now();
-    const firstSeen = arb.rows[0].first_seen.getTime();
+    let firstSeen = a.shownAt ?? now;
+    let mode = 'PREMATCH';
+    let marginAtDetection: number | null = null;
+    if (a.arbId) {
+      const arb = await db().query<{ first_seen: Date; mode: string; margin_at_detection: number }>('SELECT first_seen, mode, margin_at_detection FROM arbs WHERE id = $1', [a.arbId]);
+      if (!arb.rows[0]) throw new HttpError(404, 'arb not found');
+      firstSeen = arb.rows[0].first_seen.getTime();
+      mode = arb.rows[0].mode;
+      marginAtDetection = arb.rows[0].margin_at_detection;
+    } else if (a.action !== 'placed') {
+      throw new HttpError(400, 'arbId: required');
+    }
     const reaction = a.shownAt ? now - a.shownAt : now - firstSeen;
     const r = await db().query(
       `INSERT INTO user_actions (arb_id, action, bookmaker, stake, actual_odds, reaction_ms, arb_age_ms, margin_at_click, note, details)
        VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10) RETURNING *`,
       [
-        a.arbId,
+        a.arbId ?? null,
         a.action,
         a.bookmaker ?? null,
         a.stake ?? null,
         a.actualOdds ?? null,
         Math.max(0, Math.round(reaction)),
         now - firstSeen,
-        a.marginAtClick ?? arb.rows[0].margin_at_detection,
+        a.marginAtClick ?? marginAtDetection,
         a.note ?? null,
-        JSON.stringify({ acceptanceMs: a.acceptanceMs, live: arb.rows[0].mode !== 'PREMATCH', shownAt: a.shownAt, legs: a.legs }),
+        JSON.stringify({
+          acceptanceMs: a.acceptanceMs,
+          live: mode !== 'PREMATCH',
+          shownAt: a.shownAt,
+          legs: a.legs,
+          eventName: a.eventName,
+          marketKey: a.marketKey,
+          sport: a.sport,
+        }),
       ],
     );
     return r.rows[0];
+  });
+
+  // --- přehled sázek ---
+  route('GET', '/api/bets', async (_r, _p, _b, url) => listBets(Math.min(3650, Number(url.searchParams.get('days') ?? 365))));
+  route('PATCH', '/api/bets/:id', async (_r, p, body) => {
+    try {
+      const bet = await settleBet(Number(p.id), body);
+      if (!bet) throw new HttpError(404, 'bet not found');
+      return bet;
+    } catch (e) {
+      if (e instanceof HttpError || e instanceof z.ZodError) throw e;
+      throw new HttpError(400, (e as Error).message);
+    }
+  });
+  route('DELETE', '/api/bets/:id', async (_r, p) => {
+    if (!(await deleteBet(Number(p.id)))) throw new HttpError(404, 'bet not found');
+    return { ok: true };
   });
 
   route('GET', '/api/health', async () => {
@@ -222,7 +261,7 @@ async function main(): Promise<void> {
     const url = new URL(req.url ?? '/', 'http://localhost');
     res.setHeader('access-control-allow-origin', '*');
     res.setHeader('access-control-allow-headers', 'content-type');
-    res.setHeader('access-control-allow-methods', 'GET,POST,PATCH,OPTIONS');
+    res.setHeader('access-control-allow-methods', 'GET,POST,PATCH,DELETE,OPTIONS');
     if (req.method === 'OPTIONS') return void res.writeHead(204).end();
     if (url.pathname === '/healthz') return void res.writeHead(200, { 'content-type': 'text/plain' }).end('ok');
     for (const r of routes) {

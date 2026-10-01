@@ -1,6 +1,6 @@
 import type { BookmakerId, Mode, SelectionKey, Sport } from '@core/types';
 import { BOOKMAKER_INFO } from '@config/bookmakers';
-import { parseMarketKey, swapSelection } from '@core/markets';
+import { parseMarketKey, swapSelection, SCORE_UNIT, SCOPE_LABEL } from '@core/markets';
 
 export const SPORT_LABEL: Record<Sport, string> = {
   football: 'Fotbal',
@@ -91,6 +91,50 @@ export async function api<T>(path: string, init?: RequestInit): Promise<T> {
   return body as T;
 }
 
+/**
+ * Na co se sází, srozumitelně a bez zkratek – velký štítek v přehledu i v detailu:
+ * { kind: „Počet gólů“, detail: „více / méně než 2.5“, scope: „1. poločas“ }.
+ */
+export function marketKind(market: string, sport?: Sport): { kind: string; detail?: string; scope?: string } {
+  const p = parseMarketKey(market);
+  const unit = SCORE_UNIT[sport ?? 'football'];
+  const line = p.line ?? 0;
+  const scope = p.scope === 'REG' || p.scope === 'MATCH' ? undefined : SCOPE_LABEL[p.scope];
+  const k = (kind: string, detail?: string) => ({ kind, detail, scope });
+  switch (p.type) {
+    case '1X2':
+      return k('Výhra', '1 · X · 2 (domácí, remíza, hosté)');
+    case 'H_DA':
+      return k('Výhra', '1 proti X2 (domácí / remíza nebo hosté)');
+    case 'A_HD':
+      return k('Výhra', '2 proti 1X (hosté / domácí nebo remíza)');
+    case 'D_HA':
+      return k('Výhra', 'X proti 12 (remíza / kdokoli vyhraje)');
+    case 'ML':
+      return k('Výhra', 'vítěz zápasu');
+    case 'DNB':
+      return k('Výhra', 'bez remízy (při remíze vrácení vkladu)');
+    case 'DC':
+      return k('Dvojtip');
+    case 'OU':
+      return k(`Počet ${unit}`, `více / méně než ${line}`);
+    case 'OU_HOME':
+      return k(`Počet ${unit} domácích`, `více / méně než ${line}`);
+    case 'OU_AWAY':
+      return k(`Počet ${unit} hostů`, `více / méně než ${line}`);
+    case 'OU_SETS':
+      return k('Počet setů', `více / méně než ${line}`);
+    case 'AH':
+      return k(`Handicap (${unit})`, `${signed(line)} / ${signed(-line)}`);
+    case 'AH_SETS':
+      return k('Handicap setů', `${signed(line)} / ${signed(-line)}`);
+    case 'BTTS':
+      return k('Oba týmy dají gól', 'ano / ne');
+    case 'OE':
+      return k(`Lichý / sudý počet ${unit}`);
+  }
+}
+
 function signed(x: number): string {
   return x > 0 ? `+${x}` : `${x}`;
 }
@@ -100,8 +144,9 @@ function signed(x: number): string {
  * (u arbů napříč trhy se liší od trhu arbu – např. výsledek „X2“ vsazený jako asijský handicap hostů +0.5),
  * a jak se výběr jmenuje u sázkovky s týmy v opačném pořadí (swapped).
  */
-export function describeLeg(market: string, sel: SelectionKey, a: { home: string; away: string }, swapped: boolean): { title: string; atBook?: string } {
+export function describeLeg(market: string, sel: SelectionKey, a: { home: string; away: string; sport?: Sport }, swapped: boolean): { title: string; atBook?: string } {
   const p = parseMarketKey(market);
+  const unit = SCORE_UNIT[a.sport ?? 'football'];
   const line = p.line ?? 0;
   const team = sel === 'HOME' ? a.home : a.away;
   const flip = (s: SelectionKey) => (swapped ? swapSelection(s) : s);
@@ -113,30 +158,31 @@ export function describeLeg(market: string, sel: SelectionKey, a: { home: string
     case 'A_HD':
     case 'D_HA':
       if (sel === 'DRAW') return { title: 'X · remíza' };
-      return { title: `${sel === 'HOME' ? '1' : '2'} · ${team}`, atBook: at };
+      return { title: `${sel === 'HOME' ? '1' : '2'} · vyhraje ${team}`, atBook: at };
     case 'DC':
       if (sel === 'HOME_DRAW') return { title: `1X · ${a.home} nebo remíza (dvojtip)`, atBook: at };
       if (sel === 'DRAW_AWAY') return { title: `X2 · remíza nebo ${a.away} (dvojtip)`, atBook: at };
       return { title: `12 · bez remízy – vyhraje kdokoli (dvojtip)` };
     case 'ML':
-      return { title: team, atBook: at };
+      return { title: `Vyhraje ${team}`, atBook: at };
     case 'DNB':
-      return { title: `${team} (bez remízy)`, atBook: at };
+      return { title: `Vyhraje ${team} (bez remízy)`, atBook: at };
     case 'AH':
-      return { title: `${team} ${signed(sel === 'HOME' ? line : -line)} (handicap)`, atBook: at };
+      return { title: `${team} ${signed(sel === 'HOME' ? line : -line)} (handicap ${unit})`, atBook: at };
     case 'AH_SETS':
       return { title: `${team} ${signed(sel === 'HOME' ? line : -line)} setu`, atBook: at };
     case 'OU':
+      return { title: `${sel === 'OVER' ? 'Více' : 'Méně'} než ${line} ${unit}` };
     case 'OU_SETS':
-      return { title: `${sel === 'OVER' ? 'Více' : 'Méně'} než ${line}` };
+      return { title: `${sel === 'OVER' ? 'Více' : 'Méně'} než ${line} setů` };
     case 'OU_HOME':
-      return { title: `${a.home}: ${sel === 'OVER' ? 'více' : 'méně'} než ${line}` };
+      return { title: `${a.home}: ${sel === 'OVER' ? 'více' : 'méně'} než ${line} ${unit}` };
     case 'OU_AWAY':
-      return { title: `${a.away}: ${sel === 'OVER' ? 'více' : 'méně'} než ${line}` };
+      return { title: `${a.away}: ${sel === 'OVER' ? 'více' : 'méně'} než ${line} ${unit}` };
     case 'BTTS':
       return { title: `Oba dají gól – ${sel === 'YES' ? 'ano' : 'ne'}` };
     case 'OE':
-      return { title: sel === 'ODD' ? 'Lichý počet' : 'Sudý počet' };
+      return { title: sel === 'ODD' ? `Lichý počet ${unit}` : `Sudý počet ${unit}` };
   }
 }
 

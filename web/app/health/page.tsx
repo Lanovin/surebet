@@ -42,7 +42,7 @@ export default function HealthPage() {
                           <td>L{x.level}</td>
                           <td>
                             {x.name}
-                            {x.name === s.active && ' ◀'}
+                            {x.name === s.active && ' (aktivní)'}
                           </td>
                           <td>{x.status}</td>
                           <td className="num">{x.failures ? `${x.failures}× chyba` : ''}</td>

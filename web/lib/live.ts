@@ -23,6 +23,8 @@ export interface Toast {
 
 export interface LiveState {
   connected: boolean;
+  /** přišel první snapshot (do té doby nejde říct, že arb neexistuje) */
+  ready: boolean;
   dataSource: string;
   arbs: Map<string, ArbRow>;
   health: HealthDTO[];
@@ -41,6 +43,7 @@ const MAX_TICKS = 600;
 
 let state: LiveState = {
   connected: false,
+  ready: false,
   dataSource: '?',
   arbs: new Map(),
   health: [],
@@ -167,6 +170,8 @@ function onArb(kind: 'new' | 'update' | 'end', arb: ArbDTO): void {
 function maybeAlert(arb: ArbDTO): void {
   const s = state.settings;
   if (!s || arb.muted) return;
+  // záložky s detailem arbu nepípají – upozorňuje jen přehled (jinak by zvuk hrál v každé záložce)
+  if (location.pathname.startsWith('/arb/')) return;
   if (arb.margin < s.alerts.minMarginPct) return;
   if (s.alerts.sound && state.soundOn) playAlert(arb.mode);
   if (s.alerts.notifications && state.notifyOn) notifyArb(arb);
@@ -182,7 +187,7 @@ function handle(msg: ServerMessage): void {
       const arbs = new Map<string, ArbRow>();
       for (const a of msg.arbs)
         arbs.set(a.id, { ...a, status: 'active', addedAt: now - 10_000, marginDir: null, marginDirAt: 0, ticks: [{ ts: a.lastSeen, margin: a.margin }] });
-      set({ arbs, health: msg.health, unmatched: msg.unmatched, healthLog: msg.recentHealth });
+      set({ arbs, ready: true, health: msg.health, unmatched: msg.unmatched, healthLog: msg.recentHealth });
       break;
     }
     case 'arb':

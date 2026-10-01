@@ -14,6 +14,18 @@ const PATHS = {
   external: 'M14 3h7v7M10 14 21 3M19 14v5a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2h5',
   lock: 'M6 11h12v10H6zM8 11V7a4 4 0 0 1 8 0v4',
   swap: 'M7 4 3 8l4 4M3 8h14M17 20l4-4-4-4M21 16H7',
+  warn: 'M12 3 2 20h20L12 3zm0 6v5m0 3h.01',
+  mute: 'M11 5 6 9H3v6h3l5 4V5zM22 9l-6 6M16 9l6 6',
+  x: 'M6 6l12 12M18 6 6 18',
+  check: 'M4 12l5 5L20 6',
+  chevDown: 'M6 9l6 6 6-6',
+  up: 'M12 19V5M5 12l7-7 7 7',
+  down: 'M12 5v14M19 12l-7 7-7-7',
+  wallet: 'M3 7a2 2 0 0 1 2-2h13v4M3 7v11a2 2 0 0 0 2 2h15v-5M3 7h17v4m0 4h-5a2 2 0 0 1 0-4h5v4z',
+  trash: 'M4 7h16M9 7V4h6v3M6 7l1 13h10l1-13',
+  stop: 'M5 5h14v14H5z',
+  info: 'M12 11v6m0-10h.01M12 22a10 10 0 1 0 0-20 10 10 0 0 0 0 20z',
+  arrowRight: 'M5 12h14M13 6l6 6-6 6',
 } as const;
 
 export type IconName = keyof typeof PATHS;

@@ -48,8 +48,7 @@ export function notifyArb(arb: ArbDTO): void {
       silent: true,
     });
     n.onclick = () => {
-      window.focus();
-      window.dispatchEvent(new CustomEvent('surebet:open-arb', { detail: arb.id }));
+      window.open(`/arb/${arb.id}`, `arb-${arb.id}`);
       n.close();
     };
   } catch {

@@ -1,5 +1,6 @@
 import type { Mode } from '@core/types';
 import { bkColor, bkName } from '@/lib/format';
+import { Icon, type IconName } from './Icon';
 
 const MODE_VAR: Record<Mode, string> = { PREMATCH: 'var(--mode-prematch)', PAUSED: 'var(--mode-paused)', LIVE: 'var(--mode-live)' };
 
@@ -25,17 +26,29 @@ export function BookmakerChip({ bk, small }: { bk: string; small?: boolean }) {
   );
 }
 
+/** Výrazný název sázkovky (barevný pruh vlevo) – „kde vsadit“ musí být vidět na první pohled. */
+export function BookmakerName({ bk, size = 'md' }: { bk: string; size?: 'md' | 'lg' }) {
+  return (
+    <span
+      className={`inline-flex items-center rounded-md font-bold uppercase tracking-wide text-ink ${size === 'lg' ? 'px-2.5 py-1 text-base' : 'px-2 py-0.5 text-[13px]'}`}
+      style={{ background: 'var(--surface-3)', borderLeft: `4px solid ${bkColor(bk)}` }}
+    >
+      {bkName(bk)}
+    </span>
+  );
+}
+
 export function StateBadge({ state }: { state: 'OK' | 'DEGRADED' | 'BLOCKED' | string }) {
-  const map: Record<string, [string, string]> = {
-    OK: ['var(--good)', '✓'],
-    DEGRADED: ['var(--warning)', '⚠'],
-    BLOCKED: ['var(--critical)', '⛔'],
+  const map: Record<string, [string, IconName]> = {
+    OK: ['var(--good)', 'check'],
+    DEGRADED: ['var(--warning)', 'warn'],
+    BLOCKED: ['var(--critical)', 'stop'],
   };
-  const [c, i] = map[state] ?? ['var(--muted)', '?'];
+  const [c, i] = map[state] ?? ['var(--muted)', 'info'];
   return (
     <span className="inline-flex items-center gap-1 rounded bg-surface-2 px-1.5 py-0.5 text-[11px] font-semibold">
-      <span style={{ color: c }} aria-hidden>
-        {i}
+      <span style={{ color: c }} className="inline-flex">
+        <Icon name={i} size={12} />
       </span>
       {state}
     </span>

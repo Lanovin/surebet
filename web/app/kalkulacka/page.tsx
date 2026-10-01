@@ -5,9 +5,11 @@
 import { useEffect, useState } from 'react';
 import { BOOKMAKERS } from '@core/types';
 import { effectiveOdds, impliedSum } from '@core/arb';
-import { useLive } from '@/lib/live';
-import { bkName, formatPct } from '@/lib/format';
-import { StakeCalculator, type CalcLeg } from '@/components/StakeCalculator';
+import Link from 'next/link';
+import { api, bkName, formatPct } from '@/lib/format';
+import { pushToast, useLive } from '@/lib/live';
+import { StakeCalculator, type CalcLeg, type CalcPlan } from '@/components/StakeCalculator';
+import { Icon } from '@/components/Icon';
 
 interface Row {
   label: string;
@@ -28,6 +30,9 @@ export default function CalculatorPage() {
   const [n, setN] = useState<2 | 3>(2);
   const [rows, setRows] = useState<Row[]>(empty(2));
   const [total, setTotal] = useState<number | null>(null);
+  const [event, setEvent] = useState('');
+  const [plan, setPlan] = useState<CalcPlan | null>(null);
+  const [saved, setSaved] = useState(false);
 
   // předvyplnění z URL (z detailu arbu)
   useEffect(() => {
@@ -42,6 +47,7 @@ export default function CalculatorPage() {
     }
     const t = Number(q.get('t'));
     if (t > 0) setTotal(t);
+    setEvent(q.get('e') ?? '');
   }, []);
 
   const setCount = (k: 2 | 3) => {
@@ -61,6 +67,33 @@ export default function CalculatorPage() {
   const valid = legs.every((l) => l.odds > 1);
   const sum = valid ? impliedSum(legs.map((l) => l.odds)) : null;
   const margin = sum ? (1 / sum - 1) * 100 : null;
+
+  // ruční sázka do přehledu (bez arbu): popis zápasu + nohy s vklady z kalkulačky
+  const save = async () => {
+    if (!plan) return;
+    try {
+      await api('/actions', {
+        method: 'POST',
+        body: JSON.stringify({
+          action: 'placed',
+          stake: plan.total,
+          marginAtClick: margin ?? undefined,
+          eventName: event.trim() || 'Ruční sázka',
+          legs: rows.map((r, i) => ({
+            bookmaker: r.bookmaker || undefined,
+            title: r.label || `Výsledek ${i + 1}`,
+            stake: plan.stakes[i],
+            actualOdds: parseOdds(r.odds),
+          })),
+        }),
+      });
+      setSaved(true);
+      pushToast('Sázka uložena do Přehledu sázek', 'good');
+    } catch (e) {
+      pushToast(`Uložení selhalo: ${(e as Error).message}`, 'bad');
+    }
+  };
+  const canSave = !!plan && valid && rows.every((r) => r.bookmaker);
 
   return (
     <div className="mx-auto max-w-3xl space-y-4">
@@ -138,7 +171,22 @@ export default function CalculatorPage() {
 
       <section className="card p-4">
         <h2 className="mb-3 font-medium">Vklady</h2>
-        <StakeCalculator legs={legs} total={total ?? settings?.bankroll ?? 10000} unit={settings?.roundingUnit ?? 1} />
+        <StakeCalculator legs={legs} total={total ?? settings?.bankroll ?? 10000} unit={settings?.roundingUnit ?? 1} onPlan={setPlan} />
+      </section>
+
+      <section className="card flex flex-wrap items-end gap-3 p-4">
+        <label className="flex min-w-60 flex-1 flex-col gap-1">
+          <span className="text-xs text-muted">Zápas (popis do přehledu sázek)</span>
+          <input className="input" value={event} placeholder="např. Sparta – Slavia, více/méně 2.5" onChange={(e) => (setEvent(e.target.value), setSaved(false))} />
+        </label>
+        <button className="btn btn-primary px-4 py-2" disabled={!canSave} onClick={() => void save()} title={canSave ? undefined : 'Vyplň kurzy a u každého výsledku sázkovku'}>
+          <Icon name="check" /> Vsadil jsem – uložit sázku
+        </button>
+        {saved && (
+          <Link href="/sazky" className="inline-flex items-center gap-1 text-sm text-accent hover:underline">
+            <Icon name="wallet" size={14} /> Přehled sázek
+          </Link>
+        )}
       </section>
 
       <p className="text-xs text-muted">

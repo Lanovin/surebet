@@ -177,7 +177,7 @@ function formatLine(line: number): string {
   return line > 0 ? `+${line}` : `${line}`;
 }
 
-const SCOPE_LABEL: Record<MarketScope, string> = {
+export const SCOPE_LABEL: Record<MarketScope, string> = {
   REG: 'zákl. doba',
   MATCH: 'zápas',
   H1: '1. poločas',
