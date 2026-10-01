@@ -90,7 +90,8 @@ export class CamoufoxBridge {
     url: string,
     init: BridgeFetchInit = {},
   ): Promise<{ status: number; contentType: string | null; body: string }> {
-    return this.call('/fetch', { bk, origin, url, ...init }, 60_000);
+    // první fetch otevírá origin: 2× goto (45 s) + load (15 s) + settle (4 s) + fetch (45 s v bridge.py)
+    return this.call('/fetch', { bk, origin, url, ...init }, 180_000);
   }
 
   /** Zavře stránku sázkovky; bez `bk` celý prohlížeč (čistá session, nový fingerprint). */

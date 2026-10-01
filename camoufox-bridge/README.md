@@ -31,13 +31,18 @@ journalctl --user -u camoufox-bridge -f        # log
 systemctl --user stop camoufox-bridge          # stop (po pádu i `systemctl --user reset-failed camoufox-bridge`)
 ```
 
+Každá sázkovka má **vlastní Camoufox** (proces + fingerprint): ve sdíleném prohlížeči Tipsport a Chance
+(stejné F5) souběžně dostávaly 403 a se třemi sázkovkami se navigace i `fetch()` zasekávaly do timeoutu.
+Tři sázkovky tak berou ~3,5 GB (Windows, změřeno 2026-10-01). Starší měření se sdíleným prohlížečem:
+
 Paměť (změřeno 2026-10-01, Camoufox 152, `idlePath=/robots.txt`): jedna sázkovka ~750–870 MB anon
 (většinu bere samotný Firefox), Betano + Tipsport + Chance najednou ~1,2–1,5 GB (Firefox se přizpůsobí
 limitu – s `MemoryMax=1500M` držel ~1,4 GB, s 1700M až ~1,55 GB, OOM v žádném z běhů). Bez `idlePath`
 (plná SPA sázkovky v každé stránce) se tři sázkovky do 1,5 GB nevešly.
 
 Proměnné: `CAMOUFOX_HOST`, `CAMOUFOX_PORT`, `CAMOUFOX_HEADLESS` (`virtual` = Xvfb, vyžaduje nainstalovaný `Xvfb`; `1`; `0`),
-`CAMOUFOX_IDLE_CLOSE_S` (zavře prohlížeč po nečinnosti, výchozí 600).
+`CAMOUFOX_IDLE_CLOSE_S` (zavře prohlížeč sázkovky po nečinnosti, výchozí 600). Ingest v Dockeru volá bridge
+přes `host.docker.internal`, takže bridge musí poslouchat i mimo localhost: `CAMOUFOX_HOST=0.0.0.0`.
 
 ## Zkouška
 
@@ -51,5 +56,5 @@ První poll sázkovky trvá ~15–35 s (start prohlížeče, plná stránka kvů
 `idlePath`), další polly prematch ~2–4 s, live ~0,2–1 s.
 
 Adaptéry dodávají známé endpointy (`targets`), takže se po sportech nenaviguje – bridge jen jednou otevře
-origin a pak volá `fetch()` uvnitř stránky. Každá sázkovka má vlastní stránku (context); se třemi sázkovkami
-najednou Firefox spotřebuje ~1–1,5 GB, `/close {bk}` zavře stránku jedné z nich.
+origin a pak volá `fetch()` uvnitř stránky. Navigace je per sázkovka serializovaná, `fetch()` běží souběžně
+(live poll nečeká na prematch). `/close {bk}` zavře prohlížeč jedné sázkovky.
