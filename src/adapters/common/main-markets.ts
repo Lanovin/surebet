@@ -1,14 +1,17 @@
 // Konzervativní mapování hlavních trhů podle tvaru výběrů (ne podle názvu trhu sázkovky):
-//  * 3 výběry 1 / X(0) / 2 u sportů s remízou  → 1X2|REG  (remíza existuje jen v základní době)
-//  * 3 výběry 1X / 12 / X2 u sportů s remízou → DC|REG
+//  * 3 výběry 1 / X(0) / 2 u sportů s remízou  → 1X2|REG  (remíza existuje jen v základní době;
+//    baseball = 9 směn, MMA/box = výsledek vč. remízy – docs/adapters.md)
+//  * 3 výběry 1X / 12 / X2 u sportů s remízou → DC|REG (ne MMA/box)
 //  * 2 výběry 1 / 2 u sportů bez remízy        → ML|MATCH
-// Ostatní (hokej/basket 2-cestně = nejasné, zda vč. prodloužení) se vynechává – viz docs/adapters.md.
+// Ostatní (hokej/basket 2-cestně = nejasné, zda vč. prodloužení; MMA/box 2-cestně = nejasné vrácení
+// vkladu při remíze) se vynechává.
 import type { RawMarket, RawSelection, SelectionKey, Sport } from '../../core/types.js';
 import { marketKey, REQUIRED_SELECTIONS } from '../../core/markets.js';
 import { ODDS_MAX, ODDS_MIN } from '../../core/validate.js';
 
-const DRAW_SPORTS: readonly Sport[] = ['football', 'hockey', 'handball'];
-const NO_DRAW_SPORTS: readonly Sport[] = ['tennis', 'table_tennis', 'volleyball'];
+const DRAW_SPORTS: readonly Sport[] = ['football', 'hockey', 'handball', 'basketball', 'american_football', 'baseball', 'mma', 'boxing'];
+const DC_SPORTS: readonly Sport[] = ['football', 'hockey', 'handball', 'basketball', 'american_football', 'baseball'];
+const NO_DRAW_SPORTS: readonly Sport[] = ['tennis', 'table_tennis', 'volleyball', 'darts', 'snooker'];
 
 const LABELS: Record<string, SelectionKey> = {
   '1': 'HOME',
@@ -52,7 +55,7 @@ export function mainMarket(sport: Sport, sels: LabeledOdd[], meta: { sourceId?: 
   const keys = out.map((s) => s.key);
   let key: string | null = null;
   if (DRAW_SPORTS.includes(sport) && sameSet(keys, REQUIRED_SELECTIONS['1X2'])) key = marketKey('1X2', 'REG');
-  else if (DRAW_SPORTS.includes(sport) && sameSet(keys, REQUIRED_SELECTIONS.DC)) key = marketKey('DC', 'REG');
+  else if (DC_SPORTS.includes(sport) && sameSet(keys, REQUIRED_SELECTIONS.DC)) key = marketKey('DC', 'REG');
   else if (NO_DRAW_SPORTS.includes(sport) && sameSet(keys, REQUIRED_SELECTIONS.ML)) key = marketKey('ML', 'MATCH');
   if (!key) return null;
   return { key, open: out.some((s) => s.open !== false), selections: out, sourceId: meta.sourceId, rawName: meta.rawName };

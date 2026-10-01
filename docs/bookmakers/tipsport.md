@@ -1,10 +1,42 @@
 # Tipsport.cz (platforma sdílená s Chance.cz)
 
-**Stav k 2026-09-28: BLOKOVÁNO – žádná povolená strategie nefunguje.** Adaptér
-(`src/adapters/tipsport/index.ts`) proto vrací prázdný seznam strategií. Kód platformy
-(`src/adapters/tipsport/platform.ts`) umí blokaci poznat (`detectBlock`) a levně ověřit přístup
-(`probeAccess` = 1× GET `/rest/offer/v6/sports`). Chance.cz běží na stejné platformě a má stejný
-blok, viz [chance.md](chance.md).
+**Stav k 2026-10-01: funguje přes Camoufox** (`camoufox-bridge/`, strategie L5
+`src/adapters/common/camoufox-replay.ts`, cíle v `platformTargets()` v `src/adapters/tipsport/platform.ts`).
+Platí pro Tipsport i Chance (stejné `/rest` API, liší se jen origin). Playwright Chromium a plain HTTP
+Cloudflare dál blokuje (historie níže). Ověřeno živě: prematch ~1460 událostí v 11 sportech za ~8–10 s,
+live ~80 událostí v 9 sportech.
+
+## Camoufox strategie – endpointy (fetch uvnitř stránky)
+
+| scope | endpoint | poznámka |
+|---|---|---|
+| prematch | `POST /rest/offer/v2/offer?limit=1000`, tělo `{"type":"SUPERSPORT","id":<id>,"limit":1000,"order":"DATESTART","withLive":false,"results":false,"highlightAnyTime":false,"matchViewFilters":[]}` | jeden požadavek na superSport, `limit=1000` = bez stránkování (fotbal ~750 zápasů, ~1,3 MB); web sám posílá `limit=75` |
+| live | `GET /rest/offer/v1/live/in-play/entities` + `GET /rest/offer/v1/live/in-play/event-groups/odds` | obě `{ patches: [{ version, value }] }`; strategie je stáhne jako jeden cíl (`parts`), parser spojí zápasy s kurzy přes `matchId` |
+
+superSport ID (`SUPERSPORT_IDS` v `parse.ts`): 16 fotbal, 23 hokej, 43 tenis, 7 basket, 40 stolní tenis,
+20 házená, 47 volejbal, 6 baseball, 2 am. fotbal, 208 „Bojové sporty“ (→ MMA), 11 box, 37 snooker, 42 šipky.
+E-sporty (188), dostihy, golf, badminton, padel se nemapují. Fixtures: `fixtures/tipsport/offer-supersports.json`,
+`fixtures/tipsport/live-in-play.json`.
+
+### Mapování trhů
+
+* **Prematch** – výchozí záložka „Zápas“ (`matchView: WINNER_WHOLE_MATCH`), `oppRows[].oppsTab[]`:
+  * týmové sporty `1 10 0 02 2` → `1X2|REG` (3-cestný = remíza jen v základní době; baseball 9 směn;
+    MMA/box výsledek vč. remízy). `12` ve výpisu chybí → `DC` nevzniká.
+  * tenis, stolní tenis, šipky (snooker, volejbal) `1 / 2` → `ML|MATCH`; 2-cestné MMA/hokej/basket vynechány.
+* **Live** – `eventGroupId`:
+  * `WINNER_3W_*` → stejné pravidlo jako prematch (tvar výběrů + sport)
+  * `WINNER_HALFTIME` → `1X2|H1`, `ASIAN_TOTAL_WHOLE_MATCH_GOALS` / `ASIAN_TOTAL_HALFTIME_GOALS` → `OU|REG` /
+    `OU|H1`, `BOTH_SHOOT_GOALS` → `BTTS|REG` (vše fotbal)
+  * `ASIAN_TOTAL_WHOLE_MATCH_WITH_OVERTIME_POINTS` → `OU|MATCH` (basket), `…_GAMS` (tenis), `…_FRAMES` (snooker)
+  * hokej/házená `ASIAN_TOTAL_WHOLE_MATCH_GOALS` vynechány (není jasné, zda vč. prodloužení), setové totaly,
+    „kdo dá další gól“ (`XTH_GOAL`) taky. Výběry OU: label `+ 2.5` / `- 2.5`.
+  * stav: `score.statusOffer` jako `statusText`, `score.scoreOffer` jako skóre jen u týmových sportů.
+
+## Historie: blokace z 28. 9. 2026 (Playwright Chromium, plain HTTP)
+
+Kód platformy dál umí blokaci poznat (`detectBlock`) a levně ověřit přístup (`probeAccess` = 1× GET
+`/rest/offer/v6/sports`) – vše níže platí pro Chromium/HTTP klienty.
 
 ## Co se děje
 

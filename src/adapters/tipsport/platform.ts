@@ -3,13 +3,13 @@
 //
 // STAV: Playwright Chromium a plain HTTP blokuje Cloudflare bot management (403 „Chyba“, ID C1-<ray>),
 // detaily v docs/bookmakers/tipsport.md. Funkční cesta je L5 strategie v Camoufoxu přes camoufox-bridge
-// (common/camoufox-replay.ts): discover (zachycení /rest odpovědí stránek) → replay (fetch uvnitř stránky).
+// (common/camoufox-replay.ts) se známými /rest endpointy (fetch uvnitř stránky, viz platformTargets).
 // Zapnuto pro značky v CAMOUFOX_BRANDS; detectBlock/probeAccess zůstávají pro diagnostiku.
-import type { HealthResult } from '../../core/types.js';
+import type { FeedScope, HealthResult } from '../../core/types.js';
 import type { HttpClient } from '../http.js';
 import type { Adapter, AdapterContext } from '../types.js';
-import { CamoufoxReplayStrategy, type CamoufoxReplayConfig } from '../common/camoufox-replay.js';
-import { parseTipsport } from './parse.js';
+import { CamoufoxReplayStrategy, type KnownTarget } from '../common/camoufox-replay.js';
+import { parseTipsport, SUPERSPORT_IDS } from './parse.js';
 
 export type PlatformBrand = 'tipsport' | 'chance';
 
@@ -67,22 +67,47 @@ export async function probeAccess(http: HttpClient, brand: PlatformBrand): Promi
   }
 }
 
-/** Značky, pro které je zapnutá Camoufox strategie (camoufox-bridge). Chance: přidej 'chance' a ověř URL. */
-export const CAMOUFOX_BRANDS: readonly PlatformBrand[] = ['tipsport'];
+/** Značky, pro které je zapnutá Camoufox strategie (camoufox-bridge). */
+export const CAMOUFOX_BRANDS: readonly PlatformBrand[] = ['tipsport', 'chance'];
+
+/** Celá nabídka superSportu jedním požadavkem (limit 1000 = bez stránkování; fotbal ~750 zápasů, ~1,3 MB). */
+export const OFFER_LIMIT = 1000;
+
+const JSON_HEADERS = { accept: 'application/json', 'content-type': 'application/json;charset=utf-8' };
 
 /**
- * Stránky pro objevení /rest endpointů. ⚠️ Ověř v prohlížeči (klikni na sport, zkopíruj adresu) –
- * číslo na konci je idSuperSport (16 fotbal, 43 tenis ověřeno, hokej doplň podle URL).
+ * Známé endpointy (ověřeno na tipsport.cz 2026-10-01, Chance má stejné /rest API):
+ *  * prematch: POST /rest/offer/v2/offer pro každý superSport z SUPERSPORT_IDS (výchozí záložka „Zápas“)
+ *  * live: in-play entity (zápasy) + kurzy po skupinách, parser je spojí
  */
-function discoveryPages(origin: string): CamoufoxReplayConfig['pages'] {
-  return {
-    prematch: [
-      { url: `${origin}/kurzy/fotbal-16`, sport: 'football' },
-      { url: `${origin}/kurzy/tenis-43`, sport: 'tennis' },
-      { url: `${origin}/kurzy/hokej-23`, sport: 'hockey' },
-    ],
-    live: [{ url: `${origin}/live` }],
-  };
+export function platformTargets(origin: string, scope: FeedScope): KnownTarget[] {
+  if (scope === 'live') {
+    return [
+      {
+        url: `${origin}/rest/offer/v1/live/in-play/entities`,
+        parts: [
+          { name: 'entities', url: `${origin}/rest/offer/v1/live/in-play/entities`, headers: { accept: 'application/json' } },
+          { name: 'odds', url: `${origin}/rest/offer/v1/live/in-play/event-groups/odds`, headers: { accept: 'application/json' } },
+        ],
+      },
+    ];
+  }
+  return Object.entries(SUPERSPORT_IDS).map(([id, sport]) => ({
+    url: `${origin}/rest/offer/v2/offer?limit=${OFFER_LIMIT}`,
+    method: 'POST',
+    headers: JSON_HEADERS,
+    body: JSON.stringify({
+      results: false,
+      highlightAnyTime: false,
+      limit: OFFER_LIMIT,
+      order: 'DATESTART',
+      type: 'SUPERSPORT',
+      id: Number(id),
+      matchViewFilters: [],
+      withLive: false,
+    }),
+    sport,
+  }));
 }
 
 /** Adaptér platformy: Camoufox strategie pro CAMOUFOX_BRANDS, jinak bez strategií (blokováno). */
@@ -99,8 +124,9 @@ export function createPlatformAdapter(brand: PlatformBrand, ctx: AdapterContext)
         {
           bookmaker: brand,
           origin,
-          pages: discoveryPages(origin),
+          targets: (scope) => platformTargets(origin, scope),
           match: /\/rest\/(offer|common)\//,
+          idlePath: '/robots.txt',
           parse: parseTipsport,
           isBlocked: (status, body) => detectBlock(status, body).blocked,
         },

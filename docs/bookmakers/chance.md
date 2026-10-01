@@ -1,6 +1,18 @@
 # Chance.cz
 
-**Stav k 2026-09-28: BLOKOVÁNO – žádná povolená strategie nefunguje.** Chance.cz je značka skupiny
+**Stav k 2026-10-01: funguje přes Camoufox** – stejná strategie i parser jako Tipsport
+(`createPlatformAdapter('chance')`, `CAMOUFOX_BRANDS` v `src/adapters/tipsport/platform.ts`), endpointy a
+mapování trhů viz [tipsport.md](tipsport.md). Ověřeno živě 2026-10-01: prematch 1465 událostí v 11 sportech,
+live 78 událostí.
+
+⚠️ **Chance sdílí s Tipsportem nabídku i kurzy**: stejná ID zápasů a při porovnání hokejové nabídky
+(175 zápasů) se kurzy lišily u jediného zápasu – nejspíš jen okamžik aktualizace. Arby Tipsport × Chance
+proto prakticky nevzniknou (a „arb“ mezi nimi bude nejspíš jen časový rozdíl stažení); Chance má smysl
+hlavně jako záloha za Tipsport a pro arby proti ostatním sázkovkám.
+
+## Historie: blokace z 28. 9. 2026 (Playwright Chromium, plain HTTP)
+
+Chance.cz je značka skupiny
 Tipsport na **stejné platformě** (stejný Next.js frontend, origin vrací `x-nextjs-brandsite: CHANCE`,
 stejné `/rest/offer/...` API, stejná Cloudflare/F5 ochrana a stejná šablona chybové stránky). Veškerá
 diagnostika, protokol a postup opravy jsou v [tipsport.md](tipsport.md); kód sdílí
@@ -21,6 +33,5 @@ Ověřeno přímo na chance.cz:
 
 Vzorek odpovědi: `fixtures/chance/waf-403-rest.json` (zkrácený, IP nahrazena `192.0.2.1`).
 
-Adaptér `src/adapters/chance/index.ts` vrací prázdný seznam strategií. Až bude přístup (viz
-„Jak to opravit“ v tipsport.md), strategie a `parse.ts` se napíšou jednou v `src/adapters/tipsport/`
-parametricky podle `BrandConfig` a Chance je jen převezme – liší se jen origin.
+Strategie a `parse.ts` jsou napsané jednou v `src/adapters/tipsport/` parametricky podle `BrandConfig`,
+Chance je jen převezme – liší se jen origin.

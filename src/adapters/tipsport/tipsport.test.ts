@@ -4,9 +4,10 @@ import type { HttpClient } from '../http.js';
 import type { AdapterContext } from '../types.js';
 import { createLogger } from '../../infra/logger.js';
 import factory from './index.js';
-import { BRANDS, PROBE_PATH, detectBlock, probeAccess } from './platform.js';
-import { parseTipsport } from './parse.js';
+import { BRANDS, OFFER_LIMIT, PROBE_PATH, detectBlock, platformTargets, probeAccess } from './platform.js';
+import { parseTipsport, SUPERSPORT_IDS } from './parse.js';
 import { validateRawOdds } from '../../core/validate.js';
+import type { RawEvent } from '../../core/types.js';
 
 interface RecordedResponse {
   url: string;
@@ -70,6 +71,97 @@ describe('tipsport adapter', () => {
     const a = factory(ctx);
     expect(a.bookmaker).toBe('tipsport');
     expect(a.strategies.map((s) => [s.name, s.level])).toEqual([['camoufox', 5]]);
+  });
+
+  it('prematch targets: one full-offer POST per superSport', () => {
+    const t = platformTargets(BRANDS.tipsport.origin, 'prematch');
+    expect(t).toHaveLength(Object.keys(SUPERSPORT_IDS).length);
+    expect(new Set(t.map((x) => x.sport))).toEqual(new Set(Object.values(SUPERSPORT_IDS)));
+    const fb = t.find((x) => x.sport === 'football')!;
+    expect(fb).toMatchObject({ method: 'POST', url: `https://www.tipsport.cz/rest/offer/v2/offer?limit=${OFFER_LIMIT}` });
+    expect(JSON.parse(fb.body!)).toMatchObject({ type: 'SUPERSPORT', id: 16, limit: OFFER_LIMIT, withLive: false });
+  });
+
+  it('live target: entities + odds parts', () => {
+    const [t] = platformTargets(BRANDS.chance.origin, 'live');
+    expect(t.parts?.map((p) => [p.name, p.url])).toEqual([
+      ['entities', 'https://www.chance.cz/rest/offer/v1/live/in-play/entities'],
+      ['odds', 'https://www.chance.cz/rest/offer/v1/live/in-play/event-groups/odds'],
+    ]);
+  });
+});
+
+const keys = (e: RawEvent) => e.markets.map((m) => m.key);
+const odds = (e: RawEvent, key: string) => e.markets.find((m) => m.key === key)?.selections.map((s) => [s.key, s.odds]);
+
+describe('tipsport parse – full offer per superSport (fixtures/tipsport/offer-supersports.json, 2026-10-01)', async () => {
+  const offers = await loadFixture<Record<string, unknown>>('tipsport', 'offer-supersports.json');
+  const parse = (id: number) => parseTipsport(offers[String(id)], { scope: 'prematch', origin: BRANDS.tipsport.origin, sport: SUPERSPORT_IDS[id] });
+
+  it('football: 1X2 from the „Zápas“ tab (10/02 without 12 → no DC)', () => {
+    const e = parse(16)[0];
+    expect(e).toMatchObject({ sourceId: '8257127', sport: 'football', competition: 'UEFA - Liga národů', home: 'Ázerbájdžán', away: 'Lichtenštejnsko', live: false });
+    expect(e.startTime).toBe(Date.parse('2026-10-01T18:00:00.000+02:00'));
+    expect(e.url).toBe('https://www.tipsport.cz/kurzy/zapas/fotbal-azerbajdzan-lichtenstejnsko/8257127');
+    expect(keys(e)).toEqual(['1X2|REG']);
+    expect(odds(e, '1X2|REG')).toEqual([['HOME', 1.07], ['DRAW', 11.2], ['AWAY', 50]]);
+  });
+
+  it('team sports with a 3-way „Zápas“ → 1X2|REG (regular time / 9 innings)', () => {
+    for (const [id, sport] of [[23, 'hockey'], [7, 'basketball'], [20, 'handball'], [2, 'american_football'], [6, 'baseball']] as const) {
+      const ev = parse(id);
+      expect(ev.length, sport).toBeGreaterThan(0);
+      expect(ev.every((e) => e.sport === sport && keys(e).includes('1X2|REG')), sport).toBe(true);
+    }
+    expect(odds(parse(2)[0], '1X2|REG')).toEqual([['HOME', 2.37], ['DRAW', 15.6], ['AWAY', 1.71]]);
+  });
+
+  it('individual sports: 2-way ML|MATCH for tennis, table tennis, darts', () => {
+    const t = parse(43)[0];
+    expect(t).toMatchObject({ sport: 'tennis', home: 'Molčan Alex', away: 'Khachanov Karen', competition: 'ATP Peking - tvrdý p.' });
+    expect(odds(t, 'ML|MATCH')).toEqual([['HOME', 4.16], ['AWAY', 1.24]]);
+    expect(keys(parse(40)[0])).toEqual(['ML|MATCH']);
+    expect(odds(parse(42)[0], 'ML|MATCH')).toEqual([['HOME', 2.82], ['AWAY', 1.42]]);
+  });
+
+  it('MMA and boxing: 3-way result → 1X2|REG, 2-way winner skipped', () => {
+    expect(odds(parse(208)[0], '1X2|REG')).toEqual([['HOME', 2.68], ['DRAW', 45], ['AWAY', 1.42]]);
+    expect(parse(208).every((e) => e.sport === 'mma' && keys(e).every((k) => k === '1X2|REG'))).toBe(true);
+    expect(parse(11)[0]).toMatchObject({ sport: 'boxing', home: 'Alvarez Ronny', away: 'Carmona Narciso' });
+  });
+
+  it('all fixtures validate', () => {
+    const all = Object.keys(offers).flatMap((id) => parse(Number(id)));
+    expect(new Set(all.map((e) => e.sport)).size).toBe(11);
+    const v = validateRawOdds({ bookmaker: 'tipsport', strategy: 'camoufox', scope: 'prematch', fetchedAt: Date.now(), events: all }, { minEvents: 1, maxAgeMs: 60_000 });
+    expect(v.errors).toEqual([]);
+  });
+});
+
+describe('tipsport parse – live in-play entities + odds (fixtures/tipsport/live-in-play.json)', async () => {
+  const json = await loadFixture('tipsport', 'live-in-play.json');
+  const ev = parseTipsport(json, { scope: 'live', origin: BRANDS.tipsport.origin });
+
+  it('joins matches with odds groups; skips e-sports, races and golf', () => {
+    expect(ev).toHaveLength(9);
+    expect(new Set(ev.map((e) => e.sport))).toEqual(new Set(['football', 'tennis', 'handball', 'snooker', 'table_tennis', 'darts', 'volleyball']));
+    const v = validateRawOdds({ bookmaker: 'tipsport', strategy: 'camoufox', scope: 'live', fetchedAt: Date.now(), events: ev }, { minEvents: 1, maxAgeMs: 60_000 });
+    expect(v.errors).toEqual([]);
+  });
+
+  it('football: 1X2 and goals total with status text and score', () => {
+    const e = ev.find((x) => x.sourceId === '8603683')!;
+    expect(e).toMatchObject({ sport: 'football', competition: '2. egyptská liga', home: 'El Mansoura', away: 'FC Masar', live: true });
+    expect(e.state).toEqual({ statusText: '2.pol. - 49.min (0:0, 0:0)', score: [0, 0] });
+    expect(odds(e, '1X2|REG')).toEqual([['HOME', 11], ['DRAW', 2.5], ['AWAY', 1.6]]);
+    expect(odds(e, 'OU|REG|1.5')).toEqual([['UNDER', 1.38], ['OVER', 2.67]]);
+  });
+
+  it('tennis and snooker: ML|MATCH, tennis games total; no score for individual sports', () => {
+    const t = ev.find((x) => x.sourceId === '8608270')!;
+    expect(keys(t)).toEqual(['ML|MATCH', 'OU|MATCH|19.5']);
+    expect(t.state).toEqual({ statusText: '2.set - 3:6, 0:0 (00:00*)' });
+    expect(odds(ev.find((x) => x.sourceId === '8608898')!, 'ML|MATCH')).toEqual([['HOME', 1.04], ['AWAY', 8]]);
   });
 });
 

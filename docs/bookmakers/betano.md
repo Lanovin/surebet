@@ -1,8 +1,45 @@
 # Betano (betano.cz)
 
-**Stav: BLOCKED – žádná strategie v rámci pravidel projektu nefunguje** (ověřeno 28. 9. 2026,
-IP 217.30.68.246, T-Mobile CZ, Praha). `src/adapters/betano/index.ts` vrací `strategies: []`,
-registry adaptér přeskočí (hlásí ho jako chybějící).
+**Stav k 2026-10-01: funguje přes Camoufox** (`camoufox-bridge/`, strategie L5
+`src/adapters/common/camoufox-replay.ts`). Playwright Chromium a plain HTTP Cloudflare dál blokuje
+(níže historie z 28. 9.), Camoufox projde. Ověřeno živě: prematch ~320 událostí v 8 sportech za ~4 s,
+live ~60 událostí.
+
+## Camoufox strategie – endpointy (fetch uvnitř stránky, bez navigace po sportech)
+
+| scope | endpoint | tvar |
+|---|---|---|
+| prematch | `GET /api/sports/upcoming/calendar/<KÓD>/?timeZoneId=Europe/Prague` (= „Nadcházející“, dnes do půlnoci) | vnořený: `data.blocks[].events[]`, trhy v `markets[]`, u basketu v `sixPackBlocks[].columns[]` |
+| prematch | totéž s `?hours=12` (příštích 12 h; jiné hodnoty a `?date=` Betano ignoruje → dnešek) | |
+| live | `GET /danae-webapi/api/live/overview/latest?includeVirtuals=false&queryLanguageId=7&queryOperatorId=10` | normalizovaný: `events` / `markets` / `selections` jako mapy id → objekt, `leagues`, `zones` |
+
+Kódy sportů: FOOT, TENN, ICEH, BASK, HAND, VOLL, BASE, AMFO, MMAF, BOXI, DART, SNOO, TABL (26 požadavků na
+prematch poll, sporty bez zápasů vrací prázdné `blocks`). Fixtures: `fixtures/betano/calendar-sports.json`,
+`fixtures/betano/live-overview.json`.
+
+### Mapování trhů (podle kódu `type`, ne názvu)
+
+| kód | název | trh | sporty |
+|---|---|---|---|
+| `MRES` | Výsledek zápasu / Výsledek (zákl. hrací doba) | `1X2|REG` | fotbal, hokej, házená, am. fotbal, baseball, MMA, box |
+| `DBLC` | Dvojitá šance (`10`/`02`/`12`) | `DC|REG` | fotbal, hokej, házená |
+| `DNOB` | Sázka bez remízy | `DNB|REG` | fotbal |
+| `BTSC` | Oba týmy skórují | `BTTS|REG` | fotbal |
+| `HCTG` | Celkový počet gólů (hokej „zákl. hrací doba“) | `OU|REG` | fotbal, hokej, házená |
+| `OUH1` | Počet gólů v 1. poločase | `OU|H1` | fotbal |
+| `HTOH`, `H2HT` | Vítěz | `ML|MATCH` | tenis, stolní tenis, šipky, snooker, volejbal, basket, baseball |
+| `TGHC` / `FTGO`, `TGOU` | Handicap gamů / Gamy | `AH|MATCH` / `OU|MATCH` | tenis |
+| `FOUT` / `FTPO` / `TFOU`, `SNHC` | počet bodů / framů, handicap framů | `OU|MATCH` / `AH|MATCH` | volejbal / stolní tenis / snooker |
+
+Vynecháno: basket `FHOT`/`FTPO`, hokej `AHOT`, házená `FAHC` (Betano neuvádí, zda vč. prodloužení),
+MMA/box/am. fotbal `HTOH` (není jisté vrácení vkladu při remíze), periody, hráčské trhy, e-sporty (`ESPS`
+i „(Esports)“ v názvu týmu), outrights. Výběry 2-cestných trhů: `teamId` → `columnIndex` → pořadí (u live
+čtyřhry se pořadí jmen ve výběru liší od účastníků). Live stav: `liveData.score`, `clock.secondsSinceStart`,
+`clockStopped`, `periodDescription`; tenis sety/gamy/body.
+
+## Historie: blokace z 28. 9. 2026 (Playwright Chromium, plain HTTP)
+
+Ověřeno 28. 9. 2026, IP 217.30.68.246, T-Mobile CZ, Praha – vše níže platí pro Chromium/HTTP klienty.
 
 ## Je to blokace, nebo landing page?
 

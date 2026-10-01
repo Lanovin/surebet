@@ -88,13 +88,12 @@ přesahuje zbývající čas přestávky, je označen ⚠ jako rizikový.
 | Sazka (Allwyn) | ✅ | L2 OpenBet REST, L3 websocket push (live) | push s přehráváním zpráv po REST obnově; prematch s cache-busterem (jinak Akamai až 90 s stará data) |
 | MerkurXtip | ✅ | L2 veřejné Altenar API, L5 prohlížeč | stejná platforma jako Kingsbet; web kurz ořízne na 2 místa (2.1667 → 2.16) |
 | SYNOT TIP | ✅ | L2 interní API `sport.synottip.cz` (prematch protobuf, live `GetLiveEventsWL`), L5 prohlížeč | live endpoint stránky „Live“ (víc trhů), stáří snapshotu podle `TimeStamp`, viz `docs/bookmakers/synot.md` |
-| Tipsport | ⛔ blokováno | – | Cloudflare/F5 pozná automatizaci (i v Chrome), viz `docs/bookmakers/tipsport.md` |
-| Chance | ⛔ blokováno | – | stejná platforma a ochrana jako Tipsport |
-| Betano | ⛔ blokováno | – | Cloudflare bot management, viz `docs/bookmakers/betano.md` |
+| Tipsport | ✅ | L5 Camoufox (`camoufox-bridge`): POST `/rest/offer/v2/offer` po superSportech, live in-play entity + kurzy | Chromium/HTTP blokuje Cloudflare/F5, viz `docs/bookmakers/tipsport.md` |
+| Chance | ✅ | L5 Camoufox, stejné `/rest` API jako Tipsport | sdílí s Tipsportem nabídku i kurzy → arby Tipsport × Chance prakticky nevznikají |
+| Betano | ✅ | L5 Camoufox: kalendář „Nadcházející“ po sportech, live overview | Chromium/HTTP blokuje Cloudflare, viz `docs/bookmakers/betano.md` |
 
-Blokované sázkovky adaptér nemají – ochrana proti botům se neobchází (žádné stealth pluginy,
-podvrhování otisků ani řešení CAPTCHA). `src/adapters/tipsport/platform.ts` umí jedním požadavkem
-ověřit, jestli se přístup neuvolnil. Jak psát adaptér: `docs/adapters.md`.
+Betano, Tipsport a Chance potřebují běžící `camoufox-bridge` (Python sidecar, instalace a spuštění
+v `camoufox-bridge/README.md`). Jak psát adaptér: `docs/adapters.md`.
 
 ## Sporty a typy arbů
 

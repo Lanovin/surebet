@@ -39,6 +39,11 @@ export interface BridgeFetchInit {
   headers?: Record<string, string>;
   body?: string;
   credentials?: 'include' | 'omit' | 'same-origin';
+  /**
+   * Po prvním otevření originu (Cloudflare JS nastaví cookies) přejít na lehký dokument stejného originu
+   * (např. /robots.txt) – web sázkovky pak v prohlížeči neběží a stránka drží jen stovky kB místo stovek MB.
+   */
+  idlePath?: string;
 }
 
 export class CamoufoxBridge {

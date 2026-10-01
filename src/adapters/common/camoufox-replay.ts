@@ -7,6 +7,8 @@
 //     se znovu objevují; repair() navíc zavře stránku sázkovky (nový context = čisté cookies).
 //
 // Díky tomu není potřeba znát přesné interní endpointy předem – stačí URL stránek a parser.
+// Když endpointy známe (Betano kalendář po sportech, Tipsport /rest/offer po superSportech), adaptér
+// dodá `targets` a discovery přes navigaci se přeskočí: replay jde rovnou (stačí otevřený origin).
 import type { BookmakerId, FeedScope, HealthResult, RawEvent, RawOdds, Sport } from '../../core/types.js';
 import { camoufox, type BridgeResponse, type CamoufoxBridge } from '../camoufox.js';
 import { StrategyError, type AdapterContext, type FetchRequest, type Strategy, type StrategyLevel } from '../types.js';
@@ -23,17 +25,38 @@ export interface DiscoveryPage {
   sport?: Sport;
 }
 
+export interface TargetRequest {
+  url: string;
+  method?: string;
+  body?: string;
+  headers?: Record<string, string>;
+}
+
+/** Známý endpoint pro replay. S `parts` se stáhnou všechny části a parser dostane { [name]: json }. */
+export interface KnownTarget extends TargetRequest {
+  sport?: Sport;
+  parts?: (TargetRequest & { name: string })[];
+}
+
 export interface CamoufoxReplayConfig {
   bookmaker: BookmakerId;
   origin: string;
-  pages: Record<FeedScope, DiscoveryPage[]>;
+  /** Stránky pro discovery (když adaptér nedodá `targets`). */
+  pages?: Partial<Record<FeedScope, DiscoveryPage[]>>;
+  /**
+   * Známé endpointy místo discovery. `getJson` = GET uvnitř stránky (např. seznam sportů, ze kterého
+   * se cíle sestaví). Výsledek se drží do první chyby, pak se sestaví znovu.
+   */
+  targets?: (scope: FeedScope, getJson: (url: string) => Promise<unknown>) => Promise<KnownTarget[]> | KnownTarget[];
   /** Které síťové odpovědi zkoumat (regex nad URL). */
   match: RegExp;
   parse: (json: unknown, ctx: ParseContext) => RawEvent[];
   /** Pozná blokační odpověď (WAF stránka apod.). */
   isBlocked?: (status: number, body: string) => boolean;
-  /** Max. počet replay požadavků na jeden poll. */
+  /** Max. počet replay požadavků na jeden poll (jen discovery; `targets` se neořezávají). */
   maxTargets?: number;
+  /** Lehký dokument originu, na který stránka přejde po prvním načtení (šetří RAM, viz BridgeFetchInit). */
+  idlePath?: string;
 }
 
 interface ReplayTarget {
@@ -42,6 +65,18 @@ interface ReplayTarget {
   body?: string;
   headers: Record<string, string>;
   sport?: Sport;
+  parts?: { name: string; method: string; url: string; body?: string; headers: Record<string, string> }[];
+}
+
+interface TargetFailure {
+  error: string;
+  kind: 'http' | 'structure';
+  sample?: string;
+}
+
+function toReplayTarget(t: KnownTarget): ReplayTarget {
+  const req = (r: TargetRequest) => ({ method: r.method ?? 'GET', url: r.url, body: r.body, headers: r.headers ?? {} });
+  return { ...req(t), sport: t.sport, parts: t.parts?.map((p) => ({ name: p.name, ...req(p) })) };
 }
 
 /** Projde libovolný JSON a zavolá `visit` na každý objekt (ne pole). */
@@ -98,9 +133,11 @@ export class CamoufoxReplayStrategy implements Strategy {
   async fetch(req: FetchRequest): Promise<RawOdds> {
     const scope = req.scope;
     let events: RawEvent[];
-    const known = this.targets.get(scope);
+    const known = this.targets.get(scope) ?? (this.cfg.targets ? await this.resolveTargets(scope) : undefined);
     if (known?.length) {
       events = await this.replay(scope, known);
+    } else if (this.cfg.targets) {
+      events = [];
     } else if (scope === 'live' && Date.now() < this.emptyLiveUntil) {
       events = [];
     } else {
@@ -130,14 +167,15 @@ export class CamoufoxReplayStrategy implements Strategy {
     const seen: { url: string; status: number }[] = [];
     let sample: BridgeResponse | undefined;
 
-    for (const page of this.cfg.pages[scope]) {
+    for (const page of this.cfg.pages?.[scope] ?? []) {
       const res = await this.bridge.capture(bk, {
         url: page.url,
         match: this.cfg.match,
         reload: true,
         minResponses: 3,
         timeoutMs: 30_000,
-        settleMs: 4_000,
+        // XHR s událostmi (např. Betano .../trending/leagues/<id>/events) přijde i 5–10 s po domcontentloaded
+        settleMs: 10_000,
       });
       if (res.blocked) {
         throw new StrategyError(`${bk}: blokační stránka při načtení ${page.url} („${res.title}“)`, 'blocked', {
@@ -184,31 +222,76 @@ export class CamoufoxReplayStrategy implements Strategy {
     return merged;
   }
 
-  private async replay(scope: FeedScope, targets: ReplayTarget[]): Promise<RawEvent[]> {
-    const bk = this.cfg.bookmaker;
-    const events: RawEvent[] = [];
-    for (const t of targets) {
-      const r = await this.bridge.fetchInPage(bk, this.cfg.origin, t.url, {
-        method: t.method,
-        headers: t.headers,
-        body: t.method === 'GET' ? undefined : t.body,
-      });
-      if (this.blocked(r.status, r.body)) {
-        this.targets.delete(scope);
-        throw new StrategyError(`${bk}: replay ${t.method} ${t.url} → ${r.status}`, 'blocked', { status: r.status });
-      }
-      if (r.status !== 200) {
-        this.targets.delete(scope);
-        throw new StrategyError(`${bk}: replay ${t.method} ${t.url} → HTTP ${r.status}`, 'http', { status: r.status });
-      }
-      let json: unknown;
+  private async resolveTargets(scope: FeedScope): Promise<ReplayTarget[]> {
+    const getJson = async (url: string): Promise<unknown> => {
+      const r = await this.request({ method: 'GET', url, headers: { accept: 'application/json' } });
+      if (r.status !== 200) throw new StrategyError(`${this.cfg.bookmaker}: ${url} → HTTP ${r.status}`, 'http', { status: r.status });
+      return r.json;
+    };
+    const targets = (await this.cfg.targets!(scope, getJson)).map(toReplayTarget);
+    if (targets.length) this.targets.set(scope, targets);
+    return targets;
+  }
+
+  /** Jeden požadavek uvnitř stránky; blokace → výjimka 'blocked', jinak status + JSON (undefined = není JSON). */
+  private async request(t: { method: string; url: string; body?: string; headers: Record<string, string> }): Promise<{ status: number; json?: unknown; body: string }> {
+    const r = await this.bridge.fetchInPage(this.cfg.bookmaker, this.cfg.origin, t.url, {
+      method: t.method,
+      headers: t.headers,
+      body: t.method === 'GET' ? undefined : t.body,
+      idlePath: this.cfg.idlePath,
+    });
+    if (this.blocked(r.status, r.body)) {
+      throw new StrategyError(`${this.cfg.bookmaker}: replay ${t.method} ${t.url} → ${r.status}`, 'blocked', { status: r.status });
+    }
+    let json: unknown;
+    if (r.status === 200) {
       try {
         json = JSON.parse(r.body);
       } catch {
-        this.targets.delete(scope);
-        throw new StrategyError(`${bk}: replay ${t.url} nevrátil JSON`, 'structure', { sample: r.body.slice(0, 2_000) });
+        json = undefined;
       }
-      events.push(...this.parse(json, scope, t.sport));
+    }
+    return { status: r.status, json, body: r.body };
+  }
+
+  /** Stáhne cíl (a jeho části); vrátí JSON pro parser, nebo popis chyby. */
+  private async fetchTarget(t: ReplayTarget): Promise<{ json: unknown } | TargetFailure> {
+    const reqs = t.parts ?? [{ name: '', ...t }];
+    const out: Record<string, unknown> = {};
+    for (const p of reqs) {
+      const r = await this.request(p);
+      if (r.status !== 200) return { error: `${p.method} ${p.url} → HTTP ${r.status}`, kind: 'http' };
+      if (r.json === undefined) return { error: `${p.url} nevrátil JSON`, kind: 'structure', sample: r.body.slice(0, 2_000) };
+      if (!t.parts) return { json: r.json };
+      out[p.name] = r.json;
+    }
+    return { json: out };
+  }
+
+  private async replay(scope: FeedScope, targets: ReplayTarget[]): Promise<RawEvent[]> {
+    const bk = this.cfg.bookmaker;
+    const events: RawEvent[] = [];
+    const failures: TargetFailure[] = [];
+    for (const t of targets) {
+      let res: { json: unknown } | TargetFailure;
+      try {
+        res = await this.fetchTarget(t);
+      } catch (e) {
+        this.targets.delete(scope);
+        throw e;
+      }
+      if ('error' in res) failures.push(res);
+      else events.push(...this.parse(res.json, scope, t.sport));
+    }
+    if (failures.length) {
+      // jeden rozbitý cíl nemá shodit ostatní sporty; příště se cíle sestaví / objeví znovu
+      this.targets.delete(scope);
+      this.ctx.log.warn(`${bk}/${scope}: ${failures.length}/${targets.length} replay target(s) failed`, { errors: failures.map((f) => f.error).slice(0, 5) });
+      if (failures.length === targets.length) {
+        const f = failures[0];
+        throw new StrategyError(`${bk}: replay ${f.error}`, f.kind, f.sample ? { sample: f.sample } : undefined);
+      }
     }
     const merged = mergeEvents(events);
     if (!merged.length) {

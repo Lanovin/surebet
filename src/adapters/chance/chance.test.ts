@@ -22,10 +22,10 @@ describe('chance – shared Tipsport platform', () => {
     expect(detectBlock(rec.status, rec.body)).toEqual({ blocked: true, kind: 'waf-block', rayId: 'a425a5321ae2b190' });
   });
 
-  it('has no strategies while blocked', () => {
+  it('uses the camoufox strategy (same /rest API as Tipsport, ověřeno 2026-10-01)', () => {
     const ctx = { bookmaker: 'chance', log: createLogger('test') } as unknown as AdapterContext;
     const a = factory(ctx);
     expect(a.bookmaker).toBe('chance');
-    expect(a.strategies).toEqual([]);
+    expect(a.strategies.map((s) => [s.name, s.level])).toEqual([['camoufox', 5]]);
   });
 });

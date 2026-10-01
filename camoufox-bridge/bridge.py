@@ -4,7 +4,7 @@ Camoufox potřebuje Playwright < 1.63 a Node část projektu je na 1.63.
 
 HTTP API (jen localhost), Node klient: src/adapters/camoufox.ts
   POST /capture  {bk, url?, match, reload?, timeoutMs?, minResponses?, settleMs?}
-  POST /fetch    {bk, origin, url, method?, headers?, body?, credentials?}
+  POST /fetch    {bk, origin, url, method?, headers?, body?, credentials?, idlePath?, idleSettleMs?}
   POST /close    {bk?}            – bez bk zavře celý prohlížeč (nová session/fingerprint)
   GET  /health
 """
@@ -159,6 +159,16 @@ class Pool:
             origin = q["origin"].rstrip("/")
             if not page.url.startswith(origin):
                 await page.goto(origin + "/", wait_until="domcontentloaded", timeout=30_000)
+                idle = q.get("idlePath")
+                if idle:
+                    # Cloudflare JS (cookies) doběhne na plné stránce, pak se SPA sázkovky vymění za lehký
+                    # dokument stejného originu – fetch() má cookies, ale web neběží (≈ stovky MB RAM na stránku)
+                    try:
+                        await page.wait_for_load_state("load", timeout=15_000)
+                    except Exception:
+                        pass
+                    await asyncio.sleep(float(q.get("idleSettleMs", 4000)) / 1000)
+                    await page.goto(origin + idle, wait_until="domcontentloaded", timeout=30_000)
             init = {k: q[k] for k in ("method", "headers", "body", "credentials") if q.get(k) is not None}
             url = q["url"] if q["url"].startswith("http") else origin + q["url"]
             res = await page.evaluate(
