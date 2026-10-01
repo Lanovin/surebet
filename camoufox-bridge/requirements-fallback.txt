@@ -1,0 +1,2 @@
+# volitelný záložní engine (viz README)
+patchright>=1.55

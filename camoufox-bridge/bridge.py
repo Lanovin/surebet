@@ -1,21 +1,27 @@
-"""Camoufox bridge – jeden Camoufox (upravený Firefox) pro sázkovky, které blokují Playwright Chromium
-(Betano, Tipsport, případně Chance). Běží jako samostatný Python proces vedle ingestu, protože
+"""Camoufox bridge – vlastní Camoufox (upravený Firefox) na sázkovku pro ty, které blokují Playwright
+Chromium (Betano, Tipsport, Chance). Běží jako samostatný Python proces vedle ingestu, protože
 Camoufox potřebuje Playwright < 1.63 a Node část projektu je na 1.63.
+
+Záloha: když Camoufox u sázkovky opakovaně narazí na blokaci (403/429, stránka „Just a moment“,
+pád prohlížeče), přepne bridge tu sázkovku na Patchright (Chromium bez CDP úniků – engine, na kterém
+stojí Turnstilesolver) a po CAMOUFOX_FALLBACK_RETRY_S zkusí znovu Camoufox. Na stránce
+s Cloudflare výzvou se oba enginy pokusí odkliknout Turnstile checkbox (postup z Turnstilesolveru).
 
 HTTP API (jen localhost), Node klient: src/adapters/camoufox.ts
   POST /capture  {bk, url?, match, reload?, timeoutMs?, minResponses?, settleMs?}
   POST /fetch    {bk, origin, url, method?, headers?, body?, credentials?, idlePath?, idleSettleMs?}
   POST /close    {bk?}            – bez bk zavře celý prohlížeč (nová session/fingerprint)
-  GET  /health
+  GET  /health                    – {running, pages, engines: {bk: engine}, fallback}
 """
 from __future__ import annotations
 
 import asyncio
+import importlib.util
 import logging
 import os
 import re
 import time
-from typing import Any
+from typing import Any, Awaitable, Callable
 
 from aiohttp import web
 from camoufox.async_api import AsyncCamoufox
@@ -25,6 +31,17 @@ PORT = int(os.getenv("CAMOUFOX_PORT", "8765"))
 _headless = os.getenv("CAMOUFOX_HEADLESS", "virtual")  # virtual (Xvfb) | 1 | 0
 HEADLESS: Any = {"1": True, "0": False}.get(_headless, _headless)
 IDLE_CLOSE_S = int(os.getenv("CAMOUFOX_IDLE_CLOSE_S", "600"))
+# Záložní engine: auto | patchright | off. Přepne se po FALLBACK_AFTER blokacích po sobě (nejvýš
+# jednou za FALLBACK_MIN_SWITCH_S), zpět na Camoufox po FALLBACK_RETRY_S. FORCE_ENGINE vynutí engine.
+# auto = patchright jen s viditelným oknem (CAMOUFOX_HEADLESS=0): headless Chromium Betano i Tipsport
+# odmítnou i s opraveným UA (ověřeno 2026-10-01), takže by záloha jen zdržela návrat na Camoufox.
+_fallback = os.getenv("CAMOUFOX_FALLBACK", "auto")
+FALLBACK = ("patchright" if HEADLESS is False else "off") if _fallback == "auto" else _fallback
+FALLBACK_AFTER = int(os.getenv("CAMOUFOX_FALLBACK_AFTER", "3"))
+FALLBACK_RETRY_S = int(os.getenv("CAMOUFOX_FALLBACK_RETRY_S", "1800"))
+FALLBACK_MIN_SWITCH_S = 300
+FORCE_ENGINE = os.getenv("CAMOUFOX_FORCE_ENGINE", "")
+PRIMARY = "camoufox"
 MAX_BODY = 8_000_000
 NAV_TIMEOUT_MS = 45_000
 # fetch() uvnitř stránky; klient (src/adapters/camoufox.ts) čeká déle, aby stihl i první otevření originu
@@ -33,6 +50,9 @@ FETCH_TIMEOUT_MS = 45_000
 # Tituly blokačních stránek (viz docs/bookmakers/{betano,tipsport}.md)
 BLOCK_TITLES = re.compile(r"Betano Splash Screen|^Chyba$|Just a moment|Attention Required|Access denied", re.I)
 BLOCK_ABORT_TYPES = {"image", "media", "font"}
+# Cloudflare výzva (managed challenge / Turnstile) – zkusí se odkliknout, než se stránka vzdá
+CF_CHALLENGE_TITLES = re.compile(r"Just a moment|Okamžik|Attention Required|Checking your browser", re.I)
+CHALLENGE_WAIT_S = 25
 
 log = logging.getLogger("camoufox-bridge")
 
@@ -41,6 +61,95 @@ def replayable_header(name: str) -> bool:
     """Hlavičky, které má smysl předat fetch() při replayi (cookies, UA, sec-* si prohlížeč doplní sám)."""
     n = name.lower()
     return n in ("accept", "content-type") or (n.startswith("x-") and not n.startswith("x-forwarded"))
+
+
+def fallback_available() -> bool:
+    return FALLBACK == "patchright" and importlib.util.find_spec("patchright") is not None
+
+
+async def launch_camoufox() -> tuple[Callable[[], Awaitable[None]], Any]:
+    cm = AsyncCamoufox(
+        headless=HEADLESS,
+        os="windows",
+        locale="cs-CZ",
+        humanize=True,
+        block_images=True,
+    )
+    browser = await cm.__aenter__()
+    return (lambda: cm.__aexit__(None, None, None)), browser
+
+
+async def launch_patchright() -> tuple[Callable[[], Awaitable[None]], Any]:
+    """Patchright = Playwright s opravenými únikovými místy Chromia (Runtime.enable, navigator.webdriver…).
+    Doporučené je nic nepřepisovat (UA, hlavičky) – fingerprint pak sedí se skutečným Chromem."""
+    from patchright.async_api import async_playwright  # volitelná závislost
+
+    pw = await async_playwright().start()
+    try:
+        browser = await pw.chromium.launch(
+            headless=HEADLESS is not False,
+            args=["--disable-blink-features=AutomationControlled", "--disable-dev-shm-usage", "--lang=cs-CZ"],
+        )
+    except Exception:
+        await pw.stop()
+        raise
+    # headless Chromium se v UA hlásí jako „HeadlessChrome“ – to Cloudflare/F5 odmítnou hned; platforma
+    # v UA musí sedět s navigator.platform (Linux)
+    # (Turnstilesolver: „To solve captchas with headless mode you need to set the useragent!“)
+    major = browser.version.split(".")[0]
+    ua = f"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/{major}.0.0.0 Safari/537.36"
+    ctx = await browser.new_context(locale="cs-CZ", timezone_id="Europe/Prague", user_agent=ua)
+
+    async def close() -> None:
+        try:
+            await browser.close()
+        finally:
+            await pw.stop()
+
+    # stránky se otvírají přes kontext (kvůli locale); is_connected() hlídá prohlížeč
+    ctx.is_connected = browser.is_connected  # type: ignore[attr-defined]
+    return close, ctx
+
+
+LAUNCHERS = {"camoufox": launch_camoufox, "patchright": launch_patchright}
+
+
+async def solve_challenge(page: Any, bk: str) -> bool:
+    """Počká na Cloudflare výzvu a zkusí odkliknout Turnstile checkbox (jako Turnstilesolver:
+    klik na widget, dokud nezmizí). True = stránka už výzvu neukazuje."""
+    try:
+        title = await page.title()
+    except Exception:
+        return False
+    if not CF_CHALLENGE_TITLES.search(title):
+        return True
+    log.info("%s: cloudflare challenge (%s) – waiting / clicking turnstile", bk, title)
+    deadline = time.monotonic() + CHALLENGE_WAIT_S
+    clicked = 0
+    while time.monotonic() < deadline:
+        await asyncio.sleep(1.5)
+        try:
+            if not CF_CHALLENGE_TITLES.search(await page.title()):
+                log.info("%s: challenge passed (clicks=%d)", bk, clicked)
+                return True
+        except Exception:
+            # navigace po vyřešení výzvy – titul chvíli nejde přečíst
+            continue
+        for frame in page.frames:
+            if "challenges.cloudflare.com" not in frame.url:
+                continue
+            try:
+                el = await frame.frame_element()
+                box = await el.bounding_box()
+                if box and box["width"] > 0:
+                    # checkbox je vlevo ve widgetu (~30 px od kraje, svisle uprostřed)
+                    await page.mouse.click(box["x"] + min(30, box["width"] / 2), box["y"] + box["height"] / 2)
+                    clicked += 1
+            except Exception:
+                pass
+            break
+    log.warning("%s: challenge not solved within %d s (clicks=%d)", bk, CHALLENGE_WAIT_S, clicked)
+    return False
 
 
 class Pool:
@@ -61,6 +170,39 @@ class Pool:
         self.inflight: dict[str, int] = {}
         self.idle_cond: dict[str, asyncio.Condition] = {}
         self.last_use: dict[str, float] = {}
+        self.engine: dict[str, str] = {}
+        self.fails: dict[str, int] = {}
+        self.switched_at: dict[str, float] = {}
+
+    def engine_of(self, bk: str) -> str:
+        if FORCE_ENGINE:
+            return FORCE_ENGINE
+        e = self.engine.get(bk, PRIMARY)
+        if e != PRIMARY and time.monotonic() - self.switched_at.get(bk, 0) > FALLBACK_RETRY_S:
+            log.info("%s: fallback period over – back to %s", bk, PRIMARY)
+            e = self.engine[bk] = PRIMARY
+            self.switched_at[bk] = time.monotonic()
+            self.fails[bk] = 0
+        return e
+
+    def ok(self, bk: str) -> None:
+        self.fails[bk] = 0
+
+    async def failed(self, bk: str, why: str) -> None:
+        """Blokace/pád u sázkovky; po FALLBACK_AFTER za sebou přepne engine (a zavře ten starý)."""
+        n = self.fails[bk] = self.fails.get(bk, 0) + 1
+        if FORCE_ENGINE or n < FALLBACK_AFTER or not fallback_available():
+            return
+        if time.monotonic() - self.switched_at.get(bk, 0) < FALLBACK_MIN_SWITCH_S:
+            return
+        cur = self.engine_of(bk)
+        nxt = "patchright" if cur == PRIMARY else PRIMARY
+        log.warning("%s: %d failures in a row (%s) – switching %s → %s", bk, n, why, cur, nxt)
+        self.engine[bk] = nxt
+        self.switched_at[bk] = time.monotonic()
+        self.fails[bk] = 0
+        # zavřít až po doběhnutí rozjetých fetchů; nový prohlížeč se nahodí při dalším požadavku
+        asyncio.ensure_future(self.close(bk))
 
     def lock(self, bk: str) -> asyncio.Lock:
         return self.locks.setdefault(bk, asyncio.Lock())
@@ -77,15 +219,14 @@ class Pool:
         async with self.launch_locks.setdefault(bk, asyncio.Lock()):
             cur = self.browsers.get(bk)
             if cur is None or not cur[1].is_connected():
-                log.info("%s: launching camoufox (headless=%s)", bk, HEADLESS)
-                cm = AsyncCamoufox(
-                    headless=HEADLESS,
-                    os="windows",
-                    locale="cs-CZ",
-                    humanize=True,
-                    block_images=True,
-                )
-                self.browsers[bk] = (cm, await cm.__aenter__())
+                engine = self.engine_of(bk)
+                log.info("%s: launching %s (headless=%s)", bk, engine, HEADLESS)
+                try:
+                    closer, browser = await LAUNCHERS[engine]()
+                except Exception as e:
+                    await self.failed(bk, f"launch: {e}")
+                    raise
+                self.browsers[bk] = (closer, browser, engine)
                 self.pages.pop(bk, None)
         return self.browsers[bk][1]
 
@@ -154,6 +295,8 @@ class Pool:
                 elif q.get("reload"):
                     r = await page.reload(wait_until="domcontentloaded", timeout=timeout_s * 1000)
                     nav_status = r.status if r else None
+                if nav_status is not None and not await solve_challenge(page, bk):
+                    nav_status = 403
                 try:
                     await asyncio.wait_for(enough.wait(), timeout_s)
                 except asyncio.TimeoutError:
@@ -163,12 +306,18 @@ class Pool:
                 if pending:
                     await asyncio.gather(*pending, return_exceptions=True)
                 title = await page.title()
+                blocked = bool(BLOCK_TITLES.search(title)) or nav_status == 403
+                if blocked:
+                    await self.failed(bk, f"capture: {title or nav_status}")
+                elif got:
+                    self.ok(bk)
                 return {
                     "responses": got,
                     "navStatus": nav_status,
                     "title": title,
                     "pageUrl": page.url,
-                    "blocked": bool(BLOCK_TITLES.search(title)) or nav_status == 403,
+                    "blocked": blocked,
+                    "engine": self.engine_of(bk),
                 }
             finally:
                 page.remove_listener("response", on_response)
@@ -179,7 +328,11 @@ class Pool:
         async with self.lock(bk):
             page = await self.page(bk)
             if not page.url.startswith(origin):
-                await self.open_origin(page, origin, q)
+                try:
+                    await self.open_origin(page, origin, q, bk)
+                except Exception as e:
+                    await self.failed(bk, f"open origin: {type(e).__name__}")
+                    raise
             self.inflight[bk] = self.inflight.get(bk, 0) + 1
         try:
             init = {k: q[k] for k in ("method", "headers", "body", "credentials") if q.get(k) is not None}
@@ -198,6 +351,11 @@ class Pool:
                 {"url": url, "init": init, "timeoutMs": FETCH_TIMEOUT_MS},
             )
             res["body"] = res["body"][:MAX_BODY]
+            res["engine"] = self.engine_of(bk)
+            if res["status"] in (403, 429) or CF_CHALLENGE_TITLES.search(res["body"][:2000]):
+                await self.failed(bk, f"fetch {res['status']}")
+            elif res["status"] < 400:
+                self.ok(bk)
             return res
         finally:
             self.last_use[bk] = time.monotonic()
@@ -206,8 +364,12 @@ class Pool:
                 self.inflight[bk] -= 1
                 c.notify_all()
 
-    async def open_origin(self, page: Any, origin: str, q: dict[str, Any]) -> None:
+    async def open_origin(self, page: Any, origin: str, q: dict[str, Any], bk: str) -> None:
         await page.goto(origin + "/", wait_until="domcontentloaded", timeout=NAV_TIMEOUT_MS)
+        if not await solve_challenge(page, bk):
+            # fetch() by bez cookies z výzvy stejně dostal 403 – vrátit stránku na blank, ať se to příště zkusí znovu
+            await page.goto("about:blank")
+            raise RuntimeError(f"cloudflare challenge on {origin} not solved")
         idle = q.get("idlePath")
         if not idle:
             return
@@ -235,7 +397,7 @@ class Pool:
                 cur = self.browsers.pop(b, None)
                 if cur is not None:
                     try:
-                        await cur[0].__aexit__(None, None, None)
+                        await cur[0]()
                     except Exception as e:  # prohlížeč už mohl spadnout
                         log.warning("%s: close failed: %s", b, e)
 
@@ -280,7 +442,12 @@ async def h_close(q):
 
 
 async def h_health(_q):
-    return {"running": bool(pool.browsers), "pages": sorted(pool.pages)}
+    return {
+        "running": bool(pool.browsers),
+        "pages": sorted(pool.pages),
+        "engines": {bk: b[2] for bk, b in pool.browsers.items()},
+        "fallback": FALLBACK if fallback_available() else "unavailable",
+    }
 
 
 async def on_startup(app: web.Application) -> None:

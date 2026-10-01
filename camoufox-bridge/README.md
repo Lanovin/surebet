@@ -44,6 +44,31 @@ Proměnné: `CAMOUFOX_HOST`, `CAMOUFOX_PORT`, `CAMOUFOX_HEADLESS` (`virtual` = X
 `CAMOUFOX_IDLE_CLOSE_S` (zavře prohlížeč sázkovky po nečinnosti, výchozí 600). Ingest v Dockeru volá bridge
 přes `host.docker.internal`, takže bridge musí poslouchat i mimo localhost: `CAMOUFOX_HOST=0.0.0.0`.
 
+## Záložní engine (Patchright) a Cloudflare výzvy
+
+Když Camoufox u sázkovky narazí 3× po sobě na blokaci (403/429, „Just a moment“, pád prohlížeče),
+přepne bridge tu sázkovku na **Patchright** (Chromium s opravenými úniky CDP – engine, na kterém stojí
+[Turnstilesolver](https://github.com/surafelabeje/Turnstilesolver)) a po 30 min zkusí znovu Camoufox.
+Na stránce s Cloudflare výzvou oba enginy nejdřív ~25 s čekají a odklikávají Turnstile checkbox.
+`GET /health` ukazuje engine každé sázkovky (`engines`) a jestli je záloha k dispozici (`fallback`).
+
+```bash
+uv pip install --python .venv/bin/python -r requirements-fallback.txt
+.venv/bin/patchright install chromium          # ~170 MB, sdílí ~/.cache/ms-playwright
+```
+
+Proměnné: `CAMOUFOX_FALLBACK` (`auto` = jen s `CAMOUFOX_HEADLESS=0`; `patchright`; `off`),
+`CAMOUFOX_FALLBACK_AFTER` (3), `CAMOUFOX_FALLBACK_RETRY_S` (1800), `CAMOUFOX_FORCE_ENGINE` (test jednoho enginu).
+
+Ověřeno 2026-10-01 (Linux, headless): Patchright Chromium dostane od Betana splash 403 a od Tipsportu
+„Chyba“ 403 i s opraveným UA, proto je ve výchozím stavu záloha zapnutá jen s viditelným oknem
+(Windows / `CAMOUFOX_HEADLESS=0`). Chromium bere ~300–450 MB na sázkovku; při přepnutí se Camoufox
+té sázkovky zavře, takže paměť nenaroste.
+
+Zvažované a nepoužité: CloudDestroyer (`cloudscraper` + `selenium-stealth` – čisté HTTP a obyčejný
+Chromium sázkovky blokují, bez licence), rpa-worker-selenium (Docker image 2–4 GB se SeleniumBase,
+Docker tu není a na 4 GB RAM se nevejde).
+
 ## Zkouška
 
 ```bash
