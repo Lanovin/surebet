@@ -5,6 +5,8 @@ import type { AdapterContext } from '../types.js';
 import { createLogger } from '../../infra/logger.js';
 import factory from './index.js';
 import { BRANDS, PROBE_PATH, detectBlock, probeAccess } from './platform.js';
+import { parseTipsport } from './parse.js';
+import { validateRawOdds } from '../../core/validate.js';
 
 interface RecordedResponse {
   url: string;
@@ -63,10 +65,84 @@ describe('tipsport platform – WAF block detection', () => {
 });
 
 describe('tipsport adapter', () => {
-  it('has no strategies while blocked', () => {
+  it('uses the camoufox strategy', () => {
     const ctx = { bookmaker: 'tipsport', log: createLogger('test') } as unknown as AdapterContext;
     const a = factory(ctx);
     expect(a.bookmaker).toBe('tipsport');
-    expect(a.strategies).toEqual([]);
+    expect(a.strategies.map((s) => [s.name, s.level])).toEqual([['camoufox', 5]]);
+  });
+});
+
+describe('tipsport parse', () => {
+  const ctx = { scope: 'prematch' as const, origin: BRANDS.tipsport.origin };
+  // tvar podle archivních odpovědí (výpis s oppRows) – po prvním běhu nahradit nahranou fixture
+  const listing = {
+    matches: [
+      {
+        id: 5551,
+        idSuperSport: 16,
+        nameSuperSport: 'Fotbal',
+        nameCompetition: '1. liga',
+        homeParticipant: 'Sparta Praha',
+        visitingParticipant: 'Slavia Praha',
+        datetimeClosed: '2026-10-04T18:00:00+02:00',
+        matchUrl: '/kurzy/zapas/sparta-praha-slavia-praha-5551',
+        oppRows: [
+          {
+            oppsTab: [
+              { label: '1', odd: 2.45, bettingEnabled: true },
+              { label: '0', odd: 3.4, bettingEnabled: true },
+              { label: '2', odd: 2.8, bettingEnabled: true },
+              { label: '10', odd: 1.44, bettingEnabled: true },
+              { label: '02', odd: 1.55, bettingEnabled: true },
+              { label: '12', odd: 1.31, bettingEnabled: false },
+            ],
+          },
+        ],
+      },
+      {
+        id: 5552,
+        idSuperSport: 43,
+        nameCompetition: 'ATP Tokio',
+        homeParticipant: 'Menšík J.',
+        visitingParticipant: 'Lehečka J.',
+        datetimeClosed: 1791100000000,
+        oppRows: [{ oppsTab: [{ label: '1', odd: 1.9 }, { label: '2', odd: 1.95 }] }],
+      },
+      {
+        id: 5553,
+        nameSuperSport: 'Lední hokej',
+        nameCompetition: 'Extraliga',
+        homeParticipant: 'Sparta',
+        visitingParticipant: 'Třinec',
+        datetimeClosed: 1791100000000,
+        // 2-cestně u hokeje = nejasné (vč. prodloužení?) → vynechat
+        oppRows: [{ oppsTab: [{ label: '1', odd: 1.8 }, { label: '2', odd: 2.0 }] }],
+      },
+    ],
+  };
+
+  it('maps 1X2, DC and tennis ML from listing rows', () => {
+    const ev = parseTipsport(listing, ctx);
+    expect(ev.map((e) => e.sourceId)).toEqual(['5551', '5552']);
+    const fb = ev[0];
+    expect(fb).toMatchObject({ sport: 'football', home: 'Sparta Praha', away: 'Slavia Praha', competition: '1. liga', live: false });
+    expect(fb.startTime).toBe(Date.parse('2026-10-04T16:00:00Z'));
+    expect(fb.url).toBe('https://www.tipsport.cz/kurzy/zapas/sparta-praha-slavia-praha-5551');
+    expect(fb.markets.map((m) => m.key)).toEqual(['1X2|REG', 'DC|REG']);
+    expect(fb.markets[0].selections.map((s) => [s.key, s.odds])).toEqual([['HOME', 2.45], ['DRAW', 3.4], ['AWAY', 2.8]]);
+    expect(fb.markets[1].selections.find((s) => s.key === 'HOME_AWAY')?.open).toBe(false);
+    expect(ev[1].markets.map((m) => m.key)).toEqual(['ML|MATCH']);
+    const v = validateRawOdds({ bookmaker: 'tipsport', strategy: 'camoufox', scope: 'prematch', fetchedAt: Date.now(), events: ev }, { minEvents: 1, maxAgeMs: 60_000 });
+    expect(v.errors).toEqual([]);
+  });
+
+  it('skips half-time rows and unknown labels', () => {
+    const ev = parseTipsport(
+      { id: 1, idSuperSport: 16, homeParticipant: 'A', visitingParticipant: 'B', datetimeClosed: 1791100000000,
+        eventTables: [{ name: '1. poločas', boxes: [{ cells: [{ name: '1', odd: 3 }, { name: '0', odd: 2 }, { name: '2', odd: 4 }] }] }] },
+      ctx,
+    );
+    expect(ev).toEqual([]);
   });
 });

@@ -1,14 +1,35 @@
-// Betano.cz (Kaizen Gaming) – zatím bez funkční strategie, viz docs/bookmakers/betano.md.
-// Cloudflare bot management vrací na všechny cesty 403 „Betano Splash Screen“ (blokační stránka,
-// ne landing page): plain HTTP (TLS otisk) i výchozí headless Chromium (HeadlessChrome v UA/sec-ch-ua);
-// i s běžným UA se relace zablokuje hned po doběhnutí JS detekce Cloudflare. Obejít to by znamenalo
-// skrývat automatizaci (stealth) – mimo pravidla projektu. Registry adaptér bez strategií přeskočí.
-// S Fortunou platformu nesdílí (Fortuna = FEG „ufo“, Betano = Kaizen danae-webapi/SignalR).
+// Betano.cz (Kaizen Gaming) – jen přes camoufox-bridge, viz docs/bookmakers/betano.md.
+// Playwright Chromium a plain HTTP blokuje Cloudflare bot management (403 „Betano Splash Screen“),
+// proto L5 strategie v Camoufoxu: discover (zachycení XHR stránek) → replay (fetch uvnitř stránky).
+//  ⚠️ URL stránek si ověř v prohlížeči (klikni na sport a zkopíruj adresu) – slugy se můžou lišit.
 import type { AdapterFactory } from '../types.js';
+import { CamoufoxReplayStrategy } from '../common/camoufox-replay.js';
+import { parseBetano } from './parse.js';
 
-const factory: AdapterFactory = () => ({
+const ORIGIN = 'https://www.betano.cz';
+
+const factory: AdapterFactory = (ctx) => ({
   bookmaker: 'betano',
-  strategies: [],
+  strategies: [
+    new CamoufoxReplayStrategy(
+      {
+        bookmaker: 'betano',
+        origin: ORIGIN,
+        pages: {
+          prematch: [
+            { url: `${ORIGIN}/sport/fotbal/`, sport: 'football' },
+            { url: `${ORIGIN}/sport/tenis/`, sport: 'tennis' },
+            { url: `${ORIGIN}/sport/hokej/`, sport: 'hockey' },
+          ],
+          live: [{ url: `${ORIGIN}/live/` }],
+        },
+        match: /betano\.cz\/(api|danae-webapi)\//,
+        parse: parseBetano,
+        isBlocked: (_status, body) => body.includes('Betano Splash Screen') || body.includes('betano-splash-screen'),
+      },
+      ctx,
+    ),
+  ],
 });
 
 export default factory;

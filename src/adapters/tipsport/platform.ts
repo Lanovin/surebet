@@ -1,16 +1,15 @@
 // Sdílená platforma skupiny Tipsport (Tipsport.cz, Chance.cz – stejný Next.js frontend, stejné /rest API,
 // stejná Cloudflare konfigurace). Chance adaptér importuje odsud.
 //
-// STAV (2026-09-28): žádná povolená strategie nefunguje. Cloudflare bot management vrací 403 („Chyba“,
-// ID C1-<ray>): curl/Node fetch hned (otisk klienta), headless Chrome projde jen prvním HTML dokumentem
-// (SSR bez kurzů) a /rest/common/v1/init-web – jakmile doběhne CF JS detekce, jsou všechna /rest/offer/*
-// i další dokumenty 403 (profil „spálený“ i s cf_clearance). Projít by šlo jen skrytím automatizace
-// (stealth), což projekt zakazuje. Detaily a postup opravy: docs/bookmakers/tipsport.md.
-// Proto adaptér zatím nevrací žádné strategie; tento modul drží jen konfiguraci značek a diagnostiku bloku,
-// aby šel přístup levně ověřit (probeAccess) a strategie doplnit, až bude z čeho nahrát fixtures.
+// STAV: Playwright Chromium a plain HTTP blokuje Cloudflare bot management (403 „Chyba“, ID C1-<ray>),
+// detaily v docs/bookmakers/tipsport.md. Funkční cesta je L5 strategie v Camoufoxu přes camoufox-bridge
+// (common/camoufox-replay.ts): discover (zachycení /rest odpovědí stránek) → replay (fetch uvnitř stránky).
+// Zapnuto pro značky v CAMOUFOX_BRANDS; detectBlock/probeAccess zůstávají pro diagnostiku.
 import type { HealthResult } from '../../core/types.js';
 import type { HttpClient } from '../http.js';
 import type { Adapter, AdapterContext } from '../types.js';
+import { CamoufoxReplayStrategy, type CamoufoxReplayConfig } from '../common/camoufox-replay.js';
+import { parseTipsport } from './parse.js';
 
 export type PlatformBrand = 'tipsport' | 'chance';
 
@@ -68,8 +67,45 @@ export async function probeAccess(http: HttpClient, brand: PlatformBrand): Promi
   }
 }
 
-/** Adaptér platformy. Strategie jsou prázdné, dokud nebude přístup (viz hlavička souboru). */
+/** Značky, pro které je zapnutá Camoufox strategie (camoufox-bridge). Chance: přidej 'chance' a ověř URL. */
+export const CAMOUFOX_BRANDS: readonly PlatformBrand[] = ['tipsport'];
+
+/**
+ * Stránky pro objevení /rest endpointů. ⚠️ Ověř v prohlížeči (klikni na sport, zkopíruj adresu) –
+ * číslo na konci je idSuperSport (16 fotbal, 43 tenis ověřeno, hokej doplň podle URL).
+ */
+function discoveryPages(origin: string): CamoufoxReplayConfig['pages'] {
+  return {
+    prematch: [
+      { url: `${origin}/kurzy/fotbal-16`, sport: 'football' },
+      { url: `${origin}/kurzy/tenis-43`, sport: 'tennis' },
+      { url: `${origin}/kurzy/hokej-23`, sport: 'hockey' },
+    ],
+    live: [{ url: `${origin}/live` }],
+  };
+}
+
+/** Adaptér platformy: Camoufox strategie pro CAMOUFOX_BRANDS, jinak bez strategií (blokováno). */
 export function createPlatformAdapter(brand: PlatformBrand, ctx: AdapterContext): Adapter {
-  ctx.log.warn(`${brand}: no working strategy – Cloudflare bot management blocks automated clients, see docs/bookmakers/${brand}.md`);
-  return { bookmaker: brand, strategies: [] };
+  if (!CAMOUFOX_BRANDS.includes(brand)) {
+    ctx.log.warn(`${brand}: no working strategy – Cloudflare bot management blocks automated clients, see docs/bookmakers/${brand}.md`);
+    return { bookmaker: brand, strategies: [] };
+  }
+  const { origin } = BRANDS[brand];
+  return {
+    bookmaker: brand,
+    strategies: [
+      new CamoufoxReplayStrategy(
+        {
+          bookmaker: brand,
+          origin,
+          pages: discoveryPages(origin),
+          match: /\/rest\/(offer|common)\//,
+          parse: parseTipsport,
+          isBlocked: (status, body) => detectBlock(status, body).blocked,
+        },
+        ctx,
+      ),
+    ],
+  };
 }

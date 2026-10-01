@@ -9,3 +9,4 @@ web/.next/
 analytics/.venv/
 analytics/models/*.pkl
 __pycache__/
+camoufox-bridge/.venv/
