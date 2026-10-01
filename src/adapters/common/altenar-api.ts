@@ -24,7 +24,7 @@ export interface AltenarOptions {
   detailHorizonHours: number;
 }
 
-export const ALTENAR_DEFAULTS: AltenarOptions = { detailLimit: 50, detailHorizonHours: 24 };
+export const ALTENAR_DEFAULTS: AltenarOptions = { detailLimit: 150, detailHorizonHours: 36 };
 
 /**
  * Sporty, u kterých detail přidá namapované trhy nad rámec listingu. MMA a box mají i v detailu jen

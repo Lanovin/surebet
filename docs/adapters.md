@@ -101,7 +101,7 @@ E-sporty a virtuální/simulované zápasy dál vynech.
 * Žádné přihlášení, žádné řešení CAPTCHA, žádné stealth pluginy. Jen to, co vidí anonymní návštěvník.
 * Rozumné tempo: `HttpClient` má `minIntervalMs`; prematch sken by měl zvládnout desítky požadavků,
   ne stovky. Live polling se volá každou ~1 s – musí to být **jeden až pár** požadavků.
-* Prohlížeč jen jeden, stránek co nejméně, zavírej je. Stroj má 3,8 GB RAM.
+* Prohlížeč jen jeden, stránek co nejméně, zavírej je. Stroj má 32 GB RAM (limity v `docker-compose.yml`), ale počet stránek kvůli RAM neomezuj zbytečně – spíš kvůli zátěži sázkovek.
 
 ## Testy
 

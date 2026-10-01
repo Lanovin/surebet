@@ -241,17 +241,18 @@ export interface DetailOptions {
 }
 
 export const DEFAULT_DETAIL: DetailOptions = {
-  windowMs: 3 * 3600_000,
+  windowMs: 12 * 3600_000,
   prioritySports: ['hockey'],
   priorityWindowMs: 24 * 3600_000,
   sports: PRIMARY_SPORTS,
-  maxTracked: 45,
+  maxTracked: 150,
   extraSports: ['handball', 'baseball', 'american_football', 'volleyball', 'snooker', 'darts'],
-  extraWindowMs: 12 * 3600_000,
-  extraMaxTracked: 10,
-  maxPerFetch: 15,
-  refreshMs: 90_000,
-  ttlMs: 4 * 60_000,
+  extraWindowMs: 24 * 3600_000,
+  extraMaxTracked: 40,
+  // ~190 sledovaných / refreshMs 3 min při prematch pollu ~1 min ≈ 60 detailů na fetch (< maxPerFetch)
+  maxPerFetch: 80,
+  refreshMs: 180_000,
+  ttlMs: 8 * 60_000,
 };
 
 /** Zápasy, pro které se v prematch stahuje detail: nejbližší zápasy hlavních sportů + menší kvóta dalších. */

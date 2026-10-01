@@ -1051,14 +1051,14 @@ describe('fortuna request budget and websocket priorities for the new sports', a
     const fx = (id: string, code: string, inMin: number) => ({ id, sportId: `ufo:sprt:${code}`, startDatetime: now + inMin * 60_000, kind: 'PREMATCH', name: id, participants: [] }) as never;
     // kvóty: hlavní sporty max. maxTracked nejbližších, další sporty zvlášť extraMaxTracked (i když začínají dřív)
     const crowded = [
-      ...Array.from({ length: 60 }, (_, i) => fx(`f${i}`, '00', 10 + i)),
-      ...Array.from({ length: 30 }, (_, i) => fx(`h${i}`, '0y', 5 + i)),
+      ...Array.from({ length: DEFAULT_DETAIL.maxTracked + 15 }, (_, i) => fx(`f${i}`, '00', 10 + i)),
+      ...Array.from({ length: DEFAULT_DETAIL.extraMaxTracked + 20 }, (_, i) => fx(`h${i}`, '0y', 5 + i)),
     ];
     const a = detailTargets(crowded, DEFAULT_DETAIL, now).map((f) => f.id);
     expect(a.filter((id) => id.startsWith('f')).length).toBe(DEFAULT_DETAIL.maxTracked);
     expect(a.filter((id) => id.startsWith('h')).length).toBe(DEFAULT_DETAIL.extraMaxTracked);
-    // okna: hokej 24 h, fotbal 3 h, další sporty 12 h; stolní tenis / MMA / box detail nedostanou (vše v overview)
-    const list = [fx('t1', '0x', 20), fx('tt1', '0j', 1), fx('hk1', '0w', 20 * 60), fx('late', '00', 4 * 60), fx('hb1', '0y', 11 * 60), fx('hb2', '0y', 13 * 60), fx('mma', '19', 30), fx('bx', '01', 30)];
+    // okna: hokej 24 h, fotbal 12 h, další sporty 24 h; stolní tenis / MMA / box detail nedostanou (vše v overview)
+    const list = [fx('t1', '0x', 20), fx('tt1', '0j', 1), fx('hk1', '0w', 20 * 60), fx('late', '00', 13 * 60), fx('hb1', '0y', 23 * 60), fx('hb2', '0y', 25 * 60), fx('mma', '19', 30), fx('bx', '01', 30)];
     const b = detailTargets(list, DEFAULT_DETAIL, now).map((f) => f.id);
     expect(b.sort()).toEqual(['hb1', 'hk1', 't1']);
   });
