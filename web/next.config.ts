@@ -9,6 +9,11 @@ const nextConfig: NextConfig = {
   turbopack: { root },
   outputFileTracingRoot: root,
   devIndicators: false,
+  // sdílený kód importuje './x.js' (NodeNext) – webpack to musí přeložit na .ts
+  webpack(config) {
+    config.resolve.extensionAlias = { '.js': ['.ts', '.tsx', '.js'] };
+    return config;
+  },
   async rewrites() {
     return [{ source: '/api/:path*', destination: `${gateway}/api/:path*` }];
   },
